@@ -1,0 +1,587 @@
+@font-face {
+  font-family: "Hack";
+  src: url("/fonts/hack-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Hack";
+  src: url("/fonts/hack-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/*
+ * The Intensity ramp.
+ *
+ * Lightness carries the data: the four levels step monotonically in L
+ * (dark 0.40 → 0.55 → 0.70 → 0.85), which is the one channel every form of
+ * colour vision agrees on, so the ramp survives deuteranopia, protanopia,
+ * greyscale and a phone in sunlight. Hue then rotates 178 → 120 across the
+ * blue–yellow axis, which is intact under red-green deficiency, so it reads as
+ * a second cue rather than a mush. Level 4 is the only saturated thing in the
+ * app.
+ */
+:root,
+:root[data-theme="dark"] {
+  --lv0: oklch(0.235 0.012 128);
+  --lv1: oklch(0.4 0.055 178);
+  --lv2: oklch(0.55 0.085 155);
+  --lv3: oklch(0.7 0.125 138);
+  --lv4: oklch(0.85 0.155 118);
+
+  --bg: oklch(0.16 0.014 128);
+  --surface: oklch(0.205 0.016 128);
+  --surface-on: oklch(0.245 0.022 130);
+  --surface-input: oklch(0.21 0.017 128);
+  --surface-raised: oklch(0.27 0.02 128);
+
+  --fg: oklch(0.97 0.006 120);
+  --muted: oklch(0.71 0.02 125);
+  --dim: oklch(0.55 0.015 125);
+  --faint: oklch(0.5 0.012 125);
+
+  --line: oklch(0.97 0.006 120 / 0.09);
+  --line-strong: oklch(0.97 0.006 120 / 0.14);
+  --ghost: oklch(0.97 0.006 120 / 0.13);
+  --ring: oklch(0.97 0.006 120 / 0.4);
+  --tail-ring: oklch(0.97 0.006 120 / 0.32);
+
+  --accent: oklch(0.7 0.095 128);
+  --on-accent: oklch(0.16 0.014 128);
+  --chain-fg: oklch(0.8 0.11 124);
+  --row-on-line: oklch(0.7 0.125 138 / 0.3);
+  --knob-off: oklch(0.62 0.018 125);
+  --track-off: oklch(0.3 0.02 128);
+}
+
+:root[data-theme="light"] {
+  --lv0: oklch(0.925 0.008 128);
+  --lv1: oklch(0.855 0.055 178);
+  --lv2: oklch(0.745 0.085 155);
+  --lv3: oklch(0.605 0.105 138);
+  --lv4: oklch(0.47 0.1 120);
+
+  --bg: oklch(1 0 0);
+  --surface: oklch(0.975 0.004 128);
+  --surface-on: oklch(0.955 0.012 130);
+  --surface-input: oklch(0.98 0.004 128);
+  --surface-raised: oklch(0.94 0.008 128);
+
+  --fg: oklch(0.2 0.01 128);
+  --muted: oklch(0.5 0.012 128);
+  --dim: oklch(0.55 0.012 128);
+  --faint: oklch(0.58 0.012 128);
+
+  --line: oklch(0.141 0.005 285 / 0.09);
+  --line-strong: oklch(0.141 0.005 285 / 0.14);
+  --ghost: oklch(0.141 0.005 285 / 0.13);
+  --ring: oklch(0.141 0.005 285 / 0.35);
+  --tail-ring: oklch(0.141 0.005 285 / 0.3);
+
+  --accent: oklch(0.47 0.1 120);
+  --on-accent: oklch(1 0 0);
+  --chain-fg: oklch(0.47 0.1 120);
+  --row-on-line: oklch(0.605 0.105 138 / 0.3);
+  --knob-off: oklch(1 0 0);
+  --track-off: oklch(0.85 0.008 128);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Hack", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Desktop is the same single column, capped and centred — no second layout. */
+.app {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 20px calc(36px + env(safe-area-inset-bottom));
+  padding-top: calc(20px + env(safe-area-inset-top));
+}
+
+/* ---- type ---- */
+
+.total {
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -1.5px;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.caption {
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.title {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--fg);
+}
+.label {
+  font-size: 10px;
+  color: var(--dim);
+}
+.note {
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.note-faint {
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--faint);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- buttons ---- */
+
+.btn {
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 13px;
+  cursor: pointer;
+}
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 15px;
+}
+.btn-solid {
+  border-color: transparent;
+  background: var(--surface-raised);
+  color: var(--fg);
+}
+.btn-quiet {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.btn-chip {
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: none;
+  color: var(--muted);
+  font-size: 10.5px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.btn-chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.btn-list {
+  width: 100%;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 12.5px;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.field {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-input);
+  color: var(--fg);
+  font-size: 14px;
+  padding: 14px;
+  outline: none;
+}
+.field:focus {
+  border-color: var(--accent);
+}
+
+/* ---- heatmap ---- */
+
+.heatmap {
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: center;
+  min-height: 44px;
+}
+.sq {
+  border-radius: var(--sq-radius);
+  width: var(--sq-size);
+  height: var(--sq-size);
+  transition:
+    background-color 300ms ease,
+    box-shadow 320ms ease;
+}
+.sq-future {
+  background: transparent;
+  border: 1px dashed var(--ghost);
+}
+.sq-unborn {
+  background: transparent;
+}
+.sq-today {
+  box-shadow: 0 0 0 1.5px var(--ring);
+}
+/*
+ * The echo: the same event happening in two places, so the eye learns that the
+ * row and the year are the same object.
+ */
+.sq-echo {
+  box-shadow: 0 0 0 2.5px var(--lv4);
+}
+.legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 9px;
+  font-size: 9.5px;
+  color: var(--dim);
+}
+
+/* ---- habit row ---- */
+
+.row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 56px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  user-select: none;
+  transition:
+    background-color 90ms linear,
+    border-color 160ms ease;
+}
+.row-tick {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.row[data-ticked="true"] {
+  background: var(--surface-on);
+  border-color: var(--row-on-line);
+}
+.row[data-pressed="true"] {
+  background: var(--surface-on);
+}
+.row-yesterday {
+  opacity: 0.82;
+}
+.row-name {
+  font-size: 13.5px;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-sub {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-sub[data-chained="true"] {
+  color: var(--chain-fg);
+}
+.row-open {
+  flex: none;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--dim);
+  font-size: 14px;
+  padding: 0 14px 0 4px;
+  cursor: pointer;
+}
+.row-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--line-strong);
+  background: none;
+  color: var(--muted);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+/* ---- the 8-day tail ---- */
+
+.tail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.tail-sq {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  flex: none;
+  background: var(--lv0);
+  transition:
+    background-color 90ms linear,
+    transform 260ms cubic-bezier(0.2, 1.3, 0.35, 1);
+}
+.tail-sq[data-state="ticked"] {
+  background: var(--lv3);
+}
+.tail-sq[data-state="unborn"] {
+  background: transparent;
+  border: 1px dashed var(--ghost);
+}
+/* Today's Square carries the ring: it is the tick target. */
+.tail-sq[data-today="true"] {
+  box-shadow: 0 0 0 1.5px var(--tail-ring);
+}
+/* Yesterday, still open and still empty: hollow, not filled. */
+.tail-sq[data-open="true"] {
+  background: transparent;
+  border: 1px solid var(--ring);
+}
+.tail-sq[data-pressed="true"] {
+  transform: scale(0.9);
+  transition-duration: 90ms;
+}
+/*
+ * The overshoot is the weight. Released from 1.14 with a bezier that passes
+ * above 1, geometry springs 0.9 → 1.14 → 1.0 over 260ms.
+ */
+.tail-sq[data-pulse="true"] {
+  transform: scale(1.14);
+}
+/* Correcting a mistake is administrative: no overshoot, no haptic, no echo. */
+.tail-sq[data-untick="true"] {
+  transition:
+    background-color 120ms linear,
+    transform 120ms linear;
+}
+
+/*
+ * A Chain reads as one continuous object rather than a number: consecutive
+ * Squares are bridged, and a Tick that extends one visibly grows a limb.
+ */
+.bridge {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 4px;
+  height: 4px;
+  margin-top: -2px;
+  background: var(--lv3);
+  transform-origin: left center;
+  animation: bridge-draw 140ms ease-out;
+}
+@keyframes bridge-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ---- toggles ---- */
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: none;
+  width: 40px;
+  height: 23px;
+  padding: 0 3px;
+  border-radius: 12px;
+  background: var(--track-off);
+  transition: background-color 160ms ease;
+}
+.toggle[data-on="true"] {
+  justify-content: flex-end;
+  background: var(--accent);
+}
+.toggle-knob {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--knob-off);
+}
+.toggle[data-on="true"] .toggle-knob {
+  background: var(--on-accent);
+}
+
+/* ---- misc surfaces ---- */
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+}
+.card {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 16px;
+}
+.card-accent {
+  border-color: color-mix(in oklch, var(--accent) 35%, transparent);
+  background: var(--surface-input);
+}
+.grace {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px dashed var(--line-strong);
+  background: none;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.stat-value {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.stat-hero {
+  font-size: 40px;
+  letter-spacing: -1.5px;
+}
+.stat-hero[data-chained="true"] {
+  color: var(--lv4);
+}
+.stat-label {
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+/* The Total's changed digit rolls in behind the Square that caused it. */
+.digit {
+  display: inline-block;
+  animation: digit-roll 200ms ease-out;
+}
+@keyframes digit-roll {
+  from {
+    transform: translateY(-0.32em);
+    opacity: 0.3;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /*
+   * Colour is a fact and still snaps in; it is the spring, the roll and the
+   * limb that go. Nothing here is load-bearing for meaning.
+   */
+  .tail-sq,
+  .sq,
+  .toggle {
+    transition-property: background-color, box-shadow;
+    transition-duration: 90ms;
+  }
+  .tail-sq[data-pressed="true"],
+  .tail-sq[data-pulse="true"] {
+    transform: none;
+  }
+  .bridge,
+  .digit {
+    animation: none;
+  }
+}
