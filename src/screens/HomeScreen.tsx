@@ -67,6 +67,8 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
             {elapsed === 1 ? "ticks · the year is one day old" : `ticks · last ${elapsed} days`}
           </div>
         </div>
+        {/* One chip is all the chrome Home gets. The Share Card lives in
+            settings, next to the name opt-ins that govern it. */}
         <button type="button" className="btn-chip" onClick={onSettings}>
           settings
         </button>

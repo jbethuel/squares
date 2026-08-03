@@ -22,6 +22,15 @@ export interface GridGeometry {
 /** The largest a Square is ever drawn — day one, when there is least to see. */
 export const MAX_SQUARE = 40;
 
+/**
+ * Corner radius for a Square of a given edge, in the units it is actually
+ * drawn in. A Square must read as a Square: scaling a radius computed for a
+ * 4px cell up to a 16px one turns the grid into a field of dots.
+ */
+export function squareRadius(size: number): number {
+  return size >= 18 ? 6 : size >= 10 ? 3 : 1.4;
+}
+
 export function gridGeometry(width: number, elapsed: number, weekday: number): GridGeometry {
   const cols = Math.max(1, Math.ceil((elapsed + (6 - weekday)) / 7));
   let gap = Math.max(1.2, Math.min(4, (width / cols) * 0.16));
@@ -30,8 +39,7 @@ export function gridGeometry(width: number, elapsed: number, weekday: number): G
     size = MAX_SQUARE;
     gap = 6;
   }
-  const radius = size >= 18 ? 6 : size >= 10 ? 3 : 1.4;
-  return { cols, size: Math.max(size, 1), gap, radius };
+  return { cols, size: Math.max(size, 1), gap, radius: squareRadius(size) };
 }
 
 export type SquareKind =

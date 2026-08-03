@@ -456,6 +456,14 @@ input {
   }
 }
 
+/* The card is always the dark theme: it is a standalone image, not a screen. */
+.share-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
 /* ---- toggles ---- */
 
 .toggle-row {

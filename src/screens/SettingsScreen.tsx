@@ -11,7 +11,7 @@ import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const THEMES: ThemePreference[] = ["system", "light", "dark"];
 
-export function SettingsScreen({ onBack }: { onBack: () => void }) {
+export function SettingsScreen({ onBack, onShare }: { onBack: () => void; onShare: () => void }) {
   const { data, today, update, replace } = useStore();
   const { canInstall, installed, install } = useInstallPrompt();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -85,7 +85,7 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
       <p className="label" style={{ margin: "0 0 9px" }}>
         share card · names are off by default
       </p>
-      <div className="stack" style={{ gap: 7, marginBottom: 26 }}>
+      <div className="stack" style={{ gap: 7, marginBottom: 10 }}>
         {habits.map((habit) => (
           <ToggleRow
             key={habit.id}
@@ -96,6 +96,11 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
         ))}
         {habits.length === 0 ? <p className="note-faint">no habits yet.</p> : null}
       </div>
+      {/* The card sits directly under the opt-ins that govern it, so what is
+          on it and what may be named are never on separate screens. */}
+      <button type="button" className="btn-list" onClick={onShare} style={{ marginBottom: 26 }}>
+        make a share card ›
+      </button>
 
       <p className="label" style={{ margin: "0 0 9px" }}>
         data · lives on this device only
