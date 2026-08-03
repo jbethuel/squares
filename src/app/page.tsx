@@ -71,16 +71,15 @@ function App() {
     case "edit":
       return <EditScreen habitId={screen.habitId} onDone={home} onCancel={back} />;
     case "settings":
-      return <SettingsScreen onBack={back} />;
+      return <SettingsScreen onBack={back} onShare={() => push({ name: "share" })} />;
     case "share":
-      return <ShareScreen onBack={back} onSettings={() => push({ name: "settings" })} />;
+      return <ShareScreen onBack={back} />;
     default:
       return (
         <HomeScreen
           onOpenHabit={(habitId) => push({ name: "detail", habitId })}
           onNewHabit={() => push({ name: "edit", habitId: null })}
           onSettings={() => push({ name: "settings" })}
-          onShare={() => push({ name: "share" })}
         />
       );
   }

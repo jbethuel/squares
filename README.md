@@ -100,6 +100,10 @@ longer be reached in settings to be withdrawn), and opted-in names render as one
 lowercase line rather than rows. The screen states in words which names the card
 carries before you can save it, so the answer is never more than a glance away.
 
+It lives in settings, directly under those name opt-ins, rather than on Home.
+Home keeps the one chip the design gives it, and what the card contains is never
+on a different screen from what may be named.
+
 The card is always the dark theme — it is a standalone image, not a screen.
 
 The Intensity ramp therefore exists twice: as CSS custom properties for the app

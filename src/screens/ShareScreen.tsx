@@ -7,7 +7,7 @@ import { useStore } from "@/domain/store";
 /** The PNG is drawn at 4x the card's design units: 1280px wide. */
 const EXPORT_SCALE = 4;
 
-export function ShareScreen({ onBack, onSettings }: { onBack: () => void; onSettings: () => void }) {
+export function ShareScreen({ onBack }: { onBack: () => void }) {
   const { data, today } = useStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -119,8 +119,10 @@ export function ShareScreen({ onBack, onSettings }: { onBack: () => void; onSett
               <span style={{ color: "var(--chain-fg)" }}>{model.names.join(" · ")}</span>. everything
               else stays anonymous.
             </p>
-            <button type="button" className="btn-quiet" onClick={onSettings}>
-              change what is named ›
+            {/* Back to settings, which is where this screen was opened from
+                and where the name opt-ins are. */}
+            <button type="button" className="btn-quiet" onClick={onBack}>
+              ‹ change what is named
             </button>
           </>
         )}
