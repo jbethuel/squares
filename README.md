@@ -34,10 +34,12 @@ src/domain/     the rules — no React, fully tested
   selectors.ts    Intensity, Chain, Total, the Grace Window
   mutations.ts    Tick, add/rename/archive, and sealDays
   grid.ts         Heatmap geometry
+  palette.ts      the Intensity ramp as numbers, for canvas
+  shareCard.ts    what a Share Card may contain, and how it is drawn
   storage.ts      localStorage + import validation
   store.tsx       the one React context
 src/components/ Heatmap, HabitRow, Tail, Total, Toggle
-src/screens/    Home, Detail, Edit, Settings
+src/screens/    Home, Detail, Edit, Settings, Share
 src/app/        Next shell, globals.css (all design tokens)
 ```
 
@@ -84,11 +86,25 @@ frame with the Total rolling 180ms behind. Unticking is 120ms linear with no
 overshoot, no haptic and no echo — correcting a mistake should feel
 administrative.
 
-### Not built
+### The Share Card
 
-The **Share Card** is v2 and was delivered as a sketch only, so it is not
-implemented. Its constraint is already encoded: `Habit.sharedName` defaults to
-false and import forces it false, so no name can leak from an old file.
+Drawn on-device to a canvas and saved as a 1280px PNG — no hosted page, no link
+between users, and the app never posts anything. `shareCardModel` is a pure
+function whose whole output is five fields: elapsed, weekday, levels, total and
+names. There is no date, no handle and no per-Habit breakdown, because a
+breakdown is a leak waiting to happen.
+
+Names are the load-bearing part. `sharedName` defaults to false, a file that
+omits it parses as false, archived Habits are dropped (their opt-in can no
+longer be reached in settings to be withdrawn), and opted-in names render as one
+lowercase line rather than rows. The screen states in words which names the card
+carries before you can save it, so the answer is never more than a glance away.
+
+The card is always the dark theme — it is a standalone image, not a screen.
+
+The Intensity ramp therefore exists twice: as CSS custom properties for the app
+and as numbers in `palette.ts` for the canvas. `palette.test.ts` parses
+`globals.css` and asserts the two agree, so they cannot drift.
 
 ### Fonts
 

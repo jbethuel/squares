@@ -22,9 +22,10 @@ interface HomeScreenProps {
   onOpenHabit: (habitId: string) => void;
   onNewHabit: () => void;
   onSettings: () => void;
+  onShare: () => void;
 }
 
-export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenProps) {
+export function HomeScreen({ onOpenHabit, onNewHabit, onSettings, onShare }: HomeScreenProps) {
   const { data, today, update } = useStore();
   const [echo, setEcho] = useState(false);
   const [graceOpen, setGraceOpen] = useState(false);
@@ -67,9 +68,19 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
             {elapsed === 1 ? "ticks · the year is one day old" : `ticks · last ${elapsed} days`}
           </div>
         </div>
-        <button type="button" className="btn-chip" onClick={onSettings}>
-          settings
-        </button>
+        {/*
+          Two chips is all the chrome Home gets. Share earns one because
+          posting the card is the only channel this app has, and it sits next
+          to the Total because the Total is what it shares.
+        */}
+        <div style={{ display: "flex", gap: 6 }}>
+          <button type="button" className="btn-chip" onClick={onShare}>
+            share
+          </button>
+          <button type="button" className="btn-chip" onClick={onSettings}>
+            settings
+          </button>
+        </div>
       </header>
 
       <Heatmap

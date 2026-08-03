@@ -6,12 +6,14 @@ import { DetailScreen } from "@/screens/DetailScreen";
 import { EditScreen } from "@/screens/EditScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
+import { ShareScreen } from "@/screens/ShareScreen";
 
 type Screen =
   | { name: "home" }
   | { name: "detail"; habitId: string }
   | { name: "edit"; habitId: string | null }
-  | { name: "settings" };
+  | { name: "settings" }
+  | { name: "share" };
 
 export default function Page() {
   return (
@@ -70,12 +72,15 @@ function App() {
       return <EditScreen habitId={screen.habitId} onDone={home} onCancel={back} />;
     case "settings":
       return <SettingsScreen onBack={back} />;
+    case "share":
+      return <ShareScreen onBack={back} onSettings={() => push({ name: "settings" })} />;
     default:
       return (
         <HomeScreen
           onOpenHabit={(habitId) => push({ name: "detail", habitId })}
           onNewHabit={() => push({ name: "edit", habitId: null })}
           onSettings={() => push({ name: "settings" })}
+          onShare={() => push({ name: "share" })}
         />
       );
   }
