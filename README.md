@@ -20,7 +20,9 @@ npm run preview    # serve out/ at http://localhost:4173
 ```
 
 ```
-npm test           # domain rules
+npm test           # unit: the rules, the components, the screens
+npm run test:e2e   # end-to-end in a real browser
+npm run test:all   # typecheck + both
 npm run typecheck
 npm run icons      # regenerate public/*.png from the Intensity ramp
 ```
@@ -114,3 +116,41 @@ and as numbers in `palette.ts` for the canvas. `palette.test.ts` parses
 
 Hack (`public/fonts/*.woff2`) is the designed face, self-hosted so the app has
 no external requests. The stack falls back to the system monospace.
+
+## Tests
+
+The suite is organised around the three rules above rather than around files, so
+a test that fails names the promise that broke.
+
+**Unit** (`vitest`), two projects:
+
+- `domain` runs in node. The rules are plain TypeScript and are tested without a
+  DOM, so a component can never quietly become load-bearing for them.
+- `ui` runs in jsdom. `src/test/dom.ts` stubs the parts of a browser jsdom does
+  not bring — a 350px viewport, a canvas that records instead of painting, a
+  link that reports what it was asked to download. `src/test/harness.tsx` builds
+  an account with the app's own mutations, so a fixture cannot drift from the
+  rules it is meant to exercise.
+
+Only the clock is faked, never `setTimeout`: the tick's 260ms spring, the echo
+and the Total's 180ms roll are real timers and are asserted as such.
+
+`src/app/page.test.tsx` renders under `StrictMode`, because `next.config.ts`
+turns it on — a screen push that is not pure fails there rather than in a
+browser. That is exactly what it caught: `pushState` was being called inside a
+`setStack` updater, so every push wrote two history entries and getting back out
+of a screen cost two taps.
+
+**End-to-end** (`playwright`), against a real browser and a real localStorage.
+`e2e/fixtures.ts` seeds the device once, before the app's first script runs and
+*not* on subsequent navigations, so a reload restores what the test did rather
+than what it started with.
+
+`share.spec.ts` reads the canvas back as a PNG rather than trusting the sentence
+above the button — a card that leaks a name is the one unforgivable bug.
+`data.spec.ts` asserts that the app makes no external request at all, which is
+ADR 0002 as a test rather than as a promise.
+
+`npm run test:e2e` drives the dev server. `npm run test:e2e:static` builds and
+serves the static export instead — the artefact that actually ships, worth
+running before a release.

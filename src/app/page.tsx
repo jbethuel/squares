@@ -43,21 +43,25 @@ function App() {
     window.scrollTo(0, 0);
   }, [stack.length, screen.name]);
 
-  const push = useCallback((next: Screen) => {
-    setStack((current) => {
-      window.history.pushState({ depth: current.length }, "");
-      return [...current, next];
-    });
-  }, []);
+  // The history entry is written here rather than inside the setStack updater:
+  // an updater must be pure, and React invokes it twice under StrictMode, which
+  // would push the same depth onto the history twice and cost a second tap to
+  // get back out of every screen.
+  const push = useCallback(
+    (next: Screen) => {
+      window.history.pushState({ depth: stack.length }, "");
+      setStack((current) => [...current, next]);
+    },
+    [stack.length],
+  );
 
   const back = useCallback(() => window.history.back(), []);
 
+  // The stack itself is left to the resulting popstate, so that a jump of more
+  // than one level unwinds through exactly the same path as a single back.
   const home = useCallback(() => {
-    setStack((current) => {
-      if (current.length > 1) window.history.go(-(current.length - 1));
-      return current;
-    });
-  }, []);
+    if (stack.length > 1) window.history.go(-(stack.length - 1));
+  }, [stack.length]);
 
   switch (screen.name) {
     case "detail":

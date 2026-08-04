@@ -1,0 +1,170 @@
+import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import Page from "./page";
+import { account, onDevice, storedData } from "@/test/harness";
+import type { AppData } from "@/domain/types";
+
+/**
+ * jsdom has a history but no back button, so the browser's is modelled here:
+ * pushState records the depth of the entry, and back()/go() pop entries and
+ * fire popstate with the one beneath — asynchronously, as a real browser does.
+ */
+const entries: ({ depth?: number } | null)[] = [];
+
+function navigate(delta: number) {
+  const target = Math.max(0, entries.length - 1 + delta);
+  entries.length = target + 1;
+  window.dispatchEvent(new PopStateEvent("popstate", { state: entries[target] ?? null }));
+}
+
+beforeEach(() => {
+  entries.length = 0;
+  entries.push(null);
+
+  vi.spyOn(window.history, "pushState").mockImplementation((state) => {
+    entries.push(state as { depth?: number } | null);
+  });
+  vi.spyOn(window.history, "back").mockImplementation(() => {
+    queueMicrotask(() => navigate(-1));
+  });
+  vi.spyOn(window.history, "go").mockImplementation((delta) => {
+    queueMicrotask(() => navigate(delta ?? 0));
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+/** Let a deferred popstate land, the way the browser would deliver it. */
+async function settle() {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
+/** The hardware back button, pressed `steps` times in one go. */
+async function pressBack(steps = 1) {
+  await act(async () => {
+    navigate(-steps);
+  });
+}
+
+/**
+ * Rendered under StrictMode because `next.config.ts` turns it on, so the app
+ * runs with doubled renders and doubled state updaters in development. A screen
+ * push that is not pure shows up here rather than in a browser.
+ */
+function open(data: AppData = account({ habits: ["workout"] })) {
+  onDevice(data);
+  return render(
+    <StrictMode>
+      <Page />
+    </StrictMode>,
+  );
+}
+
+const onHome = () => screen.queryByRole("button", { name: "settings" }) !== null;
+const click = async (user: ReturnType<typeof userEvent.setup>, name: string | RegExp) => {
+  await user.click(screen.getByRole("button", { name }));
+  await settle();
+};
+
+describe("moving through the app", () => {
+  it("opens on Home", () => {
+    open();
+    expect(onHome()).toBe(true);
+  });
+
+  it("goes into a Habit and back out again", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"], ticks: { workout: [0, 1] } }));
+
+    await click(user, "Open workout");
+    expect(screen.getByRole("heading", { name: "workout" })).toBeInTheDocument();
+
+    await click(user, "‹ back");
+    expect(onHome()).toBe(true);
+  });
+
+  it("goes into settings and back", async () => {
+    const user = userEvent.setup();
+    open();
+
+    await click(user, "settings");
+    expect(screen.getByRole("heading", { name: "settings" })).toBeInTheDocument();
+
+    await click(user, "‹ back");
+    expect(onHome()).toBe(true);
+  });
+
+  it("reaches the Share Card through settings, and unwinds one screen at a time", async () => {
+    const user = userEvent.setup();
+    open();
+
+    await click(user, "settings");
+    await click(user, "make a share card ›");
+    expect(screen.getByRole("heading", { name: "share card" })).toBeInTheDocument();
+
+    await click(user, "‹ back");
+    expect(screen.getByRole("heading", { name: "settings" })).toBeInTheDocument();
+    await click(user, "‹ back");
+    expect(onHome()).toBe(true);
+  });
+
+  it("adds a Habit from Home and lands back on Home with it", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: [] }));
+
+    await click(user, "name your first habit");
+    await user.type(screen.getByLabelText("name"), "workout{Enter}");
+    await settle();
+
+    expect(onHome()).toBe(true);
+    expect(screen.getByRole("button", { name: /^workout,/ })).toBeInTheDocument();
+  });
+});
+
+describe("the browser's own back button", () => {
+  it("unwinds the stack rather than leaving the app", async () => {
+    const user = userEvent.setup();
+    open();
+
+    await click(user, "settings");
+    await pressBack();
+    expect(onHome()).toBe(true);
+  });
+
+  it("lands on Home in one step from two screens deep", async () => {
+    const user = userEvent.setup();
+    open();
+
+    // Home -> detail -> edit is a jump of two, which the depth stored in the
+    // history entry is what makes survivable with a single popstate.
+    await click(user, "Open workout");
+    await click(user, "edit");
+    expect(screen.getByLabelText("name")).toBeInTheDocument();
+
+    await pressBack(2);
+    expect(onHome()).toBe(true);
+  });
+});
+
+describe("archiving from inside a Habit", () => {
+  it("returns to Home, not to the screen of a Habit that is gone", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout", "read"] }));
+
+    await click(user, "Open workout");
+    await click(user, "archive");
+    await click(user, "archive this habit");
+    await click(user, "tap again to archive");
+
+    expect(onHome()).toBe(true);
+    expect(screen.queryByRole("button", { name: /^workout,/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^read,/ })).toBeInTheDocument();
+    expect(storedData().habits.find((h) => h.name === "workout")?.archivedOn).not.toBeNull();
+  });
+});
