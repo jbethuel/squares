@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Heatmap } from "@/components/Heatmap";
 import { HabitRow } from "@/components/HabitRow";
+import { LensPicker } from "@/components/LensPicker";
 import { Total } from "@/components/Total";
-import { longLabel, monthYearLabel, weekdayOf, type DateKey } from "@/domain/date";
+import { longLabel, weekdayOf, type DateKey } from "@/domain/date";
+import { DEFAULT_LENS, lensFrame, lensLegend, lensNoun, type Lens } from "@/domain/lens";
 import { toggleTick } from "@/domain/mutations";
 import {
   dateAt,
@@ -13,6 +15,7 @@ import {
   liveHabits,
   stillOpenYesterday,
   totalTicks,
+  totalTicksIn,
 } from "@/domain/selectors";
 import { useStore } from "@/domain/store";
 
@@ -28,6 +31,7 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
   const { data, today, update } = useStore();
   const [echo, setEcho] = useState(false);
   const [graceOpen, setGraceOpen] = useState(false);
+  const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
   const echoTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => () => window.clearTimeout(echoTimer.current), []);
@@ -51,16 +55,17 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
     [update, today],
   );
 
-  const rangeStart =
-    elapsed === 1
-      ? "installed today"
-      : elapsed < 40
-        ? `${elapsed} days on file`
-        : monthYearLabel(dateAt(today, elapsed - 1));
+  const frame = lensFrame(lens, today);
+  const legend = lensLegend(lens, today);
 
   return (
     <>
       <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
+        {/*
+          The Total is the year's under every Lens. A Total scoped to the week
+          would fall to zero every Sunday, and nothing that can go to zero is on
+          Home — the Lens redraws the grid, it does not rescore it.
+        */}
         <div>
           <Total value={totalTicks(data, today)} />
           <div className="caption">
@@ -74,20 +79,26 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         </button>
       </header>
 
+      <div style={{ marginBottom: 8 }}>
+        <LensPicker value={lens} onChange={setLens} label="how much of the record to draw" />
+      </div>
+
       <Heatmap
-        elapsed={elapsed}
+        frame={frame}
         weekday={weekdayOf(today)}
         levelFor={(offset) => intensityAt(data, dateAt(today, offset))}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
-        ariaLabel={`Overview heatmap: ${totalTicks(data, today)} ticks across ${elapsed} days`}
+        // Ticks are counted over the part of the frame that has happened: the
+        // rest of it has nothing in it yet by definition.
+        ariaLabel={`Overview heatmap: ${totalTicksIn(data, today, frame.back)} ticks across ${lensNoun(lens)}`}
         markToday
         echo={echo}
       />
 
       <div className="legend">
-        <span>{rangeStart}</span>
-        <span>{elapsed === 365 ? "53 weeks, no scrolling" : "the grid widens as the year does"}</span>
-        <span>today</span>
+        <span>{legend.start}</span>
+        <span>{legend.note}</span>
+        <span>{legend.end}</span>
       </div>
 
       <hr className="divider" style={{ margin: "22px 0 16px" }} />

@@ -1,7 +1,8 @@
-import { screen, within } from "@testing-library/react";
+import { cleanup, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { HomeScreen } from "./HomeScreen";
+import { MAX_SQUARE } from "@/domain/grid";
 import { setChained } from "@/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, storedData, TODAY, YESTERDAY } from "@/test/harness";
 import type { AppData } from "@/domain/types";
@@ -15,6 +16,10 @@ function open(data: AppData = account({ habits: ["workout"] })) {
 
 const total = () => document.querySelector(".total")!.textContent;
 const row = (name: string) => screen.getByRole("button", { name: new RegExp(`^${name},`) });
+/** The Squares actually drawn: every Day the frame covers. */
+const drawn = () => document.querySelectorAll(".sq:not(.sq-pad)");
+const grid = () => document.querySelector<HTMLElement>(".heatmap")!;
+const lens = (name: string) => screen.getByRole("button", { name });
 
 describe("Home on day one", () => {
   it("asks for a first Habit rather than showing an empty list", () => {
@@ -26,13 +31,17 @@ describe("Home on day one", () => {
   it("says the year is one day old rather than showing a zero span", () => {
     open(account({ age: 1, habits: ["workout"] }));
     expect(screen.getByText("ticks · the year is one day old")).toBeInTheDocument();
-    expect(screen.getByText("installed today")).toBeInTheDocument();
     expect(screen.getByText("tap a square. that is the whole app.")).toBeInTheDocument();
   });
 
-  it("draws a single Square, because only one Day has happened", () => {
+  it("draws the whole year from day one, rather than a grid that grows into one", () => {
     open(account({ age: 1, habits: ["workout"] }));
-    expect(document.querySelectorAll(".sq:not(.sq-future):not(.sq-unborn)")).toHaveLength(1);
+    // The frame is a calendar and does not shrink to fit what has been lived:
+    // 364 of these are Days from before the account existed, at Intensity 0.
+    expect(drawn()).toHaveLength(365);
+    expect(document.querySelectorAll(".sq-today")).toHaveLength(1);
+    // There is still no progress number anywhere near it.
+    expect(screen.queryByText(/1 of 365|0%/)).not.toBeInTheDocument();
   });
 });
 
@@ -147,21 +156,26 @@ describe("the Grace Window on Home", () => {
 });
 
 describe("what Home says about the year", () => {
-  it("counts the days on file while the grid is still young", () => {
+  it("counts the days on file above the grid", () => {
     open(account({ age: 12, habits: ["workout"] }));
     expect(screen.getByText("ticks · last 12 days")).toBeInTheDocument();
-    expect(screen.getByText("12 days on file")).toBeInTheDocument();
   });
 
-  it("names the month it started from once the grid has settled", () => {
+  it("names both edges of the year, which are the same at any age", () => {
     open(account({ age: 100, habits: ["workout"] }));
-    expect(screen.getByText("apr 2026")).toBeInTheDocument();
-    expect(screen.getByText("the grid widens as the year does")).toBeInTheDocument();
+    // A rolling year ending today: the same frame on day one and on day 365.
+    expect(screen.getByText("aug 2025")).toBeInTheDocument();
+    expect(screen.getByText("365 days to today")).toBeInTheDocument();
+    expect(screen.getByText("today")).toBeInTheDocument();
   });
 
-  it("stops widening at a full year", () => {
+  it("draws the same 365 Squares however old the account is", () => {
+    open(account({ age: 12, habits: ["workout"] }));
+    expect(drawn()).toHaveLength(365);
+    cleanup();
+
     open(account({ age: 365, habits: ["workout"] }));
-    expect(screen.getByText("53 weeks, no scrolling")).toBeInTheDocument();
+    expect(drawn()).toHaveLength(365);
   });
 
   it("carries one chip and nothing else that can go to zero", async () => {
@@ -180,6 +194,96 @@ describe("what Home says about the year", () => {
 
     expect(screen.getByText("chain 2 days")).toBeInTheDocument();
     expect(screen.getByText("2 ticks · unchained")).toBeInTheDocument();
+  });
+});
+
+describe("the Lens over the Overview", () => {
+  /*
+   * Today in the harness is Monday the 3rd of August 2026. The week runs Sunday
+   * the 2nd to Saturday the 8th; the month runs the 1st to the 31st.
+   */
+  it("draws a whole week — including the Days still to come — at the largest Squares", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"] }));
+    expect(drawn()).toHaveLength(365);
+
+    await user.click(lens("week"));
+
+    expect(drawn()).toHaveLength(7);
+    // Nothing spills out of a week: it is exactly one column.
+    expect(document.querySelectorAll(".sq-pad")).toHaveLength(0);
+    expect(grid().style.getPropertyValue("--sq-size")).toBe(`${MAX_SQUARE}px`);
+  });
+
+  it("draws the whole month, then the whole year", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"] }));
+
+    await user.click(lens("month"));
+    expect(drawn()).toHaveLength(31);
+
+    await user.click(lens("year"));
+    expect(drawn()).toHaveLength(365);
+  });
+
+  it("never moves the Total, whatever it draws", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"], ticks: { workout: [0, 10, 20] } }));
+    await vi.waitFor(() => expect(total()).toBe("3"));
+
+    await user.click(lens("week"));
+
+    // Two of those three Ticks are outside the week now on screen. The Total is
+    // the year's under every Lens: a number that can fall is not on Home.
+    expect(drawn()).toHaveLength(7);
+    expect(total()).toBe("3");
+    expect(screen.getByText("ticks · last 30 days")).toBeInTheDocument();
+  });
+
+  it("names both edges of whatever it is drawing", async () => {
+    const user = userEvent.setup();
+    open(account({ age: 100, habits: ["workout"] }));
+    expect(screen.getByText("365 days to today")).toBeInTheDocument();
+
+    await user.click(lens("week"));
+    expect(screen.getByText("sunday")).toBeInTheDocument();
+    expect(screen.getByText("this week")).toBeInTheDocument();
+    expect(screen.getByText("saturday")).toBeInTheDocument();
+
+    await user.click(lens("month"));
+    expect(screen.getByText("1 aug")).toBeInTheDocument();
+    expect(screen.getByText("aug 2026")).toBeInTheDocument();
+    expect(screen.getByText("31 aug")).toBeInTheDocument();
+  });
+
+  it("marks today, so a Day still to come cannot read as a Day that was missed", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"] }));
+    await user.click(lens("week"));
+
+    const squares = Array.from(drawn());
+    const today = document.querySelector(".sq-today, .sq-echo");
+    // Monday: Sunday behind it, and the rest of the week still ahead.
+    expect(squares.indexOf(today as Element)).toBe(1);
+  });
+
+  it("keeps yesterday tickable while a shorter Lens is on", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"] }));
+    await user.click(lens("week"));
+
+    // The Lens is a way of looking, not a way of editing: the Grace Window is
+    // untouched by it.
+    await user.click(screen.getByRole("button", { name: /yesterday · 1 still open/ }));
+    const section = document.querySelector(".row-yesterday")!;
+    await user.click(within(section as HTMLElement).getByRole("button", { name: /^workout,/ }));
+    expect(storedData().days[YESTERDAY]?.ticked).toHaveLength(1);
+  });
+
+  it("is offered from day one, because a frame never depends on the account's age", () => {
+    open(account({ age: 1, habits: ["workout"] }));
+    expect(lens("week")).toBeInTheDocument();
+    expect(lens("year")).toHaveAttribute("aria-pressed", "true");
   });
 });
 

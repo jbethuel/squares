@@ -2,13 +2,13 @@
 
 import { useMemo, type CSSProperties } from "react";
 import { useElementWidth } from "@/hooks/useElementWidth";
-import { gridGeometry, gridSquares } from "@/domain/grid";
+import { gridGeometry, gridSquares, type Frame } from "@/domain/grid";
 import type { Intensity } from "@/domain/types";
 
 interface HeatmapProps {
-  /** Days on file. The grid contains only Days that have happened. */
-  elapsed: number;
-  /** Today's weekday, 0 = Sunday, which fixes today's row in the last column. */
+  /** The run of Days to draw. Every Day in it gets a Square. */
+  frame: Frame;
+  /** Today's weekday, 0 = Sunday, which fixes today's row in its column. */
   weekday: number;
   levelFor: (offset: number) => Intensity;
   titleFor?: (offset: number) => string;
@@ -20,7 +20,7 @@ interface HeatmapProps {
 }
 
 export function Heatmap({
-  elapsed,
+  frame,
   weekday,
   levelFor,
   titleFor,
@@ -29,13 +29,16 @@ export function Heatmap({
   echo = false,
 }: HeatmapProps) {
   const [ref, width] = useElementWidth<HTMLDivElement>();
+  // Destructured for the dependency arrays: a caller that builds its frame
+  // inline would otherwise rebuild the whole grid on every render.
+  const { back, ahead } = frame;
   const geometry = useMemo(
-    () => (width > 0 ? gridGeometry(width, elapsed, weekday) : null),
-    [width, elapsed, weekday],
+    () => (width > 0 ? gridGeometry(width, { back, ahead }, weekday) : null),
+    [width, back, ahead, weekday],
   );
   const squares = useMemo(
-    () => (geometry ? gridSquares(geometry.cols, elapsed, weekday) : []),
-    [geometry, elapsed, weekday],
+    () => (geometry ? gridSquares(geometry.cols, { back, ahead }, weekday) : []),
+    [geometry, back, ahead, weekday],
   );
 
   return (
@@ -53,7 +56,7 @@ export function Heatmap({
           }
         >
           {squares.map((square) => {
-            if (square.kind !== "lived") {
+            if (square.kind !== "framed") {
               return <div key={square.key} className={`sq sq-${square.kind}`} />;
             }
             const today = square.offset === 0;

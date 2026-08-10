@@ -68,27 +68,23 @@ test.describe("the whole app, one tap at a time", () => {
     await expect(total(page)).toHaveText("4");
   });
 
-  test("widens the grid instead of showing a progress number", async ({ app }) => {
+  test("draws the year in full from day one, with no progress number", async ({ app }) => {
     const page = await app({ age: 1, habits: ["workout"] });
 
-    await expect(page.getByText("installed today")).toBeVisible();
+    await expect(page.getByText("ticks · the year is one day old")).toBeVisible();
     await expect(page.getByText("tap a square. that is the whole app.")).toBeVisible();
 
-    // Day one is a single column: one lived Square at its largest, the rest of
-    // the week ghosted. The widening is the only progress indicator there is.
-    await expect(page.locator(".heatmap .sq")).toHaveCount(7);
-    await expect(page.locator(".heatmap .sq:not(.sq-future):not(.sq-unborn)")).toHaveCount(1);
-
-    const size = await page
-      .locator(".heatmap")
-      .evaluate((el) => getComputedStyle(el).getPropertyValue("--sq-size"));
-    expect(parseFloat(size)).toBe(40);
+    // The frame is a calendar and does not grow into one: the same 365 Squares
+    // on day one as on day 365, and still nothing counting down anywhere.
+    await expect(page.locator(".heatmap .sq")).toHaveCount(53 * 7);
+    await expect(page.locator(".heatmap .sq:not(.sq-pad)")).toHaveCount(365);
+    await expect(page.locator(".sq-today")).toHaveCount(1);
   });
 
   test("fits a settled year on a phone with no scrolling", async ({ app }) => {
     const page = await app({ age: 365, habits: ["workout"] });
 
-    await expect(page.getByText("53 weeks, no scrolling")).toBeVisible();
+    await expect(page.getByText("365 days to today")).toBeVisible();
     await expect(page.locator(".heatmap .sq")).toHaveCount(53 * 7);
 
     const scrolls = await page.evaluate(

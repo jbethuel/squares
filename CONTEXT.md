@@ -37,12 +37,28 @@ _Avoid_: delete, remove, disable, pause, hide.
 ### Display
 
 **Heatmap**:
-A year of Squares, one per Day.
+A Frame of Squares, one per Day. How long the Frame is, is the Lens.
 _Avoid_: graph, calendar, grid, contribution graph.
 
 **Square**:
 One Day's cell in a Heatmap.
 _Avoid_: cell, tile, box, dot, pixel.
+
+**Lens**:
+How much of the record a Heatmap draws: the Week, the Month or the Year. A Lens
+changes how many Squares are drawn, and therefore how large they are. It never
+changes what a Square means — one Square is one Day under every Lens — and it
+never changes the Total, which is always the Year's.
+_Avoid_: view, range, period, zoom, filter.
+
+**Frame**:
+The run of Days a Lens draws, and a fixed shape: the Week is always seven
+Squares, Sunday to Saturday; the Month is always the whole month; the Year is
+always 365 Squares ending today. Every Day in the Frame is drawn, including Days
+still to come and Days from before the account existed — all of them at
+Intensity 0, which is also what a Day you missed draws at. A Frame is a calendar
+and does not shrink to fit what you did with it.
+_Avoid_: window, span, range, view.
 
 **Overview Heatmap**:
 The Heatmap across all Habits. Each Square is shaded by Intensity.

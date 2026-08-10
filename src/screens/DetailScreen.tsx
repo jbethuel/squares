@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { Heatmap } from "@/components/Heatmap";
+import { LensPicker } from "@/components/LensPicker";
 import { Toggle } from "@/components/Toggle";
 import { longLabel, weekdayOf } from "@/domain/date";
+import { DEFAULT_LENS, lensFrame, lensNoun, type Lens } from "@/domain/lens";
 import { setChained } from "@/domain/mutations";
 import {
   chainOf,
   dateAt,
-  elapsedDays,
   isTicked,
   longestChainOf,
+  tickCountIn,
   tickCountOf,
 } from "@/domain/selectors";
 import { useStore } from "@/domain/store";
@@ -22,10 +25,12 @@ interface DetailScreenProps {
 
 export function DetailScreen({ habitId, onBack, onEdit }: DetailScreenProps) {
   const { data, today, update } = useStore();
+  // Declared above the missing-Habit guard: a hook may not sit behind a return.
+  const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
   const habit = data.habits.find((h) => h.id === habitId);
   if (!habit) return null;
 
-  const elapsed = elapsedDays(data, today);
+  const frame = lensFrame(lens, today);
   const ticks = tickCountOf(data, habitId, today);
   const chain = chainOf(data, habitId, today);
 
@@ -55,19 +60,32 @@ export function DetailScreen({ habitId, onBack, onEdit }: DetailScreenProps) {
         </div>
       </div>
 
+      {/*
+        The picker sits on its own line above the grid, as it does on Home,
+        rather than sharing one with the label: at 350px the label wraps if it
+        has to share, and a two-line caption above a grid reads as a fault.
+      */}
       <p className="label" style={{ margin: "0 0 9px" }}>
-        every day of the year · ticked or not
+        every day of {lensNoun(lens)} · ticked or not
       </p>
+      <div style={{ marginBottom: 8 }}>
+        <LensPicker value={lens} onChange={setLens} label={`how much of ${habit.name} to draw`} />
+      </div>
       {/*
         A Habit Heatmap is binary and uses level 3 only. A gradient here would
         be a lie — there is nothing to be partial about.
+
+        Today is ringed here as well as on Home. Under the Week and the Month
+        the frame runs on past today, so without the ring there is no way to
+        tell a Day that was missed from one that has not happened.
       */}
       <Heatmap
-        elapsed={elapsed}
+        frame={frame}
         weekday={weekdayOf(today)}
         levelFor={(offset) => (isTicked(data, habitId, dateAt(today, offset)) ? 3 : 0)}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
-        ariaLabel={`${habit.name}: ${ticks} ticks across ${elapsed} days`}
+        ariaLabel={`${habit.name}: ${tickCountIn(data, habitId, today, frame.back)} ticks across ${lensNoun(lens)}`}
+        markToday
       />
 
       <button

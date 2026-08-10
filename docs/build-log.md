@@ -73,6 +73,54 @@ unforgivable bug". Tested, not asserted:
 
 The card is always the dark theme: it is a standalone image, not a screen.
 
+## PR #5 — the Lens
+
+Not in the design at all: a `week · month · year` picker above both grids, added
+on request. Written 2026-08-10.
+
+A Lens is a **Frame** — `{ back, ahead }` Days measured from today, in
+`src/domain/lens.ts`. `gridGeometry` already derived Square size from the number
+of Days it was given, so the Week is the Year's component drawn at the 40px cap
+rather than a second layout. The picker is view state per screen, resets to the
+Year on reload, and is not in `AppData`; nothing about a Tick, a Day Record or
+the Grace Window changed.
+
+Two questions were put to the owner and answered, and both went against what the
+first cut assumed:
+
+| Question | Answer | What it cost |
+| --- | --- | --- |
+| Does a Lens draw the period **to date**, or the **whole** period? | The whole period. Seven Squares for a week, 31 for a 31-day month, 365 for the year. | The grid had to be able to run *past* today. `gridGeometry`/`gridSquares` now take a Frame instead of an elapsed count, and `SquareKind` became `framed`/`future`/`pad`. |
+| How is a Day in the Frame with no record drawn? | As a solid empty Square, like a Day you ticked nothing on. | Design note A is reversed — see below. |
+
+**The widening grid is gone.** The design's day-one answer was that the Overview
+holds only Days that have happened, so day one is one 40px column and the
+widening *is* the progress indicator. A Frame that changes size as the week
+fills is not a frame, so day one now draws all 365 Squares. The owner chose this
+knowing the trade it carries: a Day before you installed, a Day still to come and
+a Day you missed are now drawn identically.
+
+What replaces the widening as the "where am I" cue is the ring on today, which
+moved onto the detail grid as well as Home. Under the Week and the Month the
+Frame runs on past today, and the ring is the only thing left that says where the
+record ends. That reverses the smaller decision that the detail grid is "a
+record, not a live screen".
+
+Deliberately unchanged:
+
+- **The Total.** It is the year's under every Lens. A Total scoped to the week
+  would fall to zero every Sunday, and the third rule is that nothing which can
+  go to zero is on Home. Asserted by a test in both the unit and e2e suites.
+- **The Share Card.** Its Frame is `{ back: elapsed, ahead: 0 }`, so it still
+  draws exactly the Days that have happened — no empty future, no Lens.
+  `shareCard.test.ts` passed through the whole rewrite untouched, which is the
+  evidence.
+
+The dashed ghost went with it. It used to mark the rest of the current week;
+under a Frame it would have marked whatever spilled past the end, which is a
+different idea wearing the same clothes. `.sq-future` is gone and `SquareKind`
+is `framed` or `pad` — what you see is the Frame exactly.
+
 ## Decisions taken beyond the design
 
 | Decision | Why |

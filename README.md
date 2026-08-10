@@ -36,17 +36,18 @@ src/domain/     the rules — no React, fully tested
   selectors.ts    Intensity, Chain, Total, the Grace Window
   mutations.ts    Tick, add/rename/archive, and sealDays
   grid.ts         Heatmap geometry
+  lens.ts         how much of the record a Heatmap draws
   palette.ts      the Intensity ramp as numbers, for canvas
   shareCard.ts    what a Share Card may contain, and how it is drawn
   storage.ts      localStorage + import validation
   store.tsx       the one React context
-src/components/ Heatmap, HabitRow, Tail, Total, Toggle
+src/components/ Heatmap, HabitRow, Tail, Total, Toggle, LensPicker
 src/screens/    Home, Detail, Edit, Settings, Share
 src/app/        Next shell, globals.css (all design tokens)
 ```
 
 The vocabulary in `CONTEXT.md` is used verbatim in code: Habit, Tick, Day,
-Square, Intensity, Chain, Total, Archive, Grace Window.
+Square, Intensity, Chain, Total, Archive, Grace Window, Lens, Frame.
 
 ## The three rules the code exists to protect
 
@@ -68,9 +69,8 @@ per-Habit, opt-in, and never repaired.
 Implemented from the Claude Design project `Squares.dc.html` (turn 1), which
 answers the four open questions in `docs/design-brief.md`:
 
-- **Day one** — the Overview contains only Days that have happened and always
-  fills its width. Day one is one column of 40px Squares; the widening is the
-  progress indicator. `gridGeometry` in `src/domain/grid.ts`.
+- **Day one** — the Overview always fills its width, at every age and under
+  every Lens. `gridGeometry` in `src/domain/grid.ts`.
 - **A year on a phone** — 53 columns of ~5.4px fit 350px, so the whole year
   shows with no scrolling and no gesture.
 - **Four heatmaps** — one year-grid on Home; each Habit row carries an 8-day
@@ -87,6 +87,33 @@ over 260ms, one 8ms haptic, and the Overview's today Square echoes in the same
 frame with the Total rolling 180ms behind. Unticking is 120ms linear with no
 overshoot, no haptic and no echo — correcting a mistake should feel
 administrative.
+
+### The Lens
+
+Both grids — the Overview on Home and a Habit's own — carry a `week · month ·
+year` picker. A Lens is nothing but a **Frame**: a run of Days measured from
+today, in `src/domain/lens.ts`. `gridGeometry` derives Square size from the
+Frame, so the Week is the same component as the Year drawn at the 40px cap
+instead of 5.4px, with no second layout.
+
+A Frame is a fixed shape. The Week is always seven Squares, Sunday to Saturday.
+The Month is always the whole month — 28, 29, 30 or 31. The Year is always 365,
+rolling to today rather than 1 January to 31 December, so that it agrees with the
+Total above it. Frames do not shrink to fit what has been lived: a Day still to
+come and a Day from before the account existed are both drawn, at Intensity 0,
+which is also what a Day you missed draws at.
+
+That is a deliberate reversal of the design's original day-one answer, where the
+Overview held only Days that had happened and its widening *was* the progress
+indicator. A Frame that changed size as the week filled would not be a frame.
+What replaces the widening as the "where am I" cue is the ring on today, which
+is now on the detail grid as well as Home — under the Week and the Month the
+Frame runs on past today, and without it a Day that has not happened reads
+exactly like a Day that was missed.
+
+The Lens is view state, held per screen and reset to the Year on reload. It is
+not in `AppData` and never touches a Day Record: `toggleTick` is unchanged, the
+Grace Window is unchanged, and the Total is the year's under every Lens.
 
 ### The Share Card
 
