@@ -69,23 +69,41 @@ export function intensityAt(data: AppData, date: DateKey): Intensity {
   return intensityOf(data.days[date]);
 }
 
-/** Ticks across all Habits in the last year. Only ever rises. */
-export function totalTicks(data: AppData, today: DateKey): number {
+/**
+ * Ticks across all Habits over the last `days` Days, today counting as 1.
+ *
+ * The span is passed in rather than assumed so that a Heatmap drawn under a
+ * shorter Lens can describe itself with a count of the Days it actually
+ * contains. The Total on Home is not one of those: it is always the year's.
+ */
+export function totalTicksIn(data: AppData, today: DateKey, days: number): number {
   let total = 0;
-  const span = elapsedDays(data, today);
-  for (let offset = 0; offset < span; offset++) {
+  for (let offset = 0; offset < days; offset++) {
     total += data.days[dateAt(today, offset)]?.ticked.length ?? 0;
   }
   return total;
 }
 
-export function tickCountOf(data: AppData, habitId: string, today: DateKey): number {
+/** Ticks across all Habits in the last year. Only ever rises. */
+export function totalTicks(data: AppData, today: DateKey): number {
+  return totalTicksIn(data, today, elapsedDays(data, today));
+}
+
+export function tickCountIn(
+  data: AppData,
+  habitId: string,
+  today: DateKey,
+  days: number,
+): number {
   let total = 0;
-  const span = elapsedDays(data, today);
-  for (let offset = 0; offset < span; offset++) {
+  for (let offset = 0; offset < days; offset++) {
     if (isTicked(data, habitId, dateAt(today, offset))) total++;
   }
   return total;
+}
+
+export function tickCountOf(data: AppData, habitId: string, today: DateKey): number {
+  return tickCountIn(data, habitId, today, elapsedDays(data, today));
 }
 
 /**

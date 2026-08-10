@@ -46,17 +46,67 @@ describe("a Habit's own screen", () => {
     expect(shaded).toHaveLength(2);
     // No intermediate shade appears anywhere on a Habit Heatmap.
     expect(document.querySelectorAll(".sq[style*='--lv1'], .sq[style*='--lv2']")).toHaveLength(0);
-    expect(document.querySelectorAll(".sq[style*='--lv0']")).toHaveLength(28);
+    expect(document.querySelectorAll(".sq[style*='--lv0']")).toHaveLength(363);
   });
 
-  it("does not ring today, because this grid is a record and not a live screen", () => {
+  it("rings today, because the frame runs on past it", () => {
     open(account({ habits: ["workout"] }), "workout");
-    expect(document.querySelectorAll(".sq-today")).toHaveLength(0);
+    // Under the Week and the Month there are Squares to the right of today, and
+    // an unticked Day and a Day that has not happened are drawn the same.
+    expect(document.querySelectorAll(".sq-today")).toHaveLength(1);
   });
 
   it("describes the whole year to assistive tech in one label", () => {
     open(account({ age: 30, habits: ["workout"], ticks: { workout: [0, 1] } }), "workout");
-    expect(screen.getByRole("img", { name: "workout: 2 ticks across 30 days" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "workout: 2 ticks across the year" })).toBeInTheDocument();
+  });
+});
+
+describe("the Lens over a Habit's own Heatmap", () => {
+  const drawn = () => document.querySelectorAll(".sq:not(.sq-pad)");
+
+  it("reframes this grid the same way it reframes the Overview", async () => {
+    const user = userEvent.setup();
+    open(account({ age: 30, habits: ["workout"], ticks: { workout: [0, 2] } }), "workout");
+    expect(drawn()).toHaveLength(365);
+
+    // Today is Monday the 3rd: the week runs Sunday the 2nd to Saturday the 8th.
+    await user.click(screen.getByRole("button", { name: "week" }));
+    expect(drawn()).toHaveLength(7);
+    // The Tick two Days back is outside the week, so only today is shaded.
+    expect(document.querySelectorAll(".sq[style*='--lv3']")).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: "month" }));
+    expect(drawn()).toHaveLength(31);
+  });
+
+  it("names the span it is drawing rather than always claiming a year", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"] }), "workout");
+    expect(screen.getByText("every day of the year · ticked or not")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "month" }));
+    expect(screen.getByText("every day of the month · ticked or not")).toBeInTheDocument();
+  });
+
+  it("describes what it drew, not what it did not", async () => {
+    const user = userEvent.setup();
+    open(account({ age: 30, habits: ["workout"], ticks: { workout: [0, 1] } }), "workout");
+    expect(screen.getByRole("img", { name: "workout: 2 ticks across the year" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "week" }));
+    // Both Ticks are inside this week; the count is of the part that has been lived.
+    expect(screen.getByRole("img", { name: "workout: 2 ticks across the week" })).toBeInTheDocument();
+  });
+
+  it("leaves the stats above it on the year, so nothing on screen can fall", async () => {
+    const user = userEvent.setup();
+    open(account({ age: 30, habits: ["workout"], ticks: { workout: [0, 10, 20] } }), "workout");
+    expect(stat("total ticks")).toBe("3");
+
+    await user.click(screen.getByRole("button", { name: "week" }));
+    expect(stat("total ticks")).toBe("3");
+    expect(stat("ticks")).toBe("3");
   });
 });
 

@@ -271,11 +271,8 @@ input {
     background-color 300ms ease,
     box-shadow 320ms ease;
 }
-.sq-future {
-  background: transparent;
-  border: 1px dashed var(--ghost);
-}
-.sq-unborn {
+/* Only there to complete a column — outside the frame entirely. */
+.sq-pad {
   background: transparent;
 }
 .sq-today {
@@ -295,6 +292,30 @@ input {
   margin-top: 9px;
   font-size: 9.5px;
   color: var(--dim);
+}
+
+/*
+ * The Lens picker. It sits above the grid it redraws, so it is marked by weight
+ * and a surface rather than by the accent — the accent is for a Tick and for
+ * the one chip Home carries, and three of them here would out-shout the year.
+ */
+.lens {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.lens-btn {
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--dim);
+  font-size: 10.5px;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.lens-btn[aria-pressed="true"] {
+  background: var(--surface-raised);
+  color: var(--fg);
 }
 
 /* ---- habit row ---- */

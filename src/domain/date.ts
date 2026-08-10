@@ -55,6 +55,18 @@ export function weekdayOf(key: DateKey): number {
   return fromKey(key).getDay();
 }
 
+/** The Day of the month, 1-31. */
+export function dayOfMonth(key: DateKey): number {
+  return fromKey(key).getDate();
+}
+
+/** Days in the calendar month this Day falls in: 28, 29, 30 or 31. */
+export function daysInMonth(key: DateKey): number {
+  const date = fromKey(key);
+  // Day 0 of the next month is the last Day of this one.
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+}
+
 const MONTHS = [
   "jan", "feb", "mar", "apr", "may", "jun",
   "jul", "aug", "sep", "oct", "nov", "dec",
@@ -63,6 +75,12 @@ const MONTHS = [
 export function monthYearLabel(key: DateKey): string {
   const date = fromKey(key);
   return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/** "1 aug" — an edge of a Heatmap, where the year is already understood. */
+export function dayMonthLabel(key: DateKey): string {
+  const date = fromKey(key);
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
 }
 
 export function longLabel(key: DateKey): string {

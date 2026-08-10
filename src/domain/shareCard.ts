@@ -1,5 +1,5 @@
 import { weekdayOf, type DateKey } from "./date";
-import { gridGeometry, gridSquares, squareRadius } from "./grid";
+import { gridGeometry, gridSquares, squareRadius, type Frame } from "./grid";
 import { CARD, css, DARK_LEVELS } from "./palette";
 import { dateAt, elapsedDays, intensityAt, isArchived, totalTicks } from "./selectors";
 import type { AppData, Intensity } from "./types";
@@ -53,9 +53,18 @@ const MARK_SIZE = 9;
 
 const FONT = '"Hack", ui-monospace, SFMono-Regular, Menlo, monospace';
 
+/**
+ * The card's frame ends at today and reaches back only as far as the account
+ * goes, so the card keeps drawing exactly the Days that have happened. It is a
+ * record, not a screen: it has no Lens and no empty future.
+ */
+function cardFrame(model: ShareCardModel): Frame {
+  return { back: model.elapsed, ahead: 0 };
+}
+
 export function cardHeight(model: ShareCardModel): number {
   const content = CARD_WIDTH - PAD * 2;
-  const geometry = gridGeometry(content, model.elapsed, model.weekday);
+  const geometry = gridGeometry(content, cardFrame(model), model.weekday);
   const gridHeight = geometry.size * 7 + geometry.gap * 6;
   const names = model.names.length > 0 ? NAMES_SIZE + 6 : 0;
   return PAD + gridHeight + GRID_TO_TOTAL + TOTAL_SIZE + 5 + CAPTION_SIZE + names + PAD;
@@ -111,8 +120,9 @@ export function drawShareCard(
   ctx.stroke();
 
   const content = CARD_WIDTH - PAD * 2;
-  const geometry = gridGeometry(content, model.elapsed, model.weekday);
-  const squares = gridSquares(geometry.cols, model.elapsed, model.weekday);
+  const frame = cardFrame(model);
+  const geometry = gridGeometry(content, frame, model.weekday);
+  const squares = gridSquares(geometry.cols, frame, model.weekday);
   const gridWidth = geometry.cols * geometry.size + (geometry.cols - 1) * geometry.gap;
   const originX = PAD + (content - gridWidth) / 2;
 
@@ -122,9 +132,9 @@ export function drawShareCard(
   const radiusPx = squareRadius(squarePx);
 
   for (const square of squares) {
-    // The card shows only Days that have happened: no ghost week, no today
-    // ring. It is a record, not a live screen.
-    if (square.kind !== "lived") continue;
+    // The card shows only Days that have happened, and no today ring. It is a
+    // record, not a live screen.
+    if (square.kind !== "framed") continue;
     const level = model.levels[square.offset] ?? 0;
     const x = originX + square.column * (geometry.size + geometry.gap);
     const y = PAD + square.row * (geometry.size + geometry.gap);
