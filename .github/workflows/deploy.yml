@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  push:
+    tags: ["v*"]
+
+# A tag is a release, so it is gated on the same suite CI runs rather than
+# trusting that the tagged commit was green on main.
+permissions:
+  contents: read
+  deployments: write
+
+# Never cancel a deploy that is already uploading.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: typecheck, unit tests, end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - run: pnpm test:e2e
+
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  deploy:
+    name: deploy to Cloudflare Pages
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # ADR 0002: `out/` is the whole artefact — static files, no server.
+      - run: pnpm build
+
+      # A tag build sits on a detached HEAD, so wrangler has no branch to infer.
+      # Pages decides production vs preview purely by whether the deployment's
+      # branch is the project's production branch, hence --branch=main: without
+      # it a tag would quietly publish as a preview.
+      - id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy out --project-name=squares --branch=main
+
+      - env:
+          TAG: ${{ github.ref_name }}
+          URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: echo "Deployed \`$TAG\` to $URL" >> "$GITHUB_STEP_SUMMARY"
