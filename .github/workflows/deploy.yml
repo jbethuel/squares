@@ -4,11 +4,10 @@ on:
   push:
     tags: ["v*"]
 
-# A tag is a release, so it is gated on the same suite CI runs rather than
-# trusting that the tagged commit was green on main.
 permissions:
   contents: read
   deployments: write
+  checks: read
 
 # Never cancel a deploy that is already uploading.
 concurrency:
@@ -16,45 +15,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  verify:
-    name: typecheck, unit tests, end-to-end
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 11
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm typecheck
-
-      - run: pnpm test
-
-      - run: pnpm exec playwright install --with-deps chromium
-
-      - run: pnpm test:e2e
-
-      - if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-traces
-          path: test-results/
-          retention-days: 7
-          if-no-files-found: ignore
-
   deploy:
     name: deploy to Cloudflare Pages
-    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
+      # ci.yml does not run on tags — its `branches` filter excludes tag refs —
+      # so the suite is not re-run here, it is looked up. Every commit on main
+      # already carries these two checks. Admins can push to main without
+      # blocking on them, though, so a red main could otherwise be tagged and
+      # shipped. Names must match the job names in ci.yml.
+      - name: require a green CI run on this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          green=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
+            --jq '[.check_runs[] | select(.conclusion == "success") | .name] | unique
+                  | map(select(. == "typecheck, unit tests, build" or . == "end-to-end")) | length')
+          if [ "$green" -ne 2 ]; then
+            echo "::error::$GITHUB_SHA has no green CI run — tag a commit that passed CI on main"
+            exit 1
+          fi
 
       - uses: pnpm/action-setup@v6
         with:
