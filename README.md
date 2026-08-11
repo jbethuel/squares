@@ -41,9 +41,12 @@ src/domain/     the rules — no React, fully tested
   shareCard.ts    what a Share Card may contain, and how it is drawn
   storage.ts      localStorage + import validation
   store.tsx       the one React context
-src/components/ Heatmap, HabitRow, Tail, Total, Toggle, LensPicker
+src/components/ Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
 src/screens/    Home, Detail, Edit, Settings, Share
+src/hooks/      element width, delayed value, install prompt
 src/app/        Next shell, globals.css (all design tokens)
+src/test/       jsdom stubs and the fixture harness
+e2e/            playwright specs and the device seed
 ```
 
 The vocabulary in `CONTEXT.md` is used verbatim in code: Habit, Tick, Day,
@@ -80,6 +83,23 @@ answers the four open questions in `docs/design-brief.md`:
   (0.40 → 0.55 → 0.70 → 0.85 in dark) with hue rotating 178 → 120 across the
   blue–yellow axis, so the ramp survives deuteranopia and greyscale. Defined
   once as `--lv0`…`--lv4` in `src/app/globals.css`.
+
+### The theme
+
+`system · light · dark`, in settings. Dark is the designed theme and light is a
+port, so `system` resolves to dark unless the device actively asks for light —
+the media query is `prefers-color-scheme: light`, not the absence of a dark
+preference.
+
+The preference is stored in `AppData` next to the Habits, so exporting and
+re-importing a device restores it, and `storage.ts` falls back to `system` for a
+file that omits it or carries a value that is not one of the three. Because it
+lives in that blob rather than in its own key, CSS cannot reach it:
+`layout.tsx` inlines a bootstrap script that reads localStorage and sets
+`data-theme` before first paint, without which a light-theme launch opens on one
+frame of the dark theme. While the app is open, `useApplyTheme` in `store.tsx`
+follows the system if that is the preference, and moves the `theme-color` meta
+with it so the browser chrome matches.
 
 The tick interaction is specified in that file too: press drops today's Square
 to 0.9, commit snaps colour over 90ms while geometry springs to 1.14 and back
