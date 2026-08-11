@@ -84,6 +84,10 @@ _Avoid_: streak habit, tracked habit, untracked habit.
 The number of Ticks across all Habits in the last year, shown on the Overview Heatmap. Only ever rises; nothing can break it.
 _Avoid_: score, points, streak, contributions.
 
+**Theme**:
+Which of the two palettes the app draws itself in — the Dark one it was designed in, or the Light port. The user's choice is System, Light or Dark, and System means dark unless the device asks for light. It is a property of the app, not of the record: no Day, Tick or Share Card changes with it, and a Share Card is always Dark.
+_Avoid_: mode, appearance, skin, night mode.
+
 ### Sharing
 
 **Share Card**:

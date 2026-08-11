@@ -1,7 +1,7 @@
 # Build log
 
 What was built from the design, what was decided along the way, and what is
-still open. Written 2026-08-03.
+still open. Written 2026-08-03, brought up to date 2026-08-11.
 
 The source is the Claude Design project `Squares.dc.html` (turn 1), read through
 the design MCP. It answers the four OPEN questions in `docs/design-brief.md` and
@@ -49,12 +49,25 @@ web manifest, and icons generated from the Intensity ramp by a dependency-free
 PNG encoder (`scripts/make-icons.mjs`) so the icon cannot drift from the
 palette.
 
+**The theme** is `system · light · dark` in settings, stored in `AppData`
+alongside the Habits so a restored export restores it. Dark is the designed
+theme and light is a port, so `system` resolves to dark unless the device
+actively asks for light — `prefers-color-scheme: light`, not the absence of a
+dark preference. Because the preference lives in the same localStorage blob as
+everything else, it cannot be read from CSS: `layout.tsx` inlines a bootstrap
+script that sets `data-theme` before first paint, otherwise a light-theme launch
+opens on a frame of the dark one. `useApplyTheme` then keeps it in step with the
+system while the app is open, and moves `theme-color` with it so the browser
+chrome matches.
+
 ## PR #2 — the Share Card
 
 The brief marks it v2, sketch-only, so this is the sketch made real.
 
-Drawn on-device to a canvas, saved as a 1280×568 PNG. No hosted page, no link
-between users, and the app never posts anything itself.
+Drawn on-device to a canvas, saved as a PNG 1280px wide. The height is not
+fixed: `cardHeight` derives it from the card's own content, so a card carrying
+names is taller than one that carries none. No hosted page, no link between
+users, and the app never posts anything itself.
 
 `shareCardModel` is pure and its entire output is five fields — `elapsed`,
 `weekday`, `levels`, `total`, `names`. No date, no handle, no per-Habit
@@ -73,7 +86,41 @@ unforgivable bug". Tested, not asserted:
 
 The card is always the dark theme: it is a standalone image, not a screen.
 
-## PR #5 — the Lens
+## PR #4 — the tests, and the back button
+
+251 unit tests and 41 end-to-end as this PR landed — see Verification for where
+the suite stands now. They are organised around the rules PR #1 put in
+`src/domain/` rather than around files, so a test that fails names the promise
+that broke rather than the module that moved.
+
+**Unit** (`vitest`) runs as two projects. `domain` runs in node, so the rules
+stay testable without a DOM and a component can never quietly become
+load-bearing for them; `ui` runs in jsdom. There is no React plugin — it wants
+Vite 8 and vitest bundles Vite 7 — so esbuild compiles the JSX. `src/test/dom.ts`
+stubs what jsdom does not bring: a 350px viewport, a canvas that records instead
+of painting, a link that reports what it was asked to download.
+`src/test/harness.tsx` builds an account with the app's own mutations, so a
+fixture cannot drift from the rules it is meant to exercise. Only the clock is
+faked, never `setTimeout`: the 260ms spring, the echo and the Total's 180ms roll
+are real timers and are asserted as such.
+
+**End-to-end** (`playwright`) drives a real browser and a real localStorage.
+`e2e/fixtures.ts` seeds the device before the app's first script runs and *not*
+on subsequent navigations, so a reload restores what the test did rather than
+what it started with. `share.spec.ts` reads the canvas back as a PNG rather than
+trusting the sentence above the button. `data.spec.ts` asserts the app makes no
+external request at all — ADR 0002 as a test rather than as a promise.
+
+**The back button was broken, and the tests are how it was found.**
+`page.test.tsx` renders under `StrictMode`, because `next.config.ts` turns it on.
+`pushState` was being called inside a `setStack` updater, and React invokes
+updaters twice under StrictMode, so every push wrote two history entries
+carrying the same depth: getting back out of a screen cost two taps. `home()`
+had the same fault via `history.go`. Both side effects now happen outside the
+updater. Development only — production does not double-invoke — but the updaters
+were impure either way.
+
+## PR #6 — the Lens
 
 Not in the design at all: a `week · month · year` picker above both grids, added
 on request. Written 2026-08-10.
@@ -90,7 +137,7 @@ first cut assumed:
 
 | Question | Answer | What it cost |
 | --- | --- | --- |
-| Does a Lens draw the period **to date**, or the **whole** period? | The whole period. Seven Squares for a week, 31 for a 31-day month, 365 for the year. | The grid had to be able to run *past* today. `gridGeometry`/`gridSquares` now take a Frame instead of an elapsed count, and `SquareKind` became `framed`/`future`/`pad`. |
+| Does a Lens draw the period **to date**, or the **whole** period? | The whole period. Seven Squares for a week, 31 for a 31-day month, 365 for the year. | The grid had to be able to run *past* today. `gridGeometry`/`gridSquares` now take a Frame instead of an elapsed count, and `SquareKind` lost its old meaning — see the dashed ghost below. |
 | How is a Day in the Frame with no record drawn? | As a solid empty Square, like a Day you ticked nothing on. | Design note A is reversed — see below. |
 
 **The widening grid is gone.** The design's day-one answer was that the Overview
@@ -150,16 +197,23 @@ is `framed` or `pad` — what you see is the Frame exactly.
 
 ## Verification
 
-59 tests across 5 files (`date`, `grid`, `rules`, `palette`, `shareCard`),
-`tsc --noEmit`, and `next build` all clean.
+As of 2026-08-11: **285 unit tests across 20 files** — 122 in `domain`, 163 in
+`ui` — and **48 end-to-end across 6 specs**, with `tsc --noEmit` and
+`next build` clean. `npm run test:all` runs the three in order.
 
-The Chrome extension was not connected, so the built static export was driven in
-headless Chrome over CDP. Confirmed behaviour rather than appearance:
+PR #1 and #2 shipped before the suite existed, with 59 tests across 5 files
+(`date`, `grid`, `rules`, `palette`, `shareCard`). What stood in for the rest
+was a manual pass: the Chrome extension was not connected, so the built static
+export was driven in headless Chrome over CDP. It confirmed behaviour rather
+than appearance:
 
 - A tick moves the Total 977→978, flips row state, updates the subtitle to
   "chain 1 day", and persists to localStorage; untick reverses it.
 - The day-one flow creates a Habit with `chained` and `sharedName` both false.
 - Every screen transition works, including hardware back through the stack.
+  This one was wrong: back worked, but cost two taps, and it took `StrictMode`
+  in PR #4 to see it. A pass that drives the app by hand confirms what it
+  thought to try.
 - Zero console errors.
 - Our oklch→sRGB conversion matches Chrome's own resolution of all seven card
   colours exactly.
