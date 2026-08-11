@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  deployments: write
+  checks: read
+
+# Never cancel a deploy that is already uploading.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # ci.yml does not run on tags — its `branches` filter excludes tag refs —
+      # so the suite is not re-run here, it is looked up. Every commit on main
+      # already carries these two checks. Admins can push to main without
+      # blocking on them, though, so a red main could otherwise be tagged and
+      # shipped. Names must match the job names in ci.yml.
+      - name: require a green CI run on this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          green=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
+            --jq '[.check_runs[] | select(.conclusion == "success") | .name] | unique
+                  | map(select(. == "typecheck, unit tests, build" or . == "end-to-end")) | length')
+          if [ "$green" -ne 2 ]; then
+            echo "::error::$GITHUB_SHA has no green CI run — tag a commit that passed CI on main"
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # ADR 0002: `out/` is the whole artefact — static files, no server.
+      - run: pnpm build
+
+      # A tag build sits on a detached HEAD, so wrangler has no branch to infer.
+      # Pages decides production vs preview purely by whether the deployment's
+      # branch is the project's production branch, hence --branch=main: without
+      # it a tag would quietly publish as a preview.
+      - id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy out --project-name=squares --branch=main
+
+      - env:
+          TAG: ${{ github.ref_name }}
+          URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: echo "Deployed \`$TAG\` to $URL" >> "$GITHUB_STEP_SUMMARY"
