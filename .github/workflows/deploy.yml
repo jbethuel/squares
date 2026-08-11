@@ -56,19 +56,12 @@ jobs:
       # Pages decides production vs preview purely by whether the deployment's
       # branch is the project's production branch, hence --branch=main: without
       # it a tag would quietly publish as a preview.
-      # packageManager is pinned to npm on purpose. Left to infer, the action
-      # sees pnpm-lock.yaml and runs `pnpm add wrangler`, which exits non-zero
-      # on ERR_PNPM_IGNORED_BUILDS because workerd is not in the allowBuilds
-      # list in pnpm-workspace.yaml. Wrangler is a CI tool, not one of the
-      # app's dependencies, so it is installed outside that policy rather than
-      # by widening it.
       - id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          packageManager: npm
           command: pages deploy out --project-name=squares --branch=main
 
       - env:

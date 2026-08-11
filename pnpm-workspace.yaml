@@ -1,3 +1,9 @@
 allowBuilds:
   esbuild: false
   sharp: false
+  # Not the app's — wrangler pulls it in when the deploy workflow installs it,
+  # and pnpm fails rather than warns on a build script it has no ruling for.
+  # Allowed rather than denied: the script is what puts the platform binary in
+  # place, so denying it would work for `pages deploy` and then quietly break
+  # anyone who reaches for `wrangler dev`.
+  workerd: true
