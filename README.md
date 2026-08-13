@@ -10,22 +10,22 @@ lives on the device — no account, no backend, no analytics.
 ## Quick start
 
 ```
-npm install
-npm run dev              # http://localhost:3000
+pnpm install
+pnpm dev              # http://localhost:3000
 ```
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Dev server on :3000 |
-| `npm run build` | Static export into `out/` |
-| `npm run preview` | Serve `out/` on :4173 |
-| `npm test` | Unit tests (vitest) |
-| `npm run test:watch` | Unit tests, watching |
-| `npm run test:e2e` | End-to-end against the dev server |
-| `npm run test:e2e:static` | End-to-end against the built export — the artefact that ships |
-| `npm run test:all` | Typecheck, then unit, then end-to-end |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run icons` | Regenerate `public/*.png` from the Intensity ramp |
+| `pnpm dev` | Dev server on :3000 |
+| `pnpm build` | Static export into `out/` |
+| `pnpm preview` | Serve `out/` on :4173 |
+| `pnpm test` | Unit tests (vitest) |
+| `pnpm test:watch` | Unit tests, watching |
+| `pnpm test:e2e` | End-to-end against the dev server |
+| `pnpm test:e2e:static` | End-to-end against the built export — the artefact that ships |
+| `pnpm test:all` | Typecheck, then unit, then end-to-end |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm icons` | Regenerate `public/*.png` from the Intensity ramp |
 
 ## Layout
 
