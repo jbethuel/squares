@@ -199,7 +199,7 @@ is `framed` or `pad` — what you see is the Frame exactly.
 
 As of 2026-08-11: **285 unit tests across 20 files** — 122 in `domain`, 163 in
 `ui` — and **48 end-to-end across 6 specs**, with `tsc --noEmit` and
-`next build` clean. `npm run test:all` runs the three in order.
+`next build` clean. `pnpm test:all` runs the three in order.
 
 PR #1 and #2 shipped before the suite existed, with 59 tests across 5 files
 (`date`, `grid`, `rules`, `palette`, `shareCard`). What stood in for the rest

@@ -16,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # No `version` input on purpose: the action reads `packageManager` from
+      # package.json, so the version lives in one place. Setting both is an error.
       - uses: pnpm/action-setup@v6
-        with:
-          version: 11
 
       - uses: actions/setup-node@v7
         with:
@@ -41,9 +41,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # No `version` input on purpose: the action reads `packageManager` from
+      # package.json, so the version lives in one place. Setting both is an error.
       - uses: pnpm/action-setup@v6
-        with:
-          version: 11
 
       - uses: actions/setup-node@v7
         with:
