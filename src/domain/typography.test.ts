@@ -8,15 +8,17 @@ const CSS = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8")
 );
 
 /**
- * iOS Safari zooms the page in when a focused text control computes under 16px
- * and never zooms back out, which strands the Overview Heatmap cropped after
- * naming a Habit. Nothing in CI can watch that happen — Playwright drives
- * Chromium, which has no focus zoom, and the jsdom project never loads this
- * stylesheet at all — so the rule is guarded where it is written instead.
+ * The floor itself is explained where it is written, in `globals.css`. What is
+ * worth saying here is why it is guarded by reading the stylesheet: nothing in
+ * CI can watch the zoom happen. Playwright drives Chromium, which has no focus
+ * zoom, and the jsdom project never loads this stylesheet at all.
  */
 const FLOOR_PX = 16;
 const CONTROLS = ["input", "textarea", "select"] as const;
-const TEXT_CONTROL = /\binput\b|\btextarea\b|\bselect\b|\.field\b/;
+/** Derived, so a control added above cannot fall out of the filter below. */
+const TEXT_CONTROL = new RegExp(
+  [...CONTROLS.map((control) => `\\b${control}\\b`), String.raw`\.field(?![\w-])`].join("|"),
+);
 
 /** Innermost blocks only: `@media` and `@keyframes` wrappers never match. */
 function textControlRules() {
@@ -25,8 +27,21 @@ function textControlRules() {
     .filter((rule) => TEXT_CONTROL.test(rule.selector));
 }
 
-function declaredSizes(body: string) {
-  return [...body.matchAll(/font-size:\s*([\d.]+)px/g)].map((match) => Number(match[1]));
+/**
+ * Every declared size, whatever the unit. A size only clears the floor if it is
+ * a literal px at or above it — `rem` is treated as a failure rather than
+ * ignored, because a user who has *lowered* their default text size computes it
+ * back under the threshold, which is the whole reason px was chosen.
+ */
+function sizesUnderFloor(body: string) {
+  return [...body.matchAll(/font-size:\s*([^;}]+)/g)]
+    .map((match) => match[1]!.trim())
+    .filter((size) => !clearsFloor(size));
+}
+
+function clearsFloor(size: string) {
+  const px = /^(\d+(?:\.\d+)?)px$/.exec(size);
+  return px !== null && Number(px[1]) >= FLOOR_PX;
 }
 
 describe("typography", () => {
@@ -35,10 +50,11 @@ describe("typography", () => {
     // resolves an unstyled input to the 13px body, so a control added later
     // without the field class would quietly bring the zoom back.
     for (const control of CONTROLS) {
-      const sizes = textControlRules()
+      const covered = textControlRules()
         .filter((rule) => new RegExp(`\\b${control}\\b`).test(rule.selector))
-        .flatMap((rule) => declaredSizes(rule.body));
-      expect(sizes.some((px) => px >= FLOOR_PX), `no floor covers <${control}>`).toBe(true);
+        .flatMap((rule) => [...rule.body.matchAll(/font-size:\s*([^;}]+)/g)])
+        .some((match) => clearsFloor(match[1]!.trim()));
+      expect(covered, `no floor covers <${control}>`).toBe(true);
     }
   });
 
@@ -47,9 +63,7 @@ describe("typography", () => {
     // on specificity. A floor that only checks the element rule would have
     // passed while the page still zoomed.
     const under = textControlRules().flatMap((rule) =>
-      declaredSizes(rule.body)
-        .filter((px) => px < FLOOR_PX)
-        .map((px) => `${rule.selector} { font-size: ${px}px }`),
+      sizesUnderFloor(rule.body).map((size) => `${rule.selector} { font-size: ${size} }`),
     );
     expect(under).toEqual([]);
   });
