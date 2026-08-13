@@ -113,9 +113,27 @@ body {
 }
 
 button,
-input {
+input,
+textarea,
+select {
   font: inherit;
   color: inherit;
+}
+
+/*
+ * iOS Safari zooms the page in whenever a focused text control computes under
+ * 16px, and does not zoom back out on blur — so naming a Habit left the app
+ * zoomed and the Overview Heatmap cropped. 16px is that threshold, and it sits
+ * on the elements rather than on `.field` because `font: inherit` above
+ * resolves an unstyled control to the 13px body, which would bring the zoom
+ * back through any input added later. Suppressing it with `maximum-scale` on
+ * the viewport was rejected, not overlooked: this app is a grid of ~5px
+ * Squares, and pinch-zoom is the last thing to take away from it.
+ */
+input,
+textarea,
+select {
+  font-size: 16px;
 }
 
 :focus-visible {
@@ -247,7 +265,6 @@ input {
   border: 1px solid var(--line-strong);
   background: var(--surface-input);
   color: var(--fg);
-  font-size: 14px;
   padding: 14px;
   outline: none;
 }
