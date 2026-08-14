@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ToggleRow } from "@/components/Toggle";
+import { handOff } from "@/domain/handoff";
 import { sealDays, setChained, setSharedName, setTheme } from "@/domain/mutations";
 import { archivedHabits, chainOf, liveHabits } from "@/domain/selectors";
 import { exportFilename, parseAppData, serialise } from "@/domain/storage";
@@ -21,15 +22,15 @@ export function SettingsScreen({ onBack, onShare }: { onBack: () => void; onShar
   const habits = liveHabits(data, today);
   const archived = archivedHabits(data, today);
 
-  const exportJson = () => {
-    const blob = new Blob([serialise(data)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = exportFilename(today);
-    link.click();
-    URL.revokeObjectURL(url);
-    setStatus("exported");
+  const exportJson = async () => {
+    const file = new File([serialise(data)], exportFilename(today), {
+      type: "application/json",
+    });
+    // Only the device knows whether that was a download or a share sheet, and
+    // only it knows whether the user went through with it. "exported" is the
+    // strongest honest claim: the sheet completed. Which target took the file
+    // is not something the platform reports.
+    setStatus((await handOff(file)) ? "exported" : null);
   };
 
   const readFile = async (file: File) => {
@@ -106,16 +107,20 @@ export function SettingsScreen({ onBack, onShare }: { onBack: () => void; onShar
         data · lives on this device only
       </p>
       <div className="stack" style={{ gap: 7, marginBottom: 8 }}>
-        <button type="button" className="btn-list" onClick={exportJson}>
+        <button type="button" className="btn-list" onClick={() => void exportJson()}>
           export .json
         </button>
         <button type="button" className="btn-list" onClick={() => fileInput.current?.click()}>
           import .json
         </button>
+        {/* No `accept` filter on purpose. A file that has been round-tripped
+            through a share sheet, a messaging app or a cloud folder can come
+            back renamed or untyped, and iOS greys those out with no
+            explanation. parseAppData is the real gate, and it says why it
+            refused. */}
         <input
           ref={fileInput}
           type="file"
-          accept="application/json,.json"
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0];

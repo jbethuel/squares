@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SettingsScreen } from "./SettingsScreen";
 import { serialise } from "@/domain/storage";
 import { account, idOf, onDevice, renderWithStore, storedData, TODAY } from "@/test/harness";
-import { downloads } from "@/test/dom";
+import { downloads, shared, stubSharing } from "@/test/dom";
 import type { AppData } from "@/domain/types";
 
 function open(data: AppData = account({ habits: ["workout"] })) {
@@ -108,9 +108,51 @@ describe("export", () => {
 
     await user.click(screen.getByRole("button", { name: "export .json" }));
 
-    expect(downloads).toHaveLength(1);
+    await vi.waitFor(() => expect(downloads).toHaveLength(1));
     expect(downloads[0]?.filename).toBe("squares-2026-08-03.json");
     expect(screen.getByRole("status")).toHaveTextContent("exported");
+  });
+
+  it("goes through the OS sheet where the device has one", async () => {
+    stubSharing();
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"], ticks: { workout: [0] } }));
+
+    await user.click(screen.getByRole("button", { name: "export .json" }));
+
+    await vi.waitFor(() => expect(shared).toHaveLength(1));
+    expect(shared[0]?.name).toBe("squares-2026-08-03.json");
+    expect(shared[0]?.type).toBe("application/json");
+    // On iOS the download is the branch that strands the user on an "Open in…"
+    // screen, so it must not be attempted alongside the sheet.
+    expect(downloads).toHaveLength(0);
+    expect(screen.getByRole("status")).toHaveTextContent("exported");
+  });
+
+  it("does not say exported when the sheet is dismissed", async () => {
+    stubSharing("dismissed");
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"], ticks: { workout: [0] } }));
+
+    await user.click(screen.getByRole("button", { name: "export .json" }));
+
+    // Nothing left the device. This is the only copy that survives storage
+    // being cleared, so claiming it was taken is the one lie that costs a year.
+    await vi.waitFor(() => expect(shared).toHaveLength(1));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(downloads).toHaveLength(0);
+  });
+
+  it("carries the whole year, not a summary of it", async () => {
+    const user = userEvent.setup();
+    stubSharing();
+    open(account({ habits: ["workout", "read"], ticks: { workout: [0, 1] } }));
+
+    await user.click(screen.getByRole("button", { name: "export .json" }));
+
+    await vi.waitFor(() => expect(shared).toHaveLength(1));
+    const parsed = JSON.parse(await shared[0]!.text());
+    expect(parsed.habits.map((h: { name: string }) => h.name)).toEqual(["workout", "read"]);
   });
 });
 
@@ -159,6 +201,20 @@ describe("import replaces the year on this device", () => {
 
     expect(storedData().habits.map((h) => h.name)).toEqual(["read", "meditate"]);
     expect(screen.getByRole("status")).toHaveTextContent("imported");
+  });
+
+  it("takes a file back whatever it has been renamed to on the way", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: [] }));
+
+    // A file that has been through a share sheet, a messaging app or a cloud
+    // folder can come back renamed or untyped. An `accept` filter would grey it
+    // out in the picker with no explanation; parseAppData is the real gate.
+    expect(document.querySelector('input[type="file"]')).not.toHaveAttribute("accept");
+
+    await importFile(user, new File([serialise(incoming)], "squares.txt", { type: "text/plain" }));
+
+    expect(storedData().habits.map((h) => h.name)).toEqual(["read", "meditate"]);
   });
 
   it("refuses a file that is not a Squares export, and changes nothing", async () => {

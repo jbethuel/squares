@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { defaultExclude, defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
 const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
@@ -18,6 +18,11 @@ export default defineConfig({
         test: {
           name: "domain",
           include: ["src/domain/**/*.test.ts"],
+          // handoff is the one file under domain/ that is not a rule: it hands
+          // a file to the device, so it is browser plumbing and needs a DOM to
+          // hand it to. It runs in the ui project instead. Named here rather
+          // than renamed to .tsx, so the split keeps meaning what it says.
+          exclude: [...defaultExclude, "src/domain/handoff.test.ts"],
           environment: "node",
         },
       },
@@ -25,7 +30,7 @@ export default defineConfig({
         ...shared,
         test: {
           name: "ui",
-          include: ["src/**/*.test.tsx"],
+          include: ["src/**/*.test.tsx", "src/domain/handoff.test.ts"],
           environment: "jsdom",
           setupFiles: ["./src/test/setup.ts"],
           restoreMocks: true,

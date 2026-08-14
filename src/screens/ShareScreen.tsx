@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { handOff } from "@/domain/handoff";
 import { cardSize, drawShareCard, shareCardModel } from "@/domain/shareCard";
 import { useStore } from "@/domain/store";
 
@@ -11,7 +12,6 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
   const { data, today } = useStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [canShareFiles, setCanShareFiles] = useState(false);
 
   const model = useMemo(() => shareCardModel(data, today), [data, today]);
   const size = cardSize(model, EXPORT_SCALE);
@@ -39,14 +39,6 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
     };
   }, [model]);
 
-  useEffect(() => {
-    setCanShareFiles(
-      typeof navigator !== "undefined" &&
-        typeof navigator.canShare === "function" &&
-        navigator.canShare({ files: [new File([], "squares.png", { type: "image/png" })] }),
-    );
-  }, []);
-
   const toBlob = useCallback(
     () =>
       new Promise<Blob | null>((resolve) =>
@@ -58,26 +50,13 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
   const save = async () => {
     const blob = await toBlob();
     if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
     // No date in the filename either — the card carries no date, and neither
     // should the file it is saved as.
-    link.download = "squares.png";
-    link.click();
-    URL.revokeObjectURL(url);
-    setStatus("saved");
-  };
-
-  const share = async () => {
-    const blob = await toBlob();
-    if (!blob) return;
-    try {
-      // The OS sheet, driven by the user. The app never posts anything itself.
-      await navigator.share({ files: [new File([blob], "squares.png", { type: "image/png" })] });
-    } catch {
-      setStatus(null);
-    }
+    const file = new File([blob], "squares.png", { type: "image/png" });
+    // Where the device offers a sheet this is that sheet, driven by the user.
+    // The app never posts anything itself, and it does not claim the card was
+    // saved when the sheet was dismissed.
+    setStatus((await handOff(file)) ? "saved" : null);
   };
 
   return (
@@ -128,15 +107,14 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
         )}
       </div>
 
+      {/* One button, because on a phone the two were the same act. Saving the
+          card used to be a download that iOS refuses to perform, so it now
+          goes through the same handoff as the export — which on a phone *is*
+          the share sheet, with "save to photos" on it. */}
       <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
         <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => void save()}>
           save .png
         </button>
-        {canShareFiles ? (
-          <button type="button" className="btn" style={{ flex: 1 }} onClick={() => void share()}>
-            share…
-          </button>
-        ) : null}
       </div>
 
       {status ? (
