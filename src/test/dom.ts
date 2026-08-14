@@ -28,8 +28,36 @@ export interface CanvasOp {
 /** Every call and property set made on a 2D context this test. */
 export const canvasOps: CanvasOp[] = [];
 
-/** Every download the app asked the browser for. */
-export const downloads: { href: string; filename: string }[] = [];
+/**
+ * Every download the app asked the browser for. `connected` records whether
+ * the anchor was in the document at the moment it was clicked, which some
+ * engines require and which is therefore worth failing a test over.
+ */
+export const downloads: { href: string; filename: string; connected: boolean }[] = [];
+
+/** Every file the app handed to the OS share sheet. */
+export const shared: File[] = [];
+
+/**
+ * Give the device a share sheet, as a phone has and jsdom does not. `outcome`
+ * is what the user does with it: going through with it resolves, backing out
+ * rejects with AbortError exactly as a real sheet does.
+ */
+export function stubSharing(outcome: "accepted" | "dismissed" = "accepted"): void {
+  Object.defineProperty(navigator, "canShare", {
+    value: (data: { files?: File[] }) => Array.isArray(data.files) && data.files.length > 0,
+    configurable: true,
+  });
+  Object.defineProperty(navigator, "share", {
+    value: (data: { files?: File[] }) => {
+      shared.push(...(data.files ?? []));
+      return outcome === "accepted"
+        ? Promise.resolve()
+        : Promise.reject(new DOMException("share canceled", "AbortError"));
+    },
+    configurable: true,
+  });
+}
 
 function fakeContext(): CanvasRenderingContext2D {
   const state: Record<string, unknown> = {};
@@ -107,7 +135,7 @@ export function installDomStubs(): void {
 
   // A real anchor click would navigate; record the intent instead.
   HTMLAnchorElement.prototype.click = function click() {
-    downloads.push({ href: this.href, filename: this.download });
+    downloads.push({ href: this.href, filename: this.download, connected: this.isConnected });
   };
 }
 
@@ -116,6 +144,11 @@ export function resetDomStubs(): void {
   matchedMedia.clear();
   canvasOps.length = 0;
   downloads.length = 0;
+  shared.length = 0;
+  // The default device has no share sheet, so a test that wants one has to say
+  // so — otherwise stubSharing would leak into every test that follows it.
+  Reflect.deleteProperty(navigator, "share");
+  Reflect.deleteProperty(navigator, "canShare");
   localStorage.clear();
 }
 

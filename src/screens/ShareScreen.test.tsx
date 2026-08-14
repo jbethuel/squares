@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ShareScreen } from "./ShareScreen";
 import { setSharedName } from "@/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, TODAY } from "@/test/harness";
-import { downloads, drawnText } from "@/test/dom";
+import { downloads, drawnText, shared, stubSharing } from "@/test/dom";
 import type { AppData } from "@/domain/types";
 
 function open(data: AppData) {
@@ -116,25 +116,37 @@ describe("saving the card", () => {
     expect(screen.getByRole("status")).toHaveTextContent("saved");
   });
 
-  it("offers the OS share sheet only where files can actually be shared", () => {
+  it("is one button, not a save and a share that do the same thing", () => {
+    stubSharing();
     open(account({ habits: ["workout"] }));
-    // Nothing claims to share files here, so the button is not offered at all.
     expect(screen.queryByRole("button", { name: "share…" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "save .png" })).toBeInTheDocument();
   });
 
-  it("offers it where the browser supports it", async () => {
-    Object.defineProperty(navigator, "canShare", { value: () => true, configurable: true });
-    const share = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, "share", { value: share, configurable: true });
-
+  it("goes through the OS sheet where the device has one", async () => {
+    stubSharing();
     const user = userEvent.setup();
-    open(account({ habits: ["workout"] }));
+    open(account({ age: 60, habits: ["workout"] }));
 
-    const button = await screen.findByRole("button", { name: "share…" });
-    await user.click(button);
+    await user.click(screen.getByRole("button", { name: "save .png" }));
+
     // The OS sheet, driven by the user — the app never posts anything itself.
-    await vi.waitFor(() => expect(share).toHaveBeenCalled());
-    expect(share.mock.calls[0]![0].files[0].name).toBe("squares.png");
+    await vi.waitFor(() => expect(shared.map((f) => f.name)).toEqual(["squares.png"]));
+    // iOS never performs the download, so it must not also be attempted.
+    expect(downloads).toHaveLength(0);
+    expect(screen.getByRole("status")).toHaveTextContent("saved");
+  });
+
+  it("does not claim the card was saved when the sheet is dismissed", async () => {
+    stubSharing("dismissed");
+    const user = userEvent.setup();
+    open(account({ age: 60, habits: ["workout"] }));
+
+    await user.click(screen.getByRole("button", { name: "save .png" }));
+
+    await vi.waitFor(() => expect(shared).toHaveLength(1));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(downloads).toHaveLength(0);
   });
 
   it("states that there is no hosted page and no link between users", () => {

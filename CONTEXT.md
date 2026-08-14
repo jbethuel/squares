@@ -88,6 +88,12 @@ _Avoid_: score, points, streak, contributions.
 Which of the two palettes the app draws itself in — the Dark one it was designed in, or the Light port. The user's choice is System, Light or Dark, and System means dark unless the device asks for light. It is a property of the app, not of the record: no Day, Tick or Share Card changes with it, and a Share Card is always Dark.
 _Avoid_: mode, appearance, skin, night mode.
 
+### Keeping
+
+**Export**:
+The whole record written out as a file and handed to the device — the only copy that survives this app's storage being cleared. How the file leaves is the platform's business, not the user's: the app asks the device to take it and the device decides whether that is a download or a share sheet.
+_Avoid_: backup, download, save, dump.
+
 ### Sharing
 
 **Share Card**:
