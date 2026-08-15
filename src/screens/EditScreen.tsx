@@ -81,7 +81,7 @@ export function EditScreen({ habitId, onDone }: EditScreenProps) {
       {habit ? (
         <>
           <hr className="divider" style={{ margin: "28px 0 20px" }} />
-          <h2 className="title" style={{ fontSize: 12, margin: "0 0 7px" }}>
+          <h2 className="title-sub" style={{ margin: "0 0 7px" }}>
             archive
           </h2>
           <p className="note" style={{ marginTop: 0, marginBottom: 14 }}>

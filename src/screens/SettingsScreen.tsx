@@ -165,7 +165,7 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
 
       {!installed ? (
         <div className="card card-accent">
-          <h2 className="title" style={{ fontSize: 12, margin: "0 0 6px" }}>
+          <h2 className="title-sub" style={{ margin: "0 0 6px" }}>
             install to home screen
           </h2>
           <p className="note" style={{ margin: "0 0 13px" }}>
@@ -175,7 +175,7 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
             <button
               type="button"
               className="btn btn-primary"
-              style={{ padding: "12px 16px", fontSize: 12 }}
+              style={{ padding: "12px 16px" }}
               onClick={() => void install()}
             >
               install
@@ -190,7 +190,7 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
 
       <div className="stack" style={{ gap: 7, marginTop: 26 }}>
         <div className="toggle-row" style={{ cursor: "default" }}>
-          <span style={{ fontSize: 12.5 }}>theme</span>
+          <span className="toggle-label">theme</span>
           <span style={{ display: "flex", gap: 6 }}>
             {THEMES.map((theme) => (
               <button
@@ -206,8 +206,8 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
           </span>
         </div>
         <div className="toggle-row" style={{ cursor: "default" }}>
-          <span style={{ fontSize: 12.5 }}>archived</span>
-          <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "right" }}>
+          <span className="toggle-label">archived</span>
+          <span className="toggle-value">
             {archived.length > 0 ? archived.map((h) => h.name).join(" · ") : "none"}
           </span>
         </div>
