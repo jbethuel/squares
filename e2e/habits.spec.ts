@@ -80,7 +80,7 @@ test.describe("Chains are opt-in", () => {
 
     await page.getByRole("button", { name: "Open workout" }).click();
     await page.getByRole("switch", { name: /count a chain/ }).click();
-    await expect(page.getByText(/chains are strict/)).toBeVisible();
+    await expect(page.getByText("longest")).toBeVisible();
 
     await page.getByRole("button", { name: "‹ back" }).click();
     await expect(page.getByText("chain 3 days")).toBeVisible();

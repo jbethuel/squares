@@ -96,6 +96,6 @@ test.describe("the Lens", () => {
     // for one that was missed.
     await expect(page.locator(".sq-today")).toHaveCount(1);
     // The stats above it stay on the year, so nothing on the screen can fall.
-    await expect(page.getByText("total ticks").locator("xpath=preceding-sibling::div[1]")).toHaveText("1");
+    await expect(page.getByText("ticks", { exact: true }).locator("xpath=preceding-sibling::div[1]")).toHaveText("1");
   });
 });

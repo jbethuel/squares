@@ -40,21 +40,31 @@ export function DetailScreen({ habitId, onEdit }: DetailScreenProps) {
         {habit.name}
       </h1>
 
+      {/*
+        An unchained Habit has one number, not three. It used to show the Tick
+        count as the hero and again in the third slot, with an em dash where the
+        longest Chain would go — the same figure under two labels, next to a
+        stat that reads as something that failed to load.
+      */}
       <div style={{ display: "flex", alignItems: "flex-end", gap: 26, margin: "22px 0 24px" }}>
         <div>
           <div className="stat-value stat-hero" data-chained={habit.chained}>
             {habit.chained ? chain : ticks}
           </div>
-          <div className="stat-label">{habit.chained ? "current chain" : "total ticks"}</div>
+          <div className="stat-label">{habit.chained ? "chain" : "ticks"}</div>
         </div>
-        <div>
-          <div className="stat-value">{habit.chained ? longestChainOf(data, habitId, today) : "—"}</div>
-          <div className="stat-label">longest</div>
-        </div>
-        <div>
-          <div className="stat-value">{ticks}</div>
-          <div className="stat-label">ticks</div>
-        </div>
+        {habit.chained ? (
+          <>
+            <div>
+              <div className="stat-value">{longestChainOf(data, habitId, today)}</div>
+              <div className="stat-label">longest</div>
+            </div>
+            <div>
+              <div className="stat-value">{ticks}</div>
+              <div className="stat-label">ticks</div>
+            </div>
+          </>
+        ) : null}
       </div>
 
       {/*
@@ -97,11 +107,9 @@ export function DetailScreen({ habitId, onEdit }: DetailScreenProps) {
         <Toggle on={habit.chained} />
       </button>
 
-      <p className="note" style={{ margin: "12px 0 0" }}>
-        {habit.chained
-          ? "chains are strict. a missed day ends one, and nothing here will repair it for you."
-          : "chains are off for this habit. it accumulates and nothing can break."}
-      </p>
+      {/* No note under the switch. What a Chain is, the stats say the moment it
+          is on: a count that stands next to a longest, and falls back to one
+          the day it breaks. */}
 
       <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
         <button type="button" className="btn btn-solid" style={{ flex: 1 }} onClick={onEdit}>

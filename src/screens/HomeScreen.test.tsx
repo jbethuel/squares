@@ -25,13 +25,12 @@ describe("Home on day one", () => {
   it("asks for a first Habit rather than showing an empty list", () => {
     open(account({ age: 1 }));
     expect(screen.getByRole("button", { name: "name your first habit" })).toBeInTheDocument();
-    expect(screen.getByText("two or three is the honest ceiling. start with one.")).toBeInTheDocument();
+    expect(screen.getByText("three is the ceiling. start with one.")).toBeInTheDocument();
   });
 
-  it("says the year is one day old rather than showing a zero span", () => {
+  it("drops the span on day one rather than showing a zero one", () => {
     open(account({ age: 1, habits: ["workout"] }));
-    expect(screen.getByText("ticks · the year is one day old")).toBeInTheDocument();
-    expect(screen.getByText("tap a square. that is the whole app.")).toBeInTheDocument();
+    expect(screen.getByText("ticks")).toBeInTheDocument();
   });
 
   it("draws the whole year from day one, rather than a grid that grows into one", () => {
@@ -103,7 +102,7 @@ describe("the Grace Window on Home", () => {
   it("says how many Habits yesterday is still open for, and when it closes", () => {
     open(account({ habits: ["workout", "read"] }));
     expect(
-      screen.getByRole("button", { name: /yesterday · 2 still open · closes at midnight/ }),
+      screen.getByRole("button", { name: /yesterday · 2 open · closes at midnight/ }),
     ).toBeInTheDocument();
   });
 
@@ -123,12 +122,12 @@ describe("the Grace Window on Home", () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout"] }));
 
-    await user.click(screen.getByRole("button", { name: /yesterday · 1 still open/ }));
+    await user.click(screen.getByRole("button", { name: /yesterday · 1 open/ }));
     const section = document.querySelector(".row-yesterday")!;
     await user.click(within(section as HTMLElement).getByRole("button", { name: /^workout,/ }));
 
     expect(storedData().days[YESTERDAY]?.ticked).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: /still open/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: / open ·/ })).not.toBeInTheDocument();
   });
 
   it("is not offered on day one, when there is no yesterday to forget", () => {
@@ -138,7 +137,7 @@ describe("the Grace Window on Home", () => {
 
   it("is not offered once yesterday is complete", () => {
     open(account({ habits: ["workout"], ticks: { workout: [1] } }));
-    expect(screen.queryByRole("button", { name: /still open/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: / open ·/ })).not.toBeInTheDocument();
   });
 
   it("offers no way at all to reach a closed Day", async () => {
@@ -164,8 +163,8 @@ describe("what Home says about the year", () => {
   it("names both edges of the year, which are the same at any age", () => {
     open(account({ age: 100, habits: ["workout"] }));
     // A rolling year ending today: the same frame on day one and on day 365.
+    // The edges carry it alone — there is no note between them to restate them.
     expect(screen.getByText("aug 2025")).toBeInTheDocument();
-    expect(screen.getByText("365 days to today")).toBeInTheDocument();
     expect(screen.getByText("today")).toBeInTheDocument();
   });
 
@@ -243,7 +242,8 @@ describe("the Lens over the Overview", () => {
   it("names both edges of whatever it is drawing", async () => {
     const user = userEvent.setup();
     open(account({ age: 100, habits: ["workout"] }));
-    expect(screen.getByText("365 days to today")).toBeInTheDocument();
+    expect(screen.getByText("aug 2025")).toBeInTheDocument();
+    expect(screen.getByText("today")).toBeInTheDocument();
 
     await user.click(lens("week"));
     expect(screen.getByText("sunday")).toBeInTheDocument();
@@ -274,7 +274,7 @@ describe("the Lens over the Overview", () => {
 
     // The Lens is a way of looking, not a way of editing: the Grace Window is
     // untouched by it.
-    await user.click(screen.getByRole("button", { name: /yesterday · 1 still open/ }));
+    await user.click(screen.getByRole("button", { name: /yesterday · 1 open/ }));
     const section = document.querySelector(".row-yesterday")!;
     await user.click(within(section as HTMLElement).getByRole("button", { name: /^workout,/ }));
     expect(storedData().days[YESTERDAY]?.ticked).toHaveLength(1);

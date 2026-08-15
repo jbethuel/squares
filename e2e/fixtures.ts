@@ -112,7 +112,7 @@ export const total = (page: Page): Locator => page.locator(".total");
 
 const SECTIONS = {
   chains: "chains · per habit",
-  names: "share card · names are off by default",
+  names: "share card · names off by default",
 } as const;
 
 /**

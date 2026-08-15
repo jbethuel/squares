@@ -149,8 +149,7 @@ describe("saving the card", () => {
     expect(downloads).toHaveLength(0);
   });
 
-  it("states that there is no hosted page and no link between users", () => {
-    open(account({ habits: ["workout"] }));
-    expect(screen.getByText(/there is no hosted page and no link between users/)).toBeInTheDocument();
-  });
+  // The Screen no longer claims in words that there is no hosted page. The
+  // claim is asserted where it cannot be undone by a copy edit: data.spec.ts
+  // fails if the app makes any external request at all.
 });

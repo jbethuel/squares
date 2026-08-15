@@ -65,9 +65,9 @@ export function EditScreen({ habitId, onDone }: EditScreenProps) {
           onChange={(event) => setDraft(event.target.value)}
           style={{ marginTop: 8 }}
         />
-        <p className="note-faint" style={{ marginTop: 10 }}>
-          shown on the share card only if you opt this habit in. off by default.
-        </p>
+        {/* Nothing here about the Share Card. `sharedName` defaults to false
+            and the opt-in lives in settings, next to the card it governs — the
+            card's own Screen names what it will carry before it is saved. */}
         <button
           type="submit"
           className="btn btn-primary"
@@ -85,8 +85,7 @@ export function EditScreen({ habitId, onDone }: EditScreenProps) {
             archive
           </h2>
           <p className="note" style={{ marginTop: 0, marginBottom: 14 }}>
-            stops counting from today. every past tick stays in the year, and in the total. there is
-            no delete.
+            stops counting today. past ticks stay. there is no delete.
           </p>
           <button
             type="button"

@@ -49,7 +49,7 @@ test.describe("the year lives on this device", () => {
     });
 
     await expect(page.getByText(/replace this device's year with 2 habits and 40 days\?/)).toBeVisible();
-    await expect(page.getByText(/not recoverable afterwards/)).toBeVisible();
+    await expect(page.getByText(/this cannot be undone/)).toBeVisible();
     // Nothing has happened yet.
     expect((await readDevice(page)).habits.map((h) => h.name)).toEqual(["workout"]);
 

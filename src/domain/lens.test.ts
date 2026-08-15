@@ -106,7 +106,9 @@ describe("what the legend says under each Lens", () => {
   it("ends the year at today, and says where it began", () => {
     expect(lensLegend("year", TODAY)).toEqual({
       start: "aug 2025",
-      note: "365 days to today",
+      // Nothing between the edges: they already read "aug 2025" and "today",
+      // and a note there would only restate them.
+      note: "",
       end: "today",
     });
   });

@@ -71,7 +71,7 @@ export function lensNoun(lens: Lens): string {
 export interface LensLegend {
   /** The Day the grid starts at, under its left edge. */
   start: string;
-  /** What lies between the two edges. */
+  /** What lies between the two edges, or empty where the edges already say it. */
   note: string;
   /** The Day the grid ends at, under its right edge. */
   end: string;
@@ -81,6 +81,10 @@ export interface LensLegend {
  * The three cells of the legend under the grid. Both edges are named, because
  * under the Week and the Month the right edge is no longer today — the frame
  * runs on past it to the end of the period.
+ *
+ * The middle cell only earns its place under the Month, where it carries the
+ * year that neither edge has. Under the Year the edges already read "aug 2025"
+ * and "today", so a note between them would restate them, and it is empty.
  */
 export function lensLegend(lens: Lens, today: DateKey): LensLegend {
   const frame = lensFrame(lens, today);
@@ -96,6 +100,6 @@ export function lensLegend(lens: Lens, today: DateKey): LensLegend {
         end: dayMonthLabel(last),
       };
     case "year":
-      return { start: monthYearLabel(first), note: `${YEAR} days to today`, end: "today" };
+      return { start: monthYearLabel(first), note: "", end: "today" };
   }
 }
