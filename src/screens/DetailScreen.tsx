@@ -103,7 +103,7 @@ export function DetailScreen({ habitId, onEdit }: DetailScreenProps) {
         onClick={() => update((current) => setChained(current, habitId, !habit.chained))}
         style={{ marginTop: 22 }}
       >
-        <span style={{ fontSize: 12.5 }}>count a chain</span>
+        <span className="toggle-label">count a chain</span>
         <Toggle on={habit.chained} />
       </button>
 
