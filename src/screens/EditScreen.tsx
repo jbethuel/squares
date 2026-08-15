@@ -10,10 +10,9 @@ interface EditScreenProps {
   /** null creates a Habit; a string edits one. */
   habitId: string | null;
   onDone: () => void;
-  onCancel: () => void;
 }
 
-export function EditScreen({ habitId, onDone, onCancel }: EditScreenProps) {
+export function EditScreen({ habitId, onDone }: EditScreenProps) {
   const { data, today, update } = useStore();
   const habit = habitId ? data.habits.find((h) => h.id === habitId) : undefined;
   const [draft, setDraft] = useState(habit?.name ?? "");
@@ -38,9 +37,6 @@ export function EditScreen({ habitId, onDone, onCancel }: EditScreenProps) {
 
   return (
     <>
-      <button type="button" className="btn-quiet" onClick={onCancel} style={{ marginBottom: 22 }}>
-        ‹ cancel
-      </button>
       <h1 className="title" style={{ margin: "0 0 20px" }}>
         {habit ? habit.name : "new habit"}
       </h1>
@@ -54,11 +50,16 @@ export function EditScreen({ habitId, onDone, onCancel }: EditScreenProps) {
         <label className="label" htmlFor="habit-name">
           name
         </label>
+        {/*
+          The field does not take focus by itself, on purpose. It used to, and
+          a new Habit then opened with the keyboard already up — which now
+          means over the bar, on the one Screen a first-time user meets. One
+          tap on the field is the price of every Screen showing its way out.
+        */}
         <input
           id="habit-name"
           className="field"
           value={draft}
-          autoFocus={!habit}
           maxLength={40}
           placeholder="something you do daily"
           onChange={(event) => setDraft(event.target.value)}

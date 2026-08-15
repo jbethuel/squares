@@ -19,11 +19,10 @@ import { useStore } from "@/domain/store";
 
 interface DetailScreenProps {
   habitId: string;
-  onBack: () => void;
   onEdit: () => void;
 }
 
-export function DetailScreen({ habitId, onBack, onEdit }: DetailScreenProps) {
+export function DetailScreen({ habitId, onEdit }: DetailScreenProps) {
   const { data, today, update } = useStore();
   // Declared above the missing-Habit guard: a hook may not sit behind a return.
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
@@ -36,9 +35,7 @@ export function DetailScreen({ habitId, onBack, onEdit }: DetailScreenProps) {
 
   return (
     <>
-      <button type="button" className="btn-quiet" onClick={onBack} style={{ marginBottom: 20 }}>
-        ‹ back
-      </button>
+      {/* The name leads the Screen. The way out is the bar at the bottom. */}
       <h1 className="title" style={{ margin: 0 }}>
         {habit.name}
       </h1>
