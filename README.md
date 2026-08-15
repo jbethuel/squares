@@ -1,8 +1,16 @@
 # squares
 
-A habit tracker built on the one mechanic that makes the GitHub contribution
-graph compulsive: a year of small Squares you fill in by hand, one tap at a
-time. The reward is the act of filling a Square and watching a year accumulate.
+A year of small Squares, one per Day, that you fill in by hand — one tap each,
+ten seconds a day.
+
+Most habit trackers keep a streak, and a streak is a number that can go to zero:
+miss one Tuesday and you are back to nothing. Here the count only rises. A missed
+Day is an empty Square in a year that keeps filling, nothing on the main screen
+can be reset, and there is nobody to compare yourself against. Strict per-Habit
+Chains do exist, for people who want the pressure — they stay off until you ask.
+
+If the shape looks familiar, that is the GitHub contribution graph: the mechanic,
+not the branding.
 
 TypeScript + React (Next.js, static export), installable as a PWA. All data
 lives on the device — no account, no backend, no analytics.
