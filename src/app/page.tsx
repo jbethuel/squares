@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { BackBar } from "@/components/BackBar";
 import { StoreProvider } from "@/domain/store";
 import { DetailScreen } from "@/screens/DetailScreen";
 import { EditScreen } from "@/screens/EditScreen";
@@ -63,28 +64,42 @@ function App() {
     if (stack.length > 1) window.history.go(-(stack.length - 1));
   }, [stack.length]);
 
-  switch (screen.name) {
-    case "detail":
-      return (
-        <DetailScreen
-          habitId={screen.habitId}
-          onBack={back}
-          onEdit={() => push({ name: "edit", habitId: screen.habitId })}
-        />
-      );
-    case "edit":
-      return <EditScreen habitId={screen.habitId} onDone={home} onCancel={back} />;
-    case "settings":
-      return <SettingsScreen onBack={back} onShare={() => push({ name: "share" })} />;
-    case "share":
-      return <ShareScreen onBack={back} />;
-    default:
-      return (
-        <HomeScreen
-          onOpenHabit={(habitId) => push({ name: "detail", habitId })}
-          onNewHabit={() => push({ name: "edit", habitId: null })}
-          onSettings={() => push({ name: "settings" })}
-        />
-      );
-  }
+  const body = () => {
+    switch (screen.name) {
+      case "detail":
+        return (
+          <DetailScreen
+            habitId={screen.habitId}
+            onEdit={() => push({ name: "edit", habitId: screen.habitId })}
+          />
+        );
+      case "edit":
+        return <EditScreen habitId={screen.habitId} onDone={home} />;
+      case "settings":
+        return <SettingsScreen onShare={() => push({ name: "share" })} />;
+      // The Share Card keeps a back of its own. `‹ change what is named` is a
+      // sentence about the opt-ins rather than chrome, and it leads one level
+      // up to settings — the same place the bar goes, said in words.
+      case "share":
+        return <ShareScreen onBack={back} />;
+      default:
+        return (
+          <HomeScreen
+            onOpenHabit={(habitId) => push({ name: "detail", habitId })}
+            onNewHabit={() => push({ name: "edit", habitId: null })}
+            onSettings={() => push({ name: "settings" })}
+          />
+        );
+    }
+  };
+
+  // The bar is derived from the stack rather than remembered per Screen, so
+  // "a Screen you can leave" cannot drift out of step with "a Screen with a way
+  // out". Home is never above depth zero and so never has one — see ADR 0004.
+  return (
+    <>
+      {body()}
+      {stack.length > 1 ? <BackBar onBack={back} /> : null}
+    </>
+  );
 }

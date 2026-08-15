@@ -9,7 +9,7 @@ import type { AppData } from "@/domain/types";
 
 function open(data: AppData = account({ habits: ["workout"] })) {
   onDevice(data);
-  const props = { onBack: vi.fn(), onShare: vi.fn() };
+  const props = { onShare: vi.fn() };
   renderWithStore(<SettingsScreen {...props} />);
   return props;
 }
@@ -297,10 +297,4 @@ describe("what settings promises", () => {
     expect(screen.getByText(/no account. no sync. no analytics./)).toBeInTheDocument();
   });
 
-  it("goes back", async () => {
-    const user = userEvent.setup();
-    const props = open();
-    await user.click(screen.getByRole("button", { name: "‹ back" }));
-    expect(props.onBack).toHaveBeenCalled();
-  });
 });

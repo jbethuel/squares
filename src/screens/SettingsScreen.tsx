@@ -12,7 +12,7 @@ import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const THEMES: ThemePreference[] = ["system", "light", "dark"];
 
-export function SettingsScreen({ onBack, onShare }: { onBack: () => void; onShare: () => void }) {
+export function SettingsScreen({ onShare }: { onShare: () => void }) {
   const { data, today, update, replace } = useStore();
   const { canInstall, installed, install } = useInstallPrompt();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -56,9 +56,6 @@ export function SettingsScreen({ onBack, onShare }: { onBack: () => void; onShar
 
   return (
     <>
-      <button type="button" className="btn-quiet" onClick={onBack} style={{ marginBottom: 22 }}>
-        ‹ back
-      </button>
       <h1 className="title" style={{ margin: "0 0 24px" }}>
         settings
       </h1>

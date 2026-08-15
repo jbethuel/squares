@@ -8,7 +8,7 @@ import type { AppData } from "@/domain/types";
 
 function open(data: AppData, name: string) {
   onDevice(data);
-  const props = { onBack: vi.fn(), onEdit: vi.fn() };
+  const props = { onEdit: vi.fn() };
   renderWithStore(<DetailScreen habitId={idOf(data, name)} {...props} />);
   return props;
 }
@@ -149,14 +149,9 @@ describe("opting a Habit into a Chain", () => {
   });
 });
 
+// Going back is no longer this screen's to do — the bar belongs to the app, and
+// `page.test.tsx` is where it is exercised.
 describe("leaving the screen", () => {
-  it("goes back", async () => {
-    const user = userEvent.setup();
-    const props = open(account({ habits: ["workout"] }), "workout");
-    await user.click(screen.getByRole("button", { name: "‹ back" }));
-    expect(props.onBack).toHaveBeenCalled();
-  });
-
   it("sends both edit and archive to the same screen, where Archive is confirmed", async () => {
     const user = userEvent.setup();
     const props = open(account({ habits: ["workout"] }), "workout");
@@ -172,7 +167,7 @@ describe("leaving the screen", () => {
     const data = account({ habits: ["workout"] });
     onDevice(data);
     const { container } = renderWithStore(
-      <DetailScreen habitId="ghost" onBack={vi.fn()} onEdit={vi.fn()} />,
+      <DetailScreen habitId="ghost" onEdit={vi.fn()} />,
     );
     expect(container).toBeEmptyDOMElement();
   });

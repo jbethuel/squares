@@ -61,9 +61,6 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
 
   return (
     <>
-      <button type="button" className="btn-quiet" onClick={onBack} style={{ marginBottom: 22 }}>
-        ‹ back
-      </button>
       <h1 className="title" style={{ margin: "0 0 20px" }}>
         share card
       </h1>

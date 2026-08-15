@@ -152,13 +152,52 @@ select {
   white-space: nowrap;
 }
 
+/* 44px of control with 10px of air above and below it. */
+:root {
+  --backbar-h: 64px;
+}
+
 /* Desktop is the same single column, capped and centred — no second layout. */
 .app {
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: 20px 20px calc(36px + env(safe-area-inset-bottom));
+  /*
+   * The bar is fixed, so content needs room to scroll clear of it. Home has no
+   * bar and keeps the run-off anyway: trailing space below the last thing on a
+   * Screen costs nothing, and a Screen that changes height as you enter and
+   * leave it reads as a fault.
+   */
+  padding: 20px 20px calc(24px + var(--backbar-h) + env(safe-area-inset-bottom));
   padding-top: calc(20px + env(safe-area-inset-top));
+}
+
+/*
+ * The way out, on every Screen above Home. Opaque rather than blurred: this
+ * app draws Squares in four shades of one colour, and a blur behind them would
+ * put a fifth there.
+ */
+.backbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+}
+.backbar-btn {
+  display: block;
+  width: 100%;
+  max-width: 680px;
+  min-height: 44px;
+  margin: 0 auto;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 12.5px;
+  cursor: pointer;
 }
 
 /* ---- type ---- */
@@ -233,13 +272,19 @@ select {
   padding: 4px 0;
   cursor: pointer;
 }
+/* 44px tall, not 25px. It stays visually quiet — the size is in the hit box. */
 .btn-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
   border-radius: 8px;
   border: 1px solid var(--line-strong);
   background: none;
   color: var(--muted);
   font-size: 10.5px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   cursor: pointer;
 }
 .btn-chip[aria-pressed="true"] {
@@ -391,14 +436,22 @@ select {
 .row-sub[data-chained="true"] {
   color: var(--chain-fg);
 }
+/*
+ * The chevron is small; its hit box is not. The row is already 56px tall, so
+ * only the width needed raising — 26px to 44px.
+ */
 .row-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
   flex: none;
   border: none;
   border-radius: 12px;
   background: none;
   color: var(--dim);
   font-size: 14px;
-  padding: 0 14px 0 4px;
+  padding: 0 10px;
   cursor: pointer;
 }
 .row-add {

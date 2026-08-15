@@ -114,6 +114,18 @@ describe("moving through the app", () => {
     expect(onHome()).toBe(true);
   });
 
+  it("leaves a half-typed Habit without saving it", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: [] }));
+
+    await click(user, "name your first habit");
+    await user.type(screen.getByLabelText("name"), "workout");
+    await click(user, "‹ back");
+
+    expect(onHome()).toBe(true);
+    expect(storedData().habits).toEqual([]);
+  });
+
   it("adds a Habit from Home and lands back on Home with it", async () => {
     const user = userEvent.setup();
     open(account({ habits: [] }));
@@ -124,6 +136,50 @@ describe("moving through the app", () => {
 
     expect(onHome()).toBe(true);
     expect(screen.getByRole("button", { name: /^workout,/ })).toBeInTheDocument();
+  });
+});
+
+/**
+ * Installed, there is no browser back button behind any of this — the manifest
+ * asks for `standalone`. So the rule is that every Screen you can leave shows
+ * the way out, and Home, which you cannot leave, shows no chrome for it.
+ */
+describe("the way out", () => {
+  const backBar = () => screen.queryByRole("button", { name: "‹ back" });
+
+  it("is absent on Home", () => {
+    open();
+    expect(backBar()).not.toBeInTheDocument();
+  });
+
+  it("is present on every Screen above Home", async () => {
+    const user = userEvent.setup();
+    open();
+
+    await click(user, "Open workout");
+    expect(backBar()).toBeInTheDocument();
+
+    await click(user, "edit");
+    expect(backBar()).toBeInTheDocument();
+
+    await pressBack(2);
+    await click(user, "settings");
+    expect(backBar()).toBeInTheDocument();
+
+    await click(user, "make a share card ›");
+    expect(backBar()).toBeInTheDocument();
+  });
+
+  it("goes when Home does, so leaving the last Screen takes it away", async () => {
+    const user = userEvent.setup();
+    open();
+
+    await click(user, "settings");
+    expect(backBar()).toBeInTheDocument();
+
+    await click(user, "‹ back");
+    expect(onHome()).toBe(true);
+    expect(backBar()).not.toBeInTheDocument();
   });
 });
 

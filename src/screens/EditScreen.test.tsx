@@ -8,7 +8,7 @@ import type { AppData } from "@/domain/types";
 
 function open(data: AppData, habitId: string | null) {
   onDevice(data);
-  const props = { onDone: vi.fn(), onCancel: vi.fn() };
+  const props = { onDone: vi.fn() };
   renderWithStore(<EditScreen habitId={habitId} {...props} />);
   return props;
 }
@@ -71,15 +71,8 @@ describe("naming a new Habit", () => {
     expect(storedData().habits.every((h) => h.sharedName === false)).toBe(true);
   });
 
-  it("leaves without saving on cancel", async () => {
-    const user = userEvent.setup();
-    const props = open(account({ habits: [] }), null);
-    await user.type(nameField(), "workout");
-    await user.click(screen.getByRole("button", { name: "‹ cancel" }));
-
-    expect(props.onCancel).toHaveBeenCalled();
-    expect(storedData().habits).toEqual([]);
-  });
+  // Leaving without saving is now a journey rather than a prop on this screen:
+  // the way out is the app's bar. `page.test.tsx` walks it end to end.
 
   it("offers no Archive for a Habit that does not exist yet", () => {
     open(account({ habits: [] }), null);
