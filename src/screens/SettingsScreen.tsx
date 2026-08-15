@@ -63,7 +63,10 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
       <p className="label" style={{ margin: "0 0 9px" }}>
         chains · per habit
       </p>
-      <div className="stack" style={{ gap: 7, marginBottom: 10 }}>
+      {/* No blurb under these toggles. The hint on each row already says which
+          state it is in, and a Habit's own Screen says what the two states
+          mean — an explanation is read once and then costs the space forever. */}
+      <div className="stack" style={{ gap: 7, marginBottom: 26 }}>
         {habits.map((habit) => (
           <ToggleRow
             key={habit.id}
@@ -75,13 +78,9 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
         ))}
         {habits.length === 0 ? <p className="note-faint">no habits yet.</p> : null}
       </div>
-      <p className="note-faint" style={{ marginBottom: 26 }}>
-        off means the habit only accumulates: no chain number, no bridge bars in its row, nothing
-        that can go back to zero. on means strict — one missed day ends it.
-      </p>
 
       <p className="label" style={{ margin: "0 0 9px" }}>
-        share card · names are off by default
+        share card · names off by default
       </p>
       <div className="stack" style={{ gap: 7, marginBottom: 10 }}>
         {habits.map((habit) => (
@@ -130,8 +129,7 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
         <div className="card card-accent" style={{ marginBottom: 8 }}>
           <p className="note" style={{ margin: "0 0 12px" }}>
             replace this device&apos;s year with {pending.habits.length} habits and{" "}
-            {Object.keys(pending.days).length} days? the year on this device is not recoverable
-            afterwards.
+            {Object.keys(pending.days).length} days? this cannot be undone.
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             <button
@@ -216,8 +214,8 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
       </div>
 
       <p className="note-faint" style={{ marginTop: 22 }}>
-        no account. no sync. no analytics. clearing site data clears the year, so export it now and
-        then.
+        no account. no sync. no analytics. clearing site data clears your progress. do frequent
+        backups using export .json.
       </p>
     </>
   );

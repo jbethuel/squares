@@ -85,8 +85,7 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
       <div className="card" style={{ marginTop: 16 }}>
         {model.names.length === 0 ? (
           <p className="note" style={{ margin: 0 }}>
-            no habit names on this card. a year of shape and one number, nothing that says what you
-            were doing.
+            no habit names on this card. a year of shape and one number.
           </p>
         ) : (
           <>
@@ -120,10 +119,6 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
         </p>
       ) : null}
 
-      <p className="note-faint" style={{ marginTop: 22 }}>
-        rendered on this device. there is no hosted page and no link between users — you save the
-        png and post it yourself, or you don&apos;t.
-      </p>
     </>
   );
 }

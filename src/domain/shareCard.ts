@@ -158,7 +158,10 @@ export function drawShareCard(
   const captionY = totalY + TOTAL_SIZE + 5;
   ctx.fillStyle = css(CARD.muted);
   ctx.font = `400 ${u(CAPTION_SIZE)}px ${FONT}`;
-  ctx.fillText(`ticks · last ${model.elapsed} days`, u(PAD), u(captionY));
+  // Same caption as Home, day one included: a card made on the first morning
+  // used to read "last 1 days".
+  const caption = model.elapsed === 1 ? "ticks" : `ticks · last ${model.elapsed} days`;
+  ctx.fillText(caption, u(PAD), u(captionY));
 
   if (model.names.length > 0) {
     // One lowercase line, never separate rows — a per-Habit breakdown is a

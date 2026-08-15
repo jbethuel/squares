@@ -24,17 +24,18 @@ describe("a Habit's own screen", () => {
     open(account({ habits: ["workout"], ticks: { workout: [0, 1, 4, 9] } }), "workout");
 
     expect(screen.getByRole("heading", { name: "workout" })).toBeInTheDocument();
-    expect(stat("total ticks")).toBe("4");
-    // There is no longest Chain to report for a Habit that never counted one.
-    expect(stat("longest")).toBe("—");
     expect(stat("ticks")).toBe("4");
+    // One number, not three. There is no longest Chain to report for a Habit
+    // that never counted one, and the count is not worth saying twice.
+    expect(screen.queryByText("longest")).not.toBeInTheDocument();
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 
   it("leads with the Chain once the Habit has opted in", () => {
     const data = account({ habits: ["workout"], ticks: { workout: [0, 1, 2, 6, 7, 8, 9, 10] } });
     open(setChained(data, idOf(data, "workout"), true), "workout");
 
-    expect(stat("current chain")).toBe("3");
+    expect(stat("chain")).toBe("3");
     expect(stat("longest")).toBe("5");
     expect(stat("ticks")).toBe("8");
   });
@@ -102,25 +103,25 @@ describe("the Lens over a Habit's own Heatmap", () => {
   it("leaves the stats above it on the year, so nothing on screen can fall", async () => {
     const user = userEvent.setup();
     open(account({ age: 30, habits: ["workout"], ticks: { workout: [0, 10, 20] } }), "workout");
-    expect(stat("total ticks")).toBe("3");
+    expect(stat("ticks")).toBe("3");
 
+    // Two of those three Ticks fall outside the week now drawn. The stat is the
+    // year's under every Lens: the Lens redraws the grid, it does not rescore it.
     await user.click(screen.getByRole("button", { name: "week" }));
-    expect(stat("total ticks")).toBe("3");
     expect(stat("ticks")).toBe("3");
   });
 });
 
 describe("opting a Habit into a Chain", () => {
-  it("is off by default and says what that means", () => {
+  it("is off by default, and shows the count rather than a Chain", () => {
     open(account({ habits: ["workout"] }), "workout");
     const toggle = screen.getByRole("switch", { name: /count a chain/ });
     expect(toggle).toHaveAttribute("aria-checked", "false");
-    expect(
-      screen.getByText("chains are off for this habit. it accumulates and nothing can break."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("ticks")).toBeInTheDocument();
+    expect(screen.queryByText("chain")).not.toBeInTheDocument();
   });
 
-  it("warns that a Chain is strict before it is turned on", async () => {
+  it("puts the Chain on screen when turned on, and touches no Day Record", async () => {
     const user = userEvent.setup();
     const data = account({ habits: ["workout"], ticks: { workout: [0, 1] } });
     open(data, "workout");
@@ -128,11 +129,10 @@ describe("opting a Habit into a Chain", () => {
     await user.click(screen.getByRole("switch", { name: /count a chain/ }));
 
     expect(storedData().habits[0]?.chained).toBe(true);
-    expect(
-      screen.getByText(
-        "chains are strict. a missed day ends one, and nothing here will repair it for you.",
-      ),
-    ).toBeInTheDocument();
+    // The stats are the only thing that says what a Chain is: a count with a
+    // longest beside it, where a moment ago there was one number.
+    expect(stat("chain")).toBe("2");
+    expect(stat("longest")).toBe("2");
     // Opting in changes the display and nothing else.
     expect(storedData().days).toEqual(data.days);
   });
@@ -142,10 +142,10 @@ describe("opting a Habit into a Chain", () => {
     const data = account({ habits: ["workout"], ticks: { workout: [0, 1] } });
     open(setChained(data, idOf(data, "workout"), true), "workout");
 
-    expect(stat("current chain")).toBe("2");
+    expect(stat("chain")).toBe("2");
     await user.click(screen.getByRole("switch", { name: /count a chain/ }));
     expect(storedData().habits[0]?.chained).toBe(false);
-    expect(stat("total ticks")).toBe("2");
+    expect(stat("ticks")).toBe("2");
   });
 });
 

@@ -69,7 +69,9 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         <div>
           <Total value={totalTicks(data, today)} />
           <div className="caption">
-            {elapsed === 1 ? "ticks · the year is one day old" : `ticks · last ${elapsed} days`}
+            {/* No span on day one: "last 1 days" is wrong and "last 1 day" is
+                sad. On the first morning the word alone is the whole caption. */}
+            {elapsed === 1 ? "ticks" : `ticks · last ${elapsed} days`}
           </div>
         </div>
         {/* One chip is all the chrome Home gets. The Share Card lives in
@@ -118,7 +120,7 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
             style={{ marginBottom: graceOpen ? 10 : 16 }}
           >
             <span>
-              yesterday · {openYesterday.length} still open · closes at midnight
+              yesterday · {openYesterday.length} open · closes at midnight
             </span>
             <span style={{ color: "var(--muted)" }}>{graceOpen ? "−" : "+"}</span>
           </button>
@@ -158,13 +160,11 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         </button>
       </div>
 
+      {/* The one line Home carries, and only while there is nothing else to
+          read. Once a Habit exists the rows are the instructions. */}
       {habits.length === 0 ? (
         <p className="note" style={{ textAlign: "center", marginTop: 20, color: "var(--dim)" }}>
-          two or three is the honest ceiling. start with one.
-        </p>
-      ) : elapsed === 1 ? (
-        <p className="note" style={{ textAlign: "center", marginTop: 20, color: "var(--dim)" }}>
-          tap a square. that is the whole app.
+          three is the ceiling. start with one.
         </p>
       ) : null}
     </>

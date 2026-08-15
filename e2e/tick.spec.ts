@@ -4,7 +4,7 @@ test.describe("the whole app, one tap at a time", () => {
   test("starts empty, names a first Habit, and fills a Square", async ({ app }) => {
     const page = await app();
 
-    await expect(page.getByText("two or three is the honest ceiling. start with one.")).toBeVisible();
+    await expect(page.getByText("three is the ceiling. start with one.")).toBeVisible();
     await expect(total(page)).toHaveText("0");
 
     await page.getByRole("button", { name: "name your first habit" }).click();
@@ -71,8 +71,7 @@ test.describe("the whole app, one tap at a time", () => {
   test("draws the year in full from day one, with no progress number", async ({ app }) => {
     const page = await app({ age: 1, habits: ["workout"] });
 
-    await expect(page.getByText("ticks · the year is one day old")).toBeVisible();
-    await expect(page.getByText("tap a square. that is the whole app.")).toBeVisible();
+    await expect(page.getByText("ticks", { exact: true })).toBeVisible();
 
     // The frame is a calendar and does not grow into one: the same 365 Squares
     // on day one as on day 365, and still nothing counting down anywhere.
@@ -84,7 +83,7 @@ test.describe("the whole app, one tap at a time", () => {
   test("fits a settled year on a phone with no scrolling", async ({ app }) => {
     const page = await app({ age: 365, habits: ["workout"] });
 
-    await expect(page.getByText("365 days to today")).toBeVisible();
+    await expect(page.getByText("today", { exact: true })).toBeVisible();
     await expect(page.locator(".heatmap .sq")).toHaveCount(53 * 7);
 
     const scrolls = await page.evaluate(
@@ -98,7 +97,7 @@ test.describe("the whole app, one tap at a time", () => {
 
     await page.getByRole("button", { name: "Open workout" }).click();
     await expect(page.getByRole("heading", { name: "workout" })).toBeVisible();
-    await expect(page.getByText("total ticks")).toBeVisible();
+    await expect(page.getByText("ticks", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "‹ back" }).click();
     await expect(habitRow(page, "workout")).toBeVisible();

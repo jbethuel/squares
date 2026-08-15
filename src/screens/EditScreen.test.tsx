@@ -63,11 +63,16 @@ describe("naming a new Habit", () => {
     expect(Object.values(stored.days).filter((d) => d.active.length > 0)).toHaveLength(1);
   });
 
-  it("says up front that the name is not on the Share Card by default", () => {
+  // The Screen no longer says the name is off the Share Card by default. The
+  // default itself is what matters and it is asserted here; `share.spec.ts`
+  // reads the drawn PNG back to prove a name cannot appear without an opt-in.
+  it("creates a Habit whose name is off the Share Card until it is opted in", async () => {
+    const user = userEvent.setup();
     open(account({ habits: [] }), null);
-    expect(
-      screen.getByText("shown on the share card only if you opt this habit in. off by default."),
-    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("name"), "workout");
+    await user.click(screen.getByRole("button", { name: "save" }));
+
     expect(storedData().habits.every((h) => h.sharedName === false)).toBe(true);
   });
 
@@ -161,7 +166,7 @@ describe("Archive asks once, on the button itself", () => {
     const data = account({ habits: ["workout"] });
     open(data, idOf(data, "workout"));
     expect(
-      screen.getByText(/every past tick stays in the year, and in the total. there is no delete./),
+      screen.getByText("stops counting today. past ticks stay. there is no delete."),
     ).toBeInTheDocument();
   });
 });

@@ -1,7 +1,6 @@
 {
   "name": "squares",
   "short_name": "squares",
-  "description": "A year of squares you fill in by hand, one tap at a time.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

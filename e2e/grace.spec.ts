@@ -4,13 +4,13 @@ test.describe("the Grace Window", () => {
   test("says how many Habits yesterday is still open for", async ({ app }) => {
     const page = await app({ habits: ["workout", "read"] });
     await expect(
-      page.getByRole("button", { name: /yesterday · 2 still open · closes at midnight/ }),
+      page.getByRole("button", { name: /yesterday · 2 open · closes at midnight/ }),
     ).toBeVisible();
   });
 
   test("stays collapsed until it is asked for", async ({ app }) => {
     const page = await app({ habits: ["workout"] });
-    const strip = page.getByRole("button", { name: /yesterday · 1 still open/ });
+    const strip = page.getByRole("button", { name: /yesterday · 1 open/ });
 
     await expect(strip).toHaveAttribute("aria-expanded", "false");
     await expect(page.locator(".row-yesterday")).toHaveCount(0);
@@ -23,10 +23,10 @@ test.describe("the Grace Window", () => {
   test("records a Tick against yesterday, and then has nothing left to offer", async ({ app }) => {
     const page = await app({ habits: ["workout"] });
 
-    await page.getByRole("button", { name: /yesterday · 1 still open/ }).click();
+    await page.getByRole("button", { name: /yesterday · 1 open/ }).click();
     await page.locator(".row-yesterday").getByRole("button", { name: /^workout,/ }).click();
 
-    await expect(page.getByRole("button", { name: /still open/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: / open ·/ })).toHaveCount(0);
     await expect(total(page)).toHaveText("1");
 
     const data = await readDevice(page);
@@ -38,12 +38,12 @@ test.describe("the Grace Window", () => {
   test("keeps yesterday's Tick after a reload", async ({ app }) => {
     const page = await app({ habits: ["workout"] });
 
-    await page.getByRole("button", { name: /yesterday · 1 still open/ }).click();
+    await page.getByRole("button", { name: /yesterday · 1 open/ }).click();
     await page.locator(".row-yesterday").getByRole("button", { name: /^workout,/ }).click();
     await page.reload();
 
     await expect(total(page)).toHaveText("1");
-    await expect(page.getByRole("button", { name: /still open/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: / open ·/ })).toHaveCount(0);
   });
 
   test("is not offered on day one, when there is no yesterday to forget", async ({ app }) => {
@@ -55,7 +55,7 @@ test.describe("the Grace Window", () => {
     // Two Days ago was missed, and is closed permanently.
     const page = await app({ age: 30, habits: ["workout"], ticks: { workout: [1] } });
 
-    await expect(page.getByRole("button", { name: /still open/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: / open ·/ })).toHaveCount(0);
 
     // Nothing tappable anywhere on Home refers to a Day older than yesterday.
     const labels = await page.getByRole("button").evaluateAll((nodes) =>

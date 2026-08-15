@@ -5,7 +5,6 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "squares",
-  description: "A year of squares you fill in by hand, one tap at a time.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "squares", statusBarStyle: "black-translucent" },
   icons: {

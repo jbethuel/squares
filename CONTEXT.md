@@ -11,7 +11,7 @@ Something you have decided to do daily and are tracking.
 _Avoid_: goal, task, routine, activity.
 
 **Tick**:
-The single tap that records a Habit as done for a Day. Binary — there is no quantity, note or rating.
+The single tap that records a Habit as done for a Day. Binary — there is no quantity, note or rating. Tick is the counted noun and the app says it wherever it labels a number: "41 ticks". Tap is the spoken verb and the app says it wherever it asks for the act: "tap a square".
 _Avoid_: check-in, log, entry, completion.
 
 **Day**:

@@ -22,7 +22,7 @@ function section(label: string): HTMLElement[] {
 }
 
 const chains = () => section("chains · per habit");
-const names = () => section("share card · names are off by default");
+const names = () => section("share card · names off by default");
 
 const jsonFile = (contents: string) =>
   new File([contents], "squares.json", { type: "application/json" });
@@ -52,9 +52,14 @@ describe("chain opt-ins", () => {
     expect(screen.getByText("chain 3")).toBeInTheDocument();
   });
 
-  it("says what off actually means, in words", () => {
-    open();
-    expect(screen.getByText(/no chain number, no bridge bars in its row/)).toBeInTheDocument();
+  // What off means is said on a Habit's own Screen, not here. These rows carry
+  // the state in a hint and nothing else — an explanation is read once and then
+  // costs the space forever.
+  it("says which state each Habit is in without explaining the feature", () => {
+    open(account({ habits: ["workout"] }));
+    expect(screen.getByText("counts only")).toBeInTheDocument();
+    expect(screen.queryByText(/no chain number/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/one missed day ends it/)).not.toBeInTheDocument();
   });
 
   it("says so plainly when there are no Habits to opt in", () => {
@@ -176,7 +181,7 @@ describe("import replaces the year on this device", () => {
     await importFile(user, jsonFile(serialise(incoming)));
 
     expect(screen.getByText(/replace this device's year with 2 habits and 40 days\?/)).toBeInTheDocument();
-    expect(screen.getByText(/not recoverable afterwards/)).toBeInTheDocument();
+    expect(screen.getByText(/this cannot be undone/)).toBeInTheDocument();
     // Nothing has happened yet.
     expect(storedData().habits.map((h) => h.name)).toEqual(["workout"]);
   });
