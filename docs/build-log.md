@@ -227,6 +227,40 @@ after the change because seven rows had become dead configuration for that
 frame, and the e2e one only ever counted Squares and checked the 40px cap — it
 never asserted the arrangement at all. All five now assert the layout they name.
 
+## PR #9 — the Heatmap says which Days it is showing
+
+Monday, Wednesday and Friday beside the grid; the months it spans above it, each
+over the first column its month owns; on the Month Lens, that month's own name
+and year instead. `src/domain/axis.ts` works all of it out without a DOM.
+
+Two things were measured rather than guessed, and both were wrong on the first
+try. A month name renders at 20px, so three columns of the squeezed Year (18.4px)
+overlapped and four (24.5px) did not — but a fixed column count is wrong the
+moment the column changes width, so the test is in px against the actual step.
+And "is this name too close to the last one I kept" drops whichever month
+follows a crowded one, which on a rolling year meant losing a whole September to
+keep a sliver of August. Measuring *forward*, to where the next month starts,
+always sacrifices the part-month instead.
+
+The Year no longer fits the phone. It used to be squeezed until 53 columns made
+350px — the answer this project gave to the design brief's open question B — and
+adding a weekday gutter would have taken a Square from 5.43px to 4.96px. It now
+keeps an 11px Square, the size the contribution graph draws one, and scrolls
+sideways inside its own box, opening at today. The page still never scrolls
+sideways; that assertion stayed, and a second one now says the grid does.
+
+The cost is real and lands in one place. Seven rows of 11px is 95px where seven
+rows of 4.96px was 42px, so Home at its fullest — three Habits and a settled
+year — overruns a 360×640 phone by about 30px. The 390×844 and 412×915 phones
+still fit. `back.spec.ts` carries that per phone rather than asserting something
+untrue everywhere.
+
+Only the Week keeps a legend under its grid. The Year names its months across
+the top and the Month names itself, so a second line saying where the grid
+starts was restating what was already on screen. The Week's `sunday · this week ·
+saturday` survives because `mon wed fri` never says the row runs Sunday to
+Saturday.
+
 ## Decisions taken beyond the design
 
 | Decision | Why |
@@ -256,7 +290,7 @@ never asserted the arrangement at all. All five now assert the layout they name.
 
 ## Verification
 
-As of 2026-08-16: **302 unit tests across 21 files** and **66 end-to-end across
+As of 2026-08-16: **311 unit tests across 22 files** and **68 end-to-end across
 7 specs**, with `tsc --noEmit` and `next build` clean. `pnpm test:all` runs the
 three in order.
 

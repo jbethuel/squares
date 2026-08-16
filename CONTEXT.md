@@ -43,7 +43,7 @@ _Avoid_: delete, remove, disable, pause, hide.
 ### Display
 
 **Heatmap**:
-A Frame of Squares, one per Day. How long the Frame is, is the Lens.
+A Frame of Squares, one per Day. How long the Frame is, is the Lens. On a Screen it is named around its edges: the weekdays Monday, Wednesday and Friday beside it, and above it either the months it spans or the one month it is. A Share Card carries no such names — a month is a date, and a Card carries none.
 _Avoid_: graph, calendar, grid, contribution graph.
 
 **Square**:
@@ -54,10 +54,12 @@ _Avoid_: cell, tile, box, dot, pixel.
 How much of the record a Heatmap draws: the Week, the Month or the Year. A Lens
 changes how many Squares are drawn, how large they are, and what shape they are
 drawn in — the Month and the Year are calendar blocks of weekday rows, the Week
-is a single row running Sunday to Saturday. It never changes what a Square means
-— one Square is one Day under every Lens — and it never changes the Total, which
-is always the Year's. A Share Card has a Lens of its own, chosen where the card
-is made, and shows a Tally rather than the Total.
+is a single row running Sunday to Saturday. The Week and the Month fit the
+Screen; the Year is too long to, and runs off the side rather than shrinking a
+Square to fit, opening at today. A Lens never changes what a Square means — one
+Square is one Day under every Lens — and it never changes the Total, which is
+always the Year's. A Share Card has a Lens of its own, chosen where the card is
+made, and shows a Tally rather than the Total.
 _Avoid_: view, range, period, zoom, filter.
 
 **Frame**:

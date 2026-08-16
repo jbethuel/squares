@@ -10,8 +10,10 @@ import {
   DEFAULT_LENS,
   lensFrame,
   lensLegend,
+  lensMonths,
   lensNoun,
   lensRows,
+  lensScrolls,
   type Lens,
 } from "@/domain/lens";
 import { toggleTick } from "@/domain/mutations";
@@ -63,7 +65,7 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
   );
 
   const frame = lensFrame(lens, today);
-  const legend = lensLegend(lens, today);
+  const legend = lensLegend(lens);
 
   return (
     <>
@@ -96,6 +98,9 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         frame={frame}
         weekday={weekdayOf(today)}
         rows={lensRows(lens)}
+        scrolls={lensScrolls(lens)}
+        today={today}
+        months={lensMonths(lens)}
         levelFor={(offset) => intensityAt(data, dateAt(today, offset))}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
         // Ticks are counted over the part of the frame that has happened: the
@@ -105,11 +110,20 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         echo={echo}
       />
 
-      <div className="legend">
-        <span>{legend.start}</span>
-        <span>{legend.note}</span>
-        <span>{legend.end}</span>
-      </div>
+      {/*
+        Only the Week keeps a legend. The Year and the Month now name their own
+        edges above the grid, and two lines answering "where does this start"
+        is one line too many. The Week's ends are the one thing the names on top
+        cannot say: `mon wed fri` does not tell you the row runs Sunday to
+        Saturday.
+      */}
+      {legend ? (
+        <div className="legend">
+          <span>{legend.start}</span>
+          <span>{legend.note}</span>
+          <span>{legend.end}</span>
+        </div>
+      ) : null}
 
       <hr className="divider" style={{ margin: "22px 0 16px" }} />
 

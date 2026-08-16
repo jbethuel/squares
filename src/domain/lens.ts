@@ -15,15 +15,7 @@
  * also what a Day you simply missed draws at: the frame is a calendar, and a
  * calendar does not shrink to fit what you did with it.
  */
-import {
-  addDays,
-  dayMonthLabel,
-  dayOfMonth,
-  daysInMonth,
-  monthYearLabel,
-  weekdayOf,
-  type DateKey,
-} from "./date";
+import { dayOfMonth, daysInMonth, weekdayOf, type DateKey } from "./date";
 import { CALENDAR_ROWS, type Frame } from "./grid";
 import { YEAR } from "./types";
 
@@ -70,6 +62,38 @@ export function lensRows(lens: Lens): number {
   return lens === "week" ? 1 : CALENDAR_ROWS;
 }
 
+/**
+ * What the strip above a Heatmap carries under this Lens.
+ *
+ * The Year gets a run of month names, one above the column each month begins
+ * in. The Month gets a single name, carrying its year because nothing else on
+ * the Screen says which one. The Week gets neither — its own strip is the three
+ * weekday names, which have no side to sit on when the Frame is a single row.
+ */
+export type MonthAxis = "none" | "month" | "months";
+
+export function lensMonths(lens: Lens): MonthAxis {
+  switch (lens) {
+    case "week":
+      return "none";
+    case "month":
+      return "month";
+    case "year":
+      return "months";
+  }
+}
+
+/**
+ * Whether the Lens draws a Frame too long to fit, and scrolls instead.
+ *
+ * Only the Year. A Week is seven Squares and a Month is five columns; both sit
+ * on a phone at the largest size the app draws. A Year is 53 columns, and
+ * fitting those to a phone costs a Square most of its size.
+ */
+export function lensScrolls(lens: Lens): boolean {
+  return lens === "year";
+}
+
 /** Squares a Lens draws: 7, 28-31, or 365. */
 export function lensDays(lens: Lens, today: DateKey): number {
   const frame = lensFrame(lens, today);
@@ -91,28 +115,15 @@ export interface LensLegend {
 }
 
 /**
- * The three cells of the legend under the grid. Both edges are named, because
- * under the Week and the Month the right edge is no longer today — the frame
- * runs on past it to the end of the period.
+ * The three cells of the legend under the grid, or null where the names above
+ * it already say the same thing.
  *
- * The middle cell only earns its place under the Month, where it carries the
- * year that neither edge has. Under the Year the edges already read "aug 2025"
- * and "today", so a note between them would restate them, and it is empty.
+ * Only the Week has one now. The Year names its months across the top and the
+ * Month names itself, so a second line underneath answering "where does this
+ * start" would be restating what is already on screen. The Week's strip carries
+ * `mon wed fri`, which never says that the row runs Sunday to Saturday — so
+ * that is the one legend left, and it names both ends.
  */
-export function lensLegend(lens: Lens, today: DateKey): LensLegend {
-  const frame = lensFrame(lens, today);
-  const first = addDays(today, -(frame.back - 1));
-  const last = addDays(today, frame.ahead);
-  switch (lens) {
-    case "week":
-      return { start: "sunday", note: "this week", end: "saturday" };
-    case "month":
-      return {
-        start: dayMonthLabel(first),
-        note: monthYearLabel(today),
-        end: dayMonthLabel(last),
-      };
-    case "year":
-      return { start: monthYearLabel(first), note: "", end: "today" };
-  }
+export function lensLegend(lens: Lens): LensLegend | null {
+  return lens === "week" ? { start: "sunday", note: "this week", end: "saturday" } : null;
 }

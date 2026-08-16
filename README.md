@@ -89,8 +89,9 @@ answers the four open questions in `docs/design-brief.md`:
 
 - **Day one** — the Overview always fills its width, at every age and under every
   Lens. See `gridGeometry` in `src/domain/grid.ts`.
-- **A year on a phone** — 53 columns of ~5.4px fit 350px, so the whole year shows
-  with no scrolling and no gesture.
+- **A year on a phone** — 53 columns *can* be squeezed into 350px, at ~5.4px a
+  Square. They no longer are: the Year keeps an 11px Square and scrolls
+  sideways, opening at today. The Week and the Month still fit outright.
 - **Four heatmaps** — one year-grid on Home. Each Habit row carries an 8-day tail
   that is at once the tick target, the Chain preview and the "yesterday is open"
   cue. Full per-Habit years live in detail.
@@ -118,6 +119,22 @@ seven weekday rows, because rows lining up across columns is why the shape
 reads. The Week has no second column to line up with, so it is one row running
 Sunday to Saturday — seven Squares at the 40px cap rather than a vertical strip.
 `gridGeometry` and `gridSquares` take `rows` for this; `lensRows` decides it.
+
+And whether it fits. A Week is seven Squares and a Month is five or six columns;
+both sit on a phone at the largest size the app draws. A Year is 53 columns, and
+fitting those costs a Square most of its size — so it keeps an 11px Square and
+scrolls, opening at today (`lensScrolls`, `scrollGeometry`). The page itself
+never scrolls sideways; only the grid's own box does.
+
+**A Heatmap says which Days it is showing.** Monday, Wednesday and Friday beside
+it — three, not seven, because at the Year's rows the names are taller than the
+Squares. Above it, the months it spans, each over the first column its month
+owns; or on the Month Lens, that month's own name and year. `src/domain/axis.ts`
+decides all of it without a DOM, including whether a month has the room for its
+name: that test is in px against the column width, because the same grid steps
+14px scrolling and 6.14px squeezed. The weekday names sit outside the scroller
+and stay put. A Share Card gets none of this — a month is a date, and the card
+carries none.
 
 **The Share Card cannot leak a name.** It is drawn on-device to a canvas and
 saved as a 1280px PNG. There is no hosted page and no link between users.
