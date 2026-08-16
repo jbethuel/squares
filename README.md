@@ -40,7 +40,7 @@ pnpm dev              # http://localhost:3000
 ```
 src/domain/     the rules — no React, fully tested
   date.ts         local calendar Days as YYYY-MM-DD
-  types.ts        Habit, DayRecord, Intensity
+  types.ts        Habit and its Active Spans, DayRecord, Intensity
   selectors.ts    Intensity, Chain, Total, the Grace Window
   mutations.ts    Tick, add/rename/archive, and sealDays
   grid.ts         Heatmap geometry
@@ -50,7 +50,7 @@ src/domain/     the rules — no React, fully tested
   storage.ts      localStorage + import validation
   store.tsx       the one React context
 src/components/ Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
-src/screens/    Home, Detail, Edit, Settings, Share
+src/screens/    Home, Detail, NewHabit, Settings, Share
 src/hooks/      element width, delayed value, install prompt
 src/app/        Next shell, globals.css (all design tokens)
 src/test/       jsdom stubs and the fixture harness
@@ -115,7 +115,8 @@ saved as a 1280px PNG. There is no hosted page and no link between users.
 `shareCardModel` is pure, and its whole output is five fields: elapsed, weekday,
 levels, total and names. There is no date, no handle and no per-Habit breakdown,
 because a breakdown is a leak waiting to happen. `sharedName` defaults to false,
-a file that omits it parses as false, and archived Habits are dropped. The card
+a file that omits it parses as false, and archived Habits are dropped whatever
+their opt-in says — a name on a card reads as something you do. The card
 is always the dark theme, because it is a standalone image rather than a screen.
 
 **Dark is the designed theme; light is a port.** So `system` resolves to dark

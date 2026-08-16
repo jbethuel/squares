@@ -1,16 +1,29 @@
 import type { DateKey } from "./date";
 
+/**
+ * An unbroken run of Days on which a Habit was Active.
+ *
+ * Half-open: `from` is the Day it was taken up and is Active; `to` is the Day it
+ * was Archived and is *not*. Getting that backwards gives every Archived Habit
+ * one extra Active Day.
+ */
+export interface Span {
+  from: DateKey;
+  /** null while the Habit is still going. */
+  to: DateKey | null;
+}
+
 /** Something the user has decided to do daily and is tracking. */
 export interface Habit {
   id: string;
   name: string;
-  /** First Day on which this Habit was Active. */
-  createdOn: DateKey;
   /**
-   * Archive retires a Habit from this Day forward; it is not Active on this Day
-   * or after it. History is untouched. There is no delete.
+   * ADR 0005: Archive is a state a Habit can leave, so it cannot be one date.
+   * Taking a Habit out of the Archive opens a new Span rather than extending the
+   * old one — the Days it spent Archived stay a permanent gap. Ordered, and
+   * never overlapping.
    */
-  archivedOn: DateKey | null;
+  spans: Span[];
   /** A Chained Habit is one whose Chain the user has explicitly opted into seeing. */
   chained: boolean;
   /** A Named Habit may have its name shown on a Share Card. Off by default. */
@@ -35,7 +48,8 @@ export interface DayRecord {
 export type ThemePreference = "system" | "light" | "dark";
 
 export interface AppData {
-  version: 1;
+  /** 2 since ADR 0005. A v1 file is migrated on read, never refused. */
+  version: 2;
   /** The Day the year starts counting from. */
   installedOn: DateKey;
   habits: Habit[];
@@ -56,5 +70,5 @@ export const YEAR = 365;
 export const GRACE_DAYS = 1;
 
 export function emptyData(installedOn: DateKey): AppData {
-  return { version: 1, installedOn, habits: [], days: {}, theme: "system" };
+  return { version: 2, installedOn, habits: [], days: {}, theme: "system" };
 }

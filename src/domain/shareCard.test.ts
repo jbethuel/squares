@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, type DateKey } from "./date";
-import { addHabit, archiveHabit, sealDays, setSharedName } from "./mutations";
+import { addHabit, setArchived, sealDays, setSharedName } from "./mutations";
 import { shareCardModel } from "./shareCard";
 import { parseAppData } from "./storage";
 import { emptyData, type AppData } from "./types";
@@ -42,7 +42,7 @@ describe("the Share Card is anonymous by default", () => {
   it("drops an archived Habit's name, whose opt-in can no longer be withdrawn", () => {
     let data = account(60, ["no drinking"]);
     data = setSharedName(data, idOf(data, "no drinking"), true);
-    data = archiveHabit(data, idOf(data, "no drinking"), TODAY);
+    data = setArchived(data, idOf(data, "no drinking"), true, TODAY);
     expect(shareCardModel(data, TODAY).names).toEqual([]);
   });
 

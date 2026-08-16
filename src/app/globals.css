@@ -309,6 +309,22 @@ select {
   padding: 4px 0;
   cursor: pointer;
 }
+/*
+  A Habit's name inside a sentence, and the way to the switch that takes it off
+  the card. It inherits the sentence's size so the line reads as prose rather
+  than as a row of buttons, and it is underlined because the card paints these
+  same names in this same colour — colour alone would read as emphasis.
+*/
+.name-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--chain-fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
 /* 44px tall, not 25px. It stays visually quiet — the size is in the hit box. */
 .btn-chip {
   display: inline-flex;
@@ -352,6 +368,28 @@ select {
 }
 .field:focus {
   border-color: var(--accent);
+}
+/*
+  A Habit's name is its heading and the control that changes it. It draws as the
+  title, so the Screen carries one name rather than a heading and a field that
+  repeat each other. The rule underneath is the only affordance — on a phone
+  there is no hover to reveal one, so it cannot be hidden until touched.
+*/
+.title-field {
+  width: 100%;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0 0 4px;
+  outline: none;
+}
+.title-field:focus {
+  border-bottom-color: var(--accent);
 }
 
 /* ---- heatmap ---- */

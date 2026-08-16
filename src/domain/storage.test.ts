@@ -136,6 +136,45 @@ describe("export", () => {
   });
 });
 
+/**
+ * ADR 0005. An Export is the only copy of the record that survives this app's
+ * storage being cleared, so a v1 file that cannot be read is a backup that has
+ * been destroyed. Refusing one was never an option.
+ */
+describe("a v1 file is migrated, never refused", () => {
+  const v1 = (habits: unknown[]) =>
+    parseAppData({ version: 1, installedOn: TODAY, habits, days: {}, theme: "dark" });
+
+  const legacy = (overrides: Record<string, unknown>) => ({
+    id: "h1",
+    name: "workout",
+    createdOn: addDays(TODAY, -20),
+    archivedOn: null,
+    ...overrides,
+  });
+
+  it("turns a live v1 Habit into one open Span", () => {
+    expect(v1([legacy({})])?.habits[0]?.spans).toEqual([{ from: addDays(TODAY, -20), to: null }]);
+  });
+
+  it("turns an archived v1 Habit into one closed Span", () => {
+    expect(v1([legacy({ archivedOn: YESTERDAY })])?.habits[0]?.spans).toEqual([
+      { from: addDays(TODAY, -20), to: YESTERDAY },
+    ]);
+  });
+
+  it("keeps everything else the file said", () => {
+    const parsed = v1([legacy({ chained: true, sharedName: true })]);
+    expect(parsed?.version).toBe(2);
+    expect(parsed?.theme).toBe("dark");
+    expect(parsed?.habits[0]).toMatchObject({ chained: true, sharedName: true, name: "workout" });
+  });
+
+  it("still refuses a version it has never written", () => {
+    expect(parseAppData({ version: 3, installedOn: TODAY, habits: [], days: {} })).toBeNull();
+  });
+});
+
 describe("import discards anything that does not typecheck", () => {
   const file = (overrides: Record<string, unknown>) =>
     parseAppData({ version: 1, installedOn: TODAY, habits: [], days: {}, theme: "system", ...overrides });
@@ -158,7 +197,18 @@ describe("import discards anything that does not typecheck", () => {
   it("drops a Habit whose Archive date is not a Day", () => {
     expect(file({ habits: [habit({ archivedOn: "someday" })] })?.habits).toEqual([]);
     // Absent is legitimate, and means the Habit is live.
-    expect(file({ habits: [habit({ archivedOn: undefined })] })?.habits[0]?.archivedOn).toBeNull();
+    expect(file({ habits: [habit({ archivedOn: undefined })] })?.habits[0]?.spans).toEqual([
+      { from: TODAY, to: null },
+    ]);
+  });
+
+  it("drops a Habit whose Spans are not Days", () => {
+    const v2 = (spans: unknown) =>
+      file({ version: 2, habits: [{ id: "h1", name: "workout", spans }] })?.habits;
+    expect(v2([{ from: "someday", to: null }])).toEqual([]);
+    expect(v2([{ from: TODAY, to: "someday" }])).toEqual([]);
+    expect(v2([])).toEqual([]);
+    expect(v2("nope")).toEqual([]);
   });
 
   it("trims a name rather than trusting the file's spacing", () => {

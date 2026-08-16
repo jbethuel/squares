@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { addDays, type DateKey } from "./date";
 import {
   addHabit,
-  archiveHabit,
+  setArchived,
   sealDays,
   setChained,
   toggleTick,
@@ -117,7 +117,7 @@ describe("Day Records are immutable once closed (ADR 0001)", () => {
     data = seed(data, idOf(data, "workout"), [2]);
     expect(intensityAt(data, CLOSED)).toBe(2); // one of two → half
 
-    data = archiveHabit(data, idOf(data, "read"), TODAY);
+    data = setArchived(data, idOf(data, "read"), true, TODAY);
     data = sealDays(data, TODAY);
 
     // Archiving cannot brighten the past by shrinking the denominator.
@@ -127,7 +127,7 @@ describe("Day Records are immutable once closed (ADR 0001)", () => {
 
   it("drops an archived Habit from today's denominator, from today forward", () => {
     let data = account(5, ["workout", "read"]);
-    data = archiveHabit(data, idOf(data, "read"), TODAY);
+    data = setArchived(data, idOf(data, "read"), true, TODAY);
     expect(data.days[TODAY]?.active).toEqual([idOf(data, "workout")]);
     expect(data.days[YESTERDAY]?.active).toHaveLength(2);
   });
@@ -263,7 +263,7 @@ describe("the Total", () => {
     let data = account(30, ["a"]);
     data = seed(data, idOf(data, "a"), [3, 4, 5]);
     const before = totalTicks(data, TODAY);
-    data = archiveHabit(data, idOf(data, "a"), TODAY);
+    data = setArchived(data, idOf(data, "a"), true, TODAY);
     expect(totalTicks(data, TODAY)).toBe(before);
     expect(liveHabits(data, TODAY)).toEqual([]);
     expect(data.habits).toHaveLength(1); // archived, not deleted
@@ -289,8 +289,11 @@ describe("import", () => {
   it("rejects a file that is not a Squares export", () => {
     expect(parseAppData(null)).toBeNull();
     expect(parseAppData([])).toBeNull();
-    expect(parseAppData({ version: 2, installedOn: TODAY })).toBeNull();
+    // v1 and v2 are both read — v1 is migrated, per ADR 0005. A version this
+    // app has never written is still refused outright.
+    expect(parseAppData({ version: 3, installedOn: TODAY })).toBeNull();
     expect(parseAppData({ version: 1 })).toBeNull();
+    expect(parseAppData({ version: 2 })).toBeNull();
     expect(parseAppData({ version: 1, installedOn: "yesterday" })).toBeNull();
   });
 

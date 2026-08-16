@@ -1,4 +1,4 @@
-import { expect, optIns, test } from "./fixtures";
+import { expect, optIn, test } from "./fixtures";
 
 /**
  * A card that leaks a name is the one unforgivable bug, so these drive the
@@ -30,8 +30,14 @@ test.describe("the Share Card is anonymous by default", () => {
     await page.getByRole("button", { name: "make a share card ›" }).click();
     const anonymous = await cardPixels(page);
 
+    // The opt-in lives on the Habit's own Screen now, so the route to it runs
+    // out through Home rather than sideways within settings.
     await page.getByRole("button", { name: "‹ back" }).click();
-    await optIns(page, "names").first().click();
+    await page.getByRole("button", { name: "‹ back" }).click();
+    await page.getByRole("button", { name: "Open workout" }).click();
+    await optIn(page, "name on share card").click();
+    await page.getByRole("button", { name: "‹ back" }).click();
+    await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
     await expect(page.getByText("workout")).toBeVisible();
@@ -65,9 +71,11 @@ test.describe("the Share Card is anonymous by default", () => {
     await page.getByRole("button", { name: "make a share card ›" }).click();
     await expect(page.getByRole("img", { name: /naming took my meds/ })).toBeVisible();
 
-    await page.getByRole("button", { name: "‹ change what is named" }).click();
-    await optIns(page, "names").first().click();
-    await page.getByRole("button", { name: "make a share card ›" }).click();
+    // The name on the card is the way to the switch that removes it: one tap
+    // from the card that carries it to the control that withdraws it.
+    await page.getByRole("button", { name: "took my meds", exact: true }).click();
+    await optIn(page, "name on share card").click();
+    await page.getByRole("button", { name: "‹ back" }).click();
 
     await expect(page.getByRole("img", { name: /no habit names/ })).toBeVisible();
     await expect(page.getByText(/no habit names on this card/)).toBeVisible();

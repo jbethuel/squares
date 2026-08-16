@@ -159,10 +159,11 @@ describe("the way out", () => {
     await click(user, "Open workout");
     expect(backBar()).toBeInTheDocument();
 
-    await click(user, "edit");
+    await pressBack();
+    await click(user, "+ new habit");
     expect(backBar()).toBeInTheDocument();
 
-    await pressBack(2);
+    await pressBack();
     await click(user, "settings");
     expect(backBar()).toBeInTheDocument();
 
@@ -197,11 +198,11 @@ describe("the browser's own back button", () => {
     const user = userEvent.setup();
     open();
 
-    // Home -> detail -> edit is a jump of two, which the depth stored in the
+    // Home -> settings -> share is a jump of two, which the depth stored in the
     // history entry is what makes survivable with a single popstate.
-    await click(user, "Open workout");
-    await click(user, "edit");
-    expect(screen.getByLabelText("name")).toBeInTheDocument();
+    await click(user, "settings");
+    await click(user, "make a share card ›");
+    expect(screen.getByRole("heading", { name: "share card" })).toBeInTheDocument();
 
     await pressBack(2);
     expect(onHome()).toBe(true);
@@ -209,18 +210,46 @@ describe("the browser's own back button", () => {
 });
 
 describe("archiving from inside a Habit", () => {
-  it("returns to Home, not to the screen of a Habit that is gone", async () => {
+  it("leaves the user on the Screen, because the switch can be moved back", async () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout", "read"] }));
 
     await click(user, "Open workout");
-    await click(user, "archive");
-    await click(user, "archive this habit");
-    await click(user, "tap again to archive");
+    await user.click(screen.getByRole("switch", { name: /^archive/ }));
 
+    // Nothing navigates: the Habit is still the subject of the Screen, and the
+    // switch that put it in the Archive is the one that takes it back out.
+    expect(onHome()).toBe(false);
+    expect(screen.getByRole("switch", { name: /^archive/ })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    await pressBack();
     expect(onHome()).toBe(true);
     expect(screen.queryByRole("button", { name: /^workout,/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^read,/ })).toBeInTheDocument();
-    expect(storedData().habits.find((h) => h.name === "workout")?.archivedOn).not.toBeNull();
+  });
+
+  it("reaches an Archived Habit again through settings, and takes it back", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout", "read"], archived: ["workout"] }));
+
+    expect(screen.queryByRole("button", { name: /^workout,/ })).not.toBeInTheDocument();
+
+    await click(user, "settings");
+    await click(user, "workout ›");
+    await user.click(screen.getByRole("switch", { name: /^archive/ }));
+
+    // Back out through settings to Home, where the Habit is live again. The
+    // account was Archived at today, so taking it back today is the same-Day
+    // undo — one open Span, not a Span and a zero-length gap. Where the gap is
+    // real, `mutations.test.ts` is what holds it.
+    await pressBack(2);
+    expect(onHome()).toBe(true);
+    expect(screen.getByRole("button", { name: /^workout,/ })).toBeInTheDocument();
+    expect(storedData().habits.find((h) => h.name === "workout")?.spans).toEqual([
+      { from: expect.any(String), to: null },
+    ]);
   });
 });
