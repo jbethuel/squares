@@ -252,10 +252,17 @@ select {
   font-size: var(--fs-lg);
   color: var(--fg);
 }
-/* A heading inside a Screen rather than at the top of one: archive, install. */
+/*
+  A heading inside a Screen rather than at the top of one: the blocks of
+  settings, and the install card.
+
+  It sits at the same size as the rows beneath it and carries its weight and
+  full contrast to read as a heading — at --fs-xs and --dim, as these were, a
+  block heading reads as a caption on whatever is above it instead.
+*/
 .title-sub {
   font-weight: 700;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   color: var(--fg);
 }
 .label {
@@ -345,6 +352,11 @@ select {
   background: var(--accent);
   color: var(--on-accent);
 }
+/*
+  A settings row. One step up the scale from the notes and captions around it,
+  because it is the thing being read and tapped rather than something explaining
+  it — the label above a block stays at --fs-xs so the hierarchy still reads.
+*/
 .btn-list {
   width: 100%;
   text-align: left;
@@ -352,7 +364,7 @@ select {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--fg);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   padding: 14px;
   cursor: pointer;
 }
@@ -651,8 +663,10 @@ select {
  * and the value are the same thing in different rows — what this row currently
  * says — so they take the same step.
  */
+/* Matches .btn-list: a switch and a list row are the same kind of thing, on a
+   Habit's Screen as much as in settings. */
 .toggle-label {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
 }
 .toggle-hint {
   font-size: var(--fs-xs);
