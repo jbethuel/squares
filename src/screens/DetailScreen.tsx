@@ -5,7 +5,7 @@ import { Heatmap } from "@/components/Heatmap";
 import { LensPicker } from "@/components/LensPicker";
 import { ToggleRow } from "@/components/Toggle";
 import { longLabel, weekdayOf } from "@/domain/date";
-import { DEFAULT_LENS, lensFrame, lensNoun, type Lens } from "@/domain/lens";
+import { DEFAULT_LENS, lensFrame, lensNoun, lensRows, type Lens } from "@/domain/lens";
 import { renameHabit, setArchived, setChained, setSharedName } from "@/domain/mutations";
 import {
   chainOf,
@@ -117,6 +117,7 @@ export function DetailScreen({ habitId }: { habitId: string }) {
       <Heatmap
         frame={frame}
         weekday={weekdayOf(today)}
+        rows={lensRows(lens)}
         levelFor={(offset) => (isTicked(data, habitId, dateAt(today, offset)) ? 3 : 0)}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
         ariaLabel={`${habit.name}: ${tickCountIn(data, habitId, today, frame.back)} ticks across ${lensNoun(lens)}`}

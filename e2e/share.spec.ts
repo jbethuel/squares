@@ -99,3 +99,73 @@ test.describe("the Share Card is anonymous by default", () => {
     await expect(page.getByRole("button", { name: "settings" })).toBeVisible();
   });
 });
+
+/**
+ * The card's Lens, against the real canvas. These read pixels rather than the
+ * sentence beside the button, because the card is a drawing and the drawing is
+ * what gets handed over.
+ */
+test.describe("the Share Card's own Lens", () => {
+  /** A vertical strip of device pixels down the centre of a Week card column. */
+  const columnTop = (page: import("@playwright/test").Page, column: number) =>
+    page.locator("canvas.share-preview").evaluate((el, col) => {
+      const canvas = el as HTMLCanvasElement;
+      const context = canvas.getContext("2d")!;
+      // Card units: 320 wide, 22 pad, seven columns at a 4-unit gap.
+      const scale = canvas.width / 320;
+      const size = (276 - 6 * 4) / 7;
+      const x = Math.round((22 + col * (size + 4) + size / 2) * scale);
+      const pixels: string[] = [];
+      for (let dy = 0; dy < 8; dy++) {
+        const data = context.getImageData(x, Math.round(22 * scale) + dy, 1, 1).data;
+        pixels.push(`${data[0]},${data[1]},${data[2]}`);
+      }
+      return pixels;
+    }, column);
+
+  test("draws a whole week, today ringed, on whatever day it is made", async ({ app, page }) => {
+    // Ticked only well in the past, so today is empty and the ring is the only
+    // thing separating a Day missed from a Day that has not happened.
+    await app({ age: 200, habits: ["workout"], ticks: { workout: [30, 31] } });
+    await page.getByRole("button", { name: "settings" }).click();
+    await page.getByRole("button", { name: "make a share card ›" }).click();
+    await page.getByRole("button", { name: "week", exact: true }).click();
+
+    await expect(page.getByRole("img", { name: /0 ticks across the week/ })).toBeVisible();
+
+    // Today's Square carries a stroke its neighbours do not. A Week card used
+    // to be however many Days had happened, which does not read as a week.
+    const today = await columnTop(page, 0);
+    const neighbour = await columnTop(page, 1);
+    expect(new Set(today).size).toBeGreaterThan(new Set(neighbour).size);
+    expect(today).not.toEqual(neighbour);
+  });
+
+  test("counts only what it drew, so the number matches the picture", async ({ app, page }) => {
+    // Ticks spread across the year: the year sees them all, the week sees today.
+    await app({ age: 200, habits: ["workout"], ticks: { workout: [0, 40, 80, 120] } });
+    await page.getByRole("button", { name: "settings" }).click();
+    await page.getByRole("button", { name: "make a share card ›" }).click();
+
+    await expect(page.getByRole("img", { name: /4 ticks across the year/ })).toBeVisible();
+    const year = await cardPixels(page);
+
+    await page.getByRole("button", { name: "week", exact: true }).click();
+    await expect(page.getByRole("img", { name: /1 ticks across the week/ })).toBeVisible();
+
+    // The drawing changed too, not just the sentence.
+    expect(await cardPixels(page)).not.toBe(year);
+  });
+
+  test("opens on the year, which ends at today and needs no ring", async ({ app, page }) => {
+    await app({ age: 200, habits: ["workout"] });
+    await page.getByRole("button", { name: "settings" }).click();
+    await page.getByRole("button", { name: "make a share card ›" }).click();
+
+    await expect(page.getByRole("button", { name: "year", exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.getByRole("img", { name: /across the year/ })).toBeVisible();
+  });
+});

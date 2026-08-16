@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { handOff } from "@/domain/handoff";
+import { LensPicker } from "@/components/LensPicker";
+import { DEFAULT_LENS, lensNoun, type Lens } from "@/domain/lens";
 import { liveHabits } from "@/domain/selectors";
 import { cardSize, drawShareCard, shareCardModel } from "@/domain/shareCard";
 import { useStore } from "@/domain/store";
@@ -14,7 +16,11 @@ export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) =>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  const model = useMemo(() => shareCardModel(data, today), [data, today]);
+  // The card's own Lens. It is picked here rather than inherited from Home,
+  // which this Screen is not reached from — a card that quietly depended on
+  // what another Screen was last showing would be a card you cannot predict.
+  const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
+  const model = useMemo(() => shareCardModel(data, today, lens), [data, today, lens]);
   const size = cardSize(model, EXPORT_SCALE);
   // The Habits behind the names on the card. Archived Habits are never named,
   // so every one of these still has a live Screen to open.
@@ -69,12 +75,16 @@ export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) =>
         share card
       </h1>
 
+      <div style={{ marginBottom: 12 }}>
+        <LensPicker value={lens} onChange={setLens} label="how much of the record to put on the card" />
+      </div>
+
       <canvas
         ref={canvasRef}
         width={size.width}
         height={size.height}
         className="share-preview"
-        aria-label={`Share card: ${model.total} ticks over ${model.elapsed} days${
+        aria-label={`Share card: ${model.tally} ticks across ${lensNoun(model.lens)}${
           model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ", no habit names"
         }`}
         role="img"

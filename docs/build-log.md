@@ -194,6 +194,39 @@ On the Share Card Screen each name is a button that opens the Habit that put it
 there. Withdrawing a name is the safety-critical act in this app, so it is one
 tap from the card that carries it.
 
+## PR #8 — the Week on its side, and a Lens on the card
+
+The Week was one column of seven Squares stood on end. It is now one row of
+seven, Sunday to Saturday, still at the 40px cap. The Month and the Year stay
+calendar blocks: weekday rows lining up across columns is the whole reason that
+shape reads, and a single week has no second column to line up with. Geometry
+carries `rows` for this and `lensRows` decides it, so the Lens picks the shape
+as well as the span.
+
+The Share Card gained a Lens of its own — week, month or year, picked on the
+card's own Screen and defaulting to the year. It is not inherited from Home,
+which the card Screen is not reached from; a card depending on what another
+Screen was last showing is a card you cannot predict.
+
+Two things followed. The card's number is now a **Tally** — the Ticks in the
+Frame drawn — not the Total. A Week card over a number counting the year is a
+card nobody can read, and a number that can fall to zero cannot be called a
+Total without breaking that word's promise, so it is a different word.
+
+And the card now draws the Lens's whole Frame rather than stopping at today. It
+used to trim to the Days that had happened, on the grounds that a card is a
+record rather than a screen. That stopped working once it had a Lens: a Week
+card made on a Wednesday would have been four Squares, which does not read as a
+week. One rule for all three Lenses — which also means a three-week-old account's
+Year card is now a full 365 Squares with a corner lit, where it used to be
+compact. Wherever the Frame runs past today, today is ringed, because otherwise
+a Day you missed and a Day that has not happened are the same empty Square.
+
+Four grid tests and one Lens test described the Week as a column. They passed
+after the change because seven rows had become dead configuration for that
+frame, and the e2e one only ever counted Squares and checked the 40px cap — it
+never asserted the arrangement at all. All five now assert the layout they name.
+
 ## Decisions taken beyond the design
 
 | Decision | Why |
@@ -223,7 +256,7 @@ tap from the card that carries it.
 
 ## Verification
 
-As of 2026-08-16: **295 unit tests across 21 files** and **62 end-to-end across
+As of 2026-08-16: **302 unit tests across 21 files** and **66 end-to-end across
 7 specs**, with `tsc --noEmit` and `next build` clean. `pnpm test:all` runs the
 three in order.
 

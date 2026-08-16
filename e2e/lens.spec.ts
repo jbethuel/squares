@@ -15,6 +15,12 @@ const AGE = 60;
 const drawn = (page: Page) => page.locator(".heatmap .sq:not(.sq-pad)");
 const lens = (page: Page, name: string) => page.getByRole("button", { name, exact: true });
 
+/** Rows the grid is actually laid out in, read off the resolved grid template. */
+const rowCount = (page: Page) =>
+  page
+    .locator(".heatmap")
+    .evaluate((el) => getComputedStyle(el).gridTemplateRows.split(/\s+/).filter(Boolean).length);
+
 test.describe("the Lens", () => {
   test("opens on the year, which is the app", async ({ app }) => {
     const page = await app({ age: AGE, habits: ["workout"] });
@@ -24,19 +30,45 @@ test.describe("the Lens", () => {
     await expect(drawn(page)).toHaveCount(365);
   });
 
-  test("draws a whole week as one column of the largest Squares in the app", async ({ app }) => {
+  test("draws a whole week as one row of the largest Squares in the app", async ({ app }) => {
     const page = await app({ age: AGE, habits: ["workout"], ticks: { workout: [0] } });
 
     await lens(page, "week").click();
 
-    // Sunday to Saturday is one column whatever weekday it is, so the Squares
-    // are always at the 40px cap here — and nothing spills out of it.
+    // Sunday to Saturday, left to right, whatever weekday it is — so the
+    // Squares are always at the 40px cap here, and nothing spills out of it.
     await expect(drawn(page)).toHaveCount(7);
     await expect(page.locator(".heatmap .sq")).toHaveCount(7);
+    expect(await rowCount(page)).toBe(1);
+
     const size = await page
       .locator(".heatmap")
       .evaluate((el) => getComputedStyle(el).getPropertyValue("--sq-size"));
     expect(parseFloat(size)).toBe(40);
+
+    // One row means every Square shares a top edge and they run rightwards.
+    // A single week has no second column for a weekday row to line up with,
+    // so standing it on end wastes the width and reads as nothing.
+    const boxes = await drawn(page).evaluateAll((els) =>
+      els.map((el) => {
+        const { x, y } = el.getBoundingClientRect();
+        return { x, y };
+      }),
+    );
+    expect(new Set(boxes.map((b) => Math.round(b.y))).size).toBe(1);
+    expect(boxes[0]!.x).toBeLessThan(boxes[6]!.x);
+  });
+
+  test("keeps the month and the year as calendar blocks", async ({ app }) => {
+    const page = await app({ age: AGE, habits: ["workout"] });
+
+    // Only the Week is laid on its side. A frame of more than one week is drawn
+    // as weekday rows, which lining up across columns is why the shape reads.
+    await lens(page, "month").click();
+    expect(await rowCount(page)).toBe(7);
+
+    await lens(page, "year").click();
+    expect(await rowCount(page)).toBe(7);
   });
 
   test("draws the whole month, however long this month is", async ({ app }) => {

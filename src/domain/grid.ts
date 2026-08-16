@@ -17,13 +17,29 @@
  * the Lens was not asked for: what you see is the frame exactly.
  */
 export interface GridGeometry {
-  /** Weeks wide. */
+  /** Columns across: weeks when the grid is a calendar block, Days when it is a row. */
   cols: number;
+  /**
+   * Rows down. Seven is the calendar shape a column of weekdays lines up in.
+   * One is a single Week laid on its side — see `rows` on the functions below.
+   */
+  rows: number;
   /** Square edge in px. */
   size: number;
   gap: number;
   radius: number;
 }
+
+/**
+ * The calendar shape: a column is a week, a row is a weekday.
+ *
+ * A frame of more than one week is drawn this way because the weekday rows line
+ * up across columns, which is the whole reason the contribution graph reads. A
+ * single week has no second column to line up with, so it is drawn in one row
+ * instead — seven Squares left to right, Sunday to Saturday, at the size the
+ * width allows rather than stood on end in a strip.
+ */
+export const CALENDAR_ROWS = 7;
 
 /**
  * A run of Days, measured from today.
@@ -58,25 +74,44 @@ export function squareRadius(size: number): number {
 /**
  * Days between the newest Day in the frame and the Saturday that closes its
  * column. Row 6 is Saturday, so the last column always runs to one.
+ *
+ * A one-row grid has nothing to complete: every column is a single Day, so the
+ * last one is the newest Day itself and there is no weekday to pad out to.
  */
-function trailing(frame: Frame, weekday: number): number {
+function trailing(frame: Frame, weekday: number, rows: number): number {
+  if (rows === 1) return 0;
   return 6 - ((weekday + frame.ahead) % 7);
 }
 
-/** Whole weeks needed to cover the frame. */
-export function gridColumns(frame: Frame, weekday: number): number {
-  return Math.max(1, Math.ceil((frameDays(frame) + trailing(frame, weekday)) / 7));
+/** Columns needed to cover the frame at `rows` Days per column. */
+export function gridColumns(frame: Frame, weekday: number, rows = CALENDAR_ROWS): number {
+  return Math.max(1, Math.ceil((frameDays(frame) + trailing(frame, weekday, rows)) / rows));
 }
 
-export function gridGeometry(width: number, frame: Frame, weekday: number): GridGeometry {
-  const cols = gridColumns(frame, weekday);
+export function gridGeometry(
+  width: number,
+  frame: Frame,
+  weekday: number,
+  rows = CALENDAR_ROWS,
+): GridGeometry {
+  const cols = gridColumns(frame, weekday, rows);
   let gap = Math.max(1.2, Math.min(4, (width / cols) * 0.16));
   let size = (width - (cols - 1) * gap) / cols;
   if (size > MAX_SQUARE) {
     size = MAX_SQUARE;
     gap = 6;
   }
-  return { cols, size: Math.max(size, 1), gap, radius: squareRadius(size) };
+  return { cols, rows, size: Math.max(size, 1), gap, radius: squareRadius(size) };
+}
+
+/** Height of a grid drawn at this geometry, in the same units as `size`. */
+export function gridHeight(geometry: GridGeometry): number {
+  return geometry.size * geometry.rows + geometry.gap * (geometry.rows - 1);
+}
+
+/** Width of a grid drawn at this geometry, in the same units as `size`. */
+export function gridWidth(geometry: GridGeometry): number {
+  return geometry.size * geometry.cols + geometry.gap * (geometry.cols - 1);
 }
 
 export type SquareKind =
@@ -95,17 +130,26 @@ export interface GridSquare {
 }
 
 /**
- * Squares in DOM order for a 7-row, column-flowing grid. Row 0 is Sunday, so
- * today sits at row `weekday` of whichever column its week occupies.
+ * Squares in DOM order for a column-flowing grid.
+ *
+ * At seven rows this is the calendar block: row 0 is Sunday, so today sits at
+ * row `weekday` of whichever column its week occupies. At one row it is a week
+ * laid out left to right, Sunday first, and each column is a single Day.
  */
-export function gridSquares(cols: number, frame: Frame, weekday: number): GridSquare[] {
+export function gridSquares(
+  cols: number,
+  frame: Frame,
+  weekday: number,
+  rows = CALENDAR_ROWS,
+): GridSquare[] {
   const squares: GridSquare[] = [];
-  // The offset of the Saturday closing the last column. Negative: it is the
-  // frame's newest Day pushed forward to the end of its week.
-  const lastSaturday = -(frame.ahead + trailing(frame, weekday));
+  // The offset of the last cell drawn — the Saturday closing the final column
+  // in a calendar block, or simply the newest Day in a single row. Negative:
+  // it is the frame's newest Day pushed forward to the end of its week.
+  const lastDrawn = -(frame.ahead + trailing(frame, weekday, rows));
   for (let column = 0; column < cols; column++) {
-    for (let row = 0; row < 7; row++) {
-      const offset = lastSaturday + (6 - row) + (cols - 1 - column) * 7;
+    for (let row = 0; row < rows; row++) {
+      const offset = lastDrawn + (rows - 1 - row) + (cols - 1 - column) * rows;
       const inFrame = offset >= -frame.ahead && offset < frame.back;
       squares.push({
         key: `${column}-${row}`,

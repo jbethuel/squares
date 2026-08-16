@@ -60,7 +60,8 @@ e2e/            playwright specs and the device seed
 ## Vocabulary
 
 `CONTEXT.md` is the glossary, and its terms are used verbatim in code: Habit,
-Tick, Day, Square, Intensity, Chain, Total, Archive, Grace Window, Lens, Frame.
+Tick, Day, Square, Intensity, Chain, Total, Tally, Archive, Grace Window, Lens,
+Frame.
 Read it before changing anything in `src/domain/`.
 
 ## The three rules the code exists to protect
@@ -107,17 +108,31 @@ Sunday to Saturday. The Month is always the whole month. The Year is always 365,
 rolling to today rather than 1 January to 31 December, so it agrees with the
 Total above it. Frames do not shrink to fit what has been lived: a Day still to
 come and a Day from before the account existed are both drawn, at Intensity 0,
-which is also what a missed Day draws at. The Lens is view state — it never
-touches a Day Record, and the Total is the year's under every Lens.
+which is also what a missed Day draws at. Wherever a Frame runs past today,
+today is ringed: without it a missed Day and a Day that has not happened are the
+same empty Square. The Lens is view state — it never touches a Day Record, and
+the Total is the year's under every Lens.
+
+The Lens also picks the *shape*. The Month and the Year are calendar blocks of
+seven weekday rows, because rows lining up across columns is why the shape
+reads. The Week has no second column to line up with, so it is one row running
+Sunday to Saturday — seven Squares at the 40px cap rather than a vertical strip.
+`gridGeometry` and `gridSquares` take `rows` for this; `lensRows` decides it.
 
 **The Share Card cannot leak a name.** It is drawn on-device to a canvas and
 saved as a 1280px PNG. There is no hosted page and no link between users.
-`shareCardModel` is pure, and its whole output is five fields: elapsed, weekday,
-levels, total and names. There is no date, no handle and no per-Habit breakdown,
-because a breakdown is a leak waiting to happen. `sharedName` defaults to false,
-a file that omits it parses as false, and archived Habits are dropped whatever
-their opt-in says — a name on a card reads as something you do. The card
+`shareCardModel` is pure, and its whole output is seven fields: lens, frame, rows,
+weekday, levels, tally and names. There is no date, no handle and no per-Habit
+breakdown, because a breakdown is a leak waiting to happen. `sharedName` defaults
+to false, a file that omits it parses as false, and archived Habits are dropped
+whatever their opt-in says — a name on a card reads as something you do. The card
 is always the dark theme, because it is a standalone image rather than a screen.
+
+The card has a **Lens of its own**, picked where the card is made rather than
+inherited from Home, which it is not reached from. It draws that Lens's whole
+Frame — a Week card made on a Wednesday still shows seven Squares, with today
+ringed — and it carries a **Tally**, the Ticks in the Frame drawn, not the Total.
+A Week card over a number counting the Year is a card nobody can read.
 
 **Dark is the designed theme; light is a port.** So `system` resolves to dark
 unless the device actively asks for light — the media query is
