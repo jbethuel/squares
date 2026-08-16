@@ -55,14 +55,14 @@ for (const phone of PHONES) {
     test("never lets the bar cover the end of a Screen", async ({ app, page }) => {
       await app({ age: 365, habits: ["workout", "read", "meds"] });
 
+      // Every Screen with a bar, whether it overflows on this phone or not. The
+      // Screen that actually overflows is pinned separately below, because
+      // which one that is now depends on the phone.
       await openHabit(page, "workout");
       expect(await gapBelowContent(page)).toBeGreaterThanOrEqual(0);
 
       await page.getByRole("button", { name: "‹ back" }).click();
-      // Settings is the long one: several screens of scroll, so it is the only
-      // place the last line can end up underneath a fixed bar.
       await page.getByRole("button", { name: "settings" }).click();
-      expect(await scrollsVertically(page)).toBe(true);
       expect(await gapBelowContent(page)).toBeGreaterThanOrEqual(0);
 
       await page.getByRole("button", { name: "make a share card ›" }).click();
@@ -86,15 +86,33 @@ for (const phone of PHONES) {
     test("lets the system back and the bar unwind the same stack", async ({ app, page }) => {
       await app({ age: 30, habits: ["workout"] });
 
-      await openHabit(page, "workout");
-      await page.getByRole("button", { name: "edit" }).click();
-      await expect(page.getByLabel("name")).toBeVisible();
+      await page.getByRole("button", { name: "settings" }).click();
+      await page.getByRole("button", { name: "make a share card ›" }).click();
+      await expect(page.getByRole("heading", { name: "share card" })).toBeVisible();
 
       await page.goBack();
-      await expect(page.getByRole("heading", { name: "workout" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "settings" })).toBeVisible();
 
       await page.getByRole("button", { name: "‹ back" }).click();
       await expect(page.getByRole("button", { name: "settings" })).toBeVisible();
     });
   });
 }
+
+/**
+ * The gap assertions above are only worth something on a Screen that actually
+ * overflows, and since the per-Habit lists left settings the app fits on a
+ * Pixel and an iPhone without scrolling at all. The floor is where the overlap
+ * can still happen, so that is where it is proved rather than assumed.
+ */
+test.describe("the Screen that still overflows", () => {
+  test.use({ viewport: { width: 360, height: 640 } });
+
+  test("scrolls, and still keeps its last line clear of the bar", async ({ app, page }) => {
+    await app({ age: 365, habits: ["workout", "read", "meds"] });
+
+    await page.getByRole("button", { name: "settings" }).click();
+    expect(await scrollsVertically(page)).toBe(true);
+    expect(await gapBelowContent(page)).toBeGreaterThanOrEqual(0);
+  });
+});

@@ -168,6 +168,32 @@ under a Frame it would have marked whatever spilled past the end, which is a
 different idea wearing the same clothes. `.sq-future` is gone and `SquareKind`
 is `framed` or `pad` — what you see is the Frame exactly.
 
+## PR #7 — one Screen per Habit
+
+The Edit Screen is gone. Everything about a Habit that exists — its name, its
+Chain, its Share Card opt-in, whether it is Archived — is on that Habit's own
+Screen, reached from Home. Naming a *new* Habit keeps a Screen of its own, now
+called `NewHabitScreen`, because creating one needs one field and nothing else.
+
+The name is the heading and the field that changes it: no save button, blur
+commits, blank reverts, Escape abandons. Archive became a switch, which meant it
+had to be reversible, which meant a Habit could no longer be one `createdOn` and
+one nullable `archivedOn` — see ADR 0005 and the `version: 2` migration. Both
+per-Habit lists left settings; what is left there is the app, plus the Archived
+Habits as rows that open their own Screens, which is the only route back to a
+switch Home no longer shows.
+
+Two rules fell out of making Archive reversible rather than terminal. An
+Archived Habit is shown no current Chain even when Chained, because a Chain
+counts back from today and would read 0 forever. And it is never named on a
+Share Card whatever its opt-in says — the old reason was that the opt-in could
+not be reached, which is no longer true; the reason now is that a name on a card
+reads as something you do.
+
+On the Share Card Screen each name is a button that opens the Habit that put it
+there. Withdrawing a name is the safety-critical act in this app, so it is one
+tap from the card that carries it.
+
 ## Decisions taken beyond the design
 
 | Decision | Why |
@@ -197,9 +223,9 @@ is `framed` or `pad` — what you see is the Frame exactly.
 
 ## Verification
 
-As of 2026-08-11: **285 unit tests across 20 files** — 122 in `domain`, 163 in
-`ui` — and **48 end-to-end across 6 specs**, with `tsc --noEmit` and
-`next build` clean. `pnpm test:all` runs the three in order.
+As of 2026-08-16: **295 unit tests across 21 files** and **62 end-to-end across
+7 specs**, with `tsc --noEmit` and `next build` clean. `pnpm test:all` runs the
+three in order.
 
 PR #1 and #2 shipped before the suite existed, with 59 tests across 5 files
 (`date`, `grid`, `rules`, `palette`, `shareCard`). What stood in for the rest
@@ -231,8 +257,6 @@ in Rec. 709 luma.
 
 - **Sync.** ADR 0002 names it the intended paid tier if v1 holds. Nothing here
   anticipates it beyond the export format.
-- **Un-archive.** The design has no such affordance and `CONTEXT.md` describes
-  Archive as retiring a Habit, not pausing it.
 - **A global wipe.** ADR 0001 allows one as the only form of real deletion. The
   design's settings does not show it, and its footer note already says clearing
   site data clears the year.

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { addDays, type DateKey } from "./date";
 import {
   addHabit,
-  archiveHabit,
+  setArchived,
   renameHabit,
   sealDays,
   setChained,
@@ -42,7 +42,7 @@ describe("naming a Habit", () => {
     const data = addHabit(emptyData(TODAY), "took my meds", TODAY);
     expect(data.habits[0]?.chained).toBe(false);
     expect(data.habits[0]?.sharedName).toBe(false);
-    expect(data.habits[0]?.archivedOn).toBeNull();
+    expect(data.habits[0]?.spans).toEqual([{ from: TODAY, to: null }]);
   });
 
   it("gives each Habit its own id", () => {
@@ -74,7 +74,7 @@ describe("Archive is not delete", () => {
   it("retires the Habit from today forward and keeps its history", () => {
     let data = account(10, ["workout", "read"]);
     const workout = idOf(data, "workout");
-    data = archiveHabit(data, workout, TODAY);
+    data = setArchived(data, workout, true, TODAY);
 
     expect(isArchived(data.habits.find((h) => h.id === workout)!, TODAY)).toBe(true);
     expect(data.habits).toHaveLength(2);
@@ -83,24 +83,57 @@ describe("Archive is not delete", () => {
     expect(data.days[CLOSED]?.active).toContain(workout);
   });
 
-  it("cannot be applied twice, so an Archive date is never moved", () => {
+  it("cannot be applied twice, so the Span's end is never moved", () => {
     let data = account(10, ["workout"]);
-    data = archiveHabit(data, idOf(data, "workout"), TODAY);
-    const later = archiveHabit(data, idOf(data, "workout"), addDays(TODAY, 5));
+    data = setArchived(data, idOf(data, "workout"), true, TODAY);
+    const later = setArchived(data, idOf(data, "workout"), true, addDays(TODAY, 5));
     expect(later).toBe(data);
-    expect(later.habits[0]?.archivedOn).toBe(TODAY);
+    expect(later.habits[0]?.spans).toEqual([{ from: data.installedOn, to: TODAY }]);
   });
 
   it("ignores a Habit that does not exist", () => {
     const before = account(10, ["workout"]);
-    expect(archiveHabit(before, "ghost", TODAY)).toBe(before);
+    expect(setArchived(before, "ghost", true, TODAY)).toBe(before);
+  });
+
+  it("comes back from today forward, leaving the Archived Days a permanent gap", () => {
+    const later = addDays(TODAY, 5);
+    let data = account(10, ["workout"]);
+    const workout = idOf(data, "workout");
+    data = setArchived(data, workout, true, TODAY);
+    data = setArchived(data, workout, false, later);
+
+    // A new Span, not a reopened one: coming back is never backdated.
+    expect(data.habits[0]?.spans).toEqual([
+      { from: data.installedOn, to: TODAY },
+      { from: later, to: null },
+    ]);
+    expect(isArchived(data.habits[0]!, later)).toBe(false);
+    expect(activeOn(data.habits, addDays(TODAY, 2))).not.toContain(workout);
+    expect(activeOn(data.habits, later)).toContain(workout);
+  });
+
+  it("treats archiving and changing your mind the same Day as an undo", () => {
+    // Otherwise every mis-tap of the switch leaves a zero-length Span behind
+    // for as long as the record exists.
+    const before = account(10, ["workout"]);
+    const workout = idOf(before, "workout");
+    const after = setArchived(setArchived(before, workout, true, TODAY), workout, false, TODAY);
+
+    expect(after.habits[0]?.spans).toEqual([{ from: before.installedOn, to: null }]);
+    expect(after.days).toEqual(before.days);
+  });
+
+  it("cannot be taken out of an Archive it is not in", () => {
+    const before = account(10, ["workout"]);
+    expect(setArchived(before, idOf(before, "workout"), false, TODAY)).toBe(before);
   });
 
   it("removes today's Day Record when the last Habit is archived", () => {
     // A Day with no Active Habits is not a Day Record — Intensity would have no
     // denominator. Yesterday, which had one, is untouched.
     let data = account(10, ["workout"]);
-    data = archiveHabit(data, idOf(data, "workout"), TODAY);
+    data = setArchived(data, idOf(data, "workout"), true, TODAY);
     expect(data.days[TODAY]).toBeUndefined();
     expect(data.days[YESTERDAY]?.active).toHaveLength(1);
     expect(liveHabits(data, TODAY)).toEqual([]);
@@ -111,7 +144,7 @@ describe("Archive is not delete", () => {
     const workout = idOf(data, "workout");
     data = toggleTick(data, workout, TODAY, TODAY);
     expect(data.days[TODAY]?.ticked).toEqual([workout]);
-    data = archiveHabit(data, workout, TODAY);
+    data = setArchived(data, workout, true, TODAY);
     expect(data.days[TODAY]?.ticked).toEqual([]);
     expect(data.days[TODAY]?.active).toEqual([idOf(data, "read")]);
   });
@@ -120,7 +153,7 @@ describe("Archive is not delete", () => {
     let data = account(10, ["workout"]);
     data = toggleTick(data, idOf(data, "workout"), YESTERDAY, TODAY);
     const before = totalTicks(data, TODAY);
-    data = archiveHabit(data, idOf(data, "workout"), TODAY);
+    data = setArchived(data, idOf(data, "workout"), true, TODAY);
     expect(totalTicks(data, TODAY)).toBe(before);
   });
 });
@@ -179,7 +212,7 @@ describe("sealDays", () => {
       {
         ...emptyData(installedOn),
         habits: [
-          { id: "h1", name: "workout", createdOn: installedOn, archivedOn: null, chained: false, sharedName: false },
+          { id: "h1", name: "workout", spans: [{ from: installedOn, to: null }], chained: false, sharedName: false },
         ],
       },
       TODAY,

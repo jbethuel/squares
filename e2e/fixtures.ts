@@ -20,6 +20,8 @@ interface AccountSpec {
   ticks?: Record<string, number[]>;
   chained?: string[];
   sharedNames?: string[];
+  /** Habits whose Span was closed at today, so they read as Archived. */
+  archived?: string[];
   theme?: AppData["theme"];
 }
 
@@ -29,6 +31,7 @@ export function buildAccount({
   ticks = {},
   chained = [],
   sharedNames = [],
+  archived = [],
   theme = "system",
 }: AccountSpec): AppData {
   const now = today();
@@ -41,8 +44,7 @@ export function buildAccount({
       habits: habits.map((name, index) => ({
         id: `h${index + 1}`,
         name,
-        createdOn: installedOn,
-        archivedOn: null,
+        spans: [{ from: installedOn, to: archived.includes(name) ? now : null }],
         chained: chained.includes(name),
         sharedName: sharedNames.includes(name),
       })),
@@ -110,19 +112,14 @@ export function habitRow(page: Page, name: string): Locator {
 
 export const total = (page: Page): Locator => page.locator(".total");
 
-const SECTIONS = {
-  chains: "chains · per habit",
-  names: "share card · names off by default",
-} as const;
-
 /**
- * The opt-in switches of one settings section. Anchored to the section's own
- * label, because both groups list the same Habit names and `.stack` is used
- * again inside every row.
+ * A switch on a Habit's own Screen, by label. Every per-Habit opt-in lives
+ * there now, so there is no section to anchor to and no ambiguity to resolve —
+ * the Screen is about exactly one Habit.
  */
-export function optIns(page: Page, section: keyof typeof SECTIONS): Locator {
-  return page
-    .getByText(SECTIONS[section], { exact: true })
-    .locator("xpath=following-sibling::div[1]")
-    .getByRole("switch");
+export function optIn(page: Page, label: string): Locator {
+  return page.getByRole("switch", { name: new RegExp(`^${label}`) });
 }
+
+/** The Habit screen's name field, which is also its heading. */
+export const habitName = (page: Page): Locator => page.getByLabel("habit name");

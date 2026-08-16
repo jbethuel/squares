@@ -2,19 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { handOff } from "@/domain/handoff";
+import { liveHabits } from "@/domain/selectors";
 import { cardSize, drawShareCard, shareCardModel } from "@/domain/shareCard";
 import { useStore } from "@/domain/store";
 
 /** The PNG is drawn at 4x the card's design units: 1280px wide. */
 const EXPORT_SCALE = 4;
 
-export function ShareScreen({ onBack }: { onBack: () => void }) {
+export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) => void }) {
   const { data, today } = useStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<string | null>(null);
 
   const model = useMemo(() => shareCardModel(data, today), [data, today]);
   const size = cardSize(model, EXPORT_SCALE);
+  // The Habits behind the names on the card. Archived Habits are never named,
+  // so every one of these still has a live Screen to open.
+  const named = liveHabits(data, today).filter((habit) => habit.sharedName);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,16 +93,31 @@ export function ShareScreen({ onBack }: { onBack: () => void }) {
           </p>
         ) : (
           <>
+            {/*
+              Each name is the way to its own opt-in. Withdrawing a name is the
+              safety-critical act in this app, so it is one tap from the card
+              that carries it — read the name here, tap it, and the switch that
+              removes it is the next thing on the screen.
+            */}
             <p className="note" style={{ margin: "0 0 8px" }}>
               this card names{" "}
-              <span style={{ color: "var(--chain-fg)" }}>{model.names.join(" · ")}</span>. everything
-              else stays anonymous.
+              {named.map((habit, index) => (
+                <span key={habit.id}>
+                  {index > 0 ? " · " : null}
+                  <button
+                    type="button"
+                    className="name-link"
+                    onClick={() => onOpenHabit(habit.id)}
+                  >
+                    {habit.name.trim().toLowerCase()}
+                  </button>
+                </span>
+              ))}
+              . everything else stays anonymous.
             </p>
-            {/* Back to settings, which is where this screen was opened from
-                and where the name opt-ins are. */}
-            <button type="button" className="btn-quiet" onClick={onBack}>
-              ‹ change what is named
-            </button>
+            <p className="note-faint" style={{ margin: 0 }}>
+              tap a name to stop naming it.
+            </p>
           </>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { DetailScreen } from "./DetailScreen";
 import { setChained } from "@/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, storedData } from "@/test/harness";
@@ -8,10 +8,11 @@ import type { AppData } from "@/domain/types";
 
 function open(data: AppData, name: string) {
   onDevice(data);
-  const props = { onEdit: vi.fn() };
-  renderWithStore(<DetailScreen habitId={idOf(data, name)} {...props} />);
-  return props;
+  renderWithStore(<DetailScreen habitId={idOf(data, name)} />);
 }
+
+/** The Habit's name is its heading and the field that changes it. */
+const nameField = () => screen.getByLabelText("habit name");
 
 /** The stat under a given label. */
 function stat(label: string): string {
@@ -23,7 +24,7 @@ describe("a Habit's own screen", () => {
   it("leads with the count for an unchained Habit", () => {
     open(account({ habits: ["workout"], ticks: { workout: [0, 1, 4, 9] } }), "workout");
 
-    expect(screen.getByRole("heading", { name: "workout" })).toBeInTheDocument();
+    expect(nameField()).toHaveValue("workout");
     expect(stat("ticks")).toBe("4");
     // One number, not three. There is no longest Chain to report for a Habit
     // that never counted one, and the count is not worth saying twice.
@@ -149,26 +150,107 @@ describe("opting a Habit into a Chain", () => {
   });
 });
 
+describe("naming a Habit is done where the name is", () => {
+  it("keeps the new name when the field is left, with no save to press", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"], ticks: { workout: [0, 1] } }), "workout");
+
+    await user.clear(nameField());
+    await user.type(nameField(), "lift");
+    await user.tab();
+
+    expect(storedData().habits[0]?.name).toBe("lift");
+    // The Ticks follow the name, because a rename is not a new Habit.
+    expect(stat("ticks")).toBe("2");
+  });
+
+  it("puts the old name back when the field is left blank", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"] }), "workout");
+
+    await user.clear(nameField());
+    await user.tab();
+
+    // Blank reverts rather than rejects: nothing to disable, no error to show.
+    expect(nameField()).toHaveValue("workout");
+    expect(storedData().habits[0]?.name).toBe("workout");
+  });
+
+  it("abandons an edit on escape", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"] }), "workout");
+
+    await user.clear(nameField());
+    await user.type(nameField(), "lift{Escape}");
+    await user.tab();
+
+    expect(storedData().habits[0]?.name).toBe("workout");
+  });
+});
+
+describe("archiving is a switch that can be moved back", () => {
+  const archiveSwitch = () => screen.getByRole("switch", { name: /^archive/ });
+
+  it("archives on one tap, with nothing to confirm", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout", "read"], ticks: { workout: [2, 3] } }), "workout");
+
+    expect(archiveSwitch()).toHaveAttribute("aria-checked", "false");
+    await user.click(archiveSwitch());
+
+    expect(archiveSwitch()).toHaveAttribute("aria-checked", "true");
+    // Every past Tick stays in the year. There is no delete.
+    expect(storedData().habits[0]?.spans).toHaveLength(1);
+    expect(stat("ticks")).toBe("2");
+  });
+
+  it("takes the Habit back out again, because the switch is honest", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"], archived: ["workout"] }), "workout");
+
+    expect(archiveSwitch()).toHaveAttribute("aria-checked", "true");
+    await user.click(archiveSwitch());
+    expect(archiveSwitch()).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("hides the Chain and Share Card switches while the Habit is Archived", () => {
+    open(account({ habits: ["workout"], archived: ["workout"] }), "workout");
+
+    // A switch that sits on and provably does nothing is worse than no switch.
+    expect(screen.queryByRole("switch", { name: /count a chain/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: /name on share card/ })).not.toBeInTheDocument();
+    expect(archiveSwitch()).toBeInTheDocument();
+  });
+
+  it("shows an Archived Habit no current Chain, even when Chained", () => {
+    const data = account({ habits: ["workout"], ticks: { workout: [1, 2, 3] }, archived: ["workout"] });
+    open(setChained(data, idOf(data, "workout"), true), "workout");
+
+    // A Chain counts back from today, and this Habit cannot be Ticked today —
+    // it would read 0 forever. What it did, and its longest run, are still true.
+    expect(screen.queryByText("chain")).not.toBeInTheDocument();
+    expect(stat("ticks")).toBe("3");
+    expect(stat("longest")).toBe("3");
+  });
+
+  it("still lets an Archived Habit be renamed, so the list stays right", async () => {
+    const user = userEvent.setup();
+    open(account({ habits: ["workout"], archived: ["workout"] }), "workout");
+
+    await user.clear(nameField());
+    await user.type(nameField(), "lift");
+    await user.tab();
+
+    expect(storedData().habits[0]?.name).toBe("lift");
+  });
+});
+
 // Going back is no longer this screen's to do — the bar belongs to the app, and
 // `page.test.tsx` is where it is exercised.
 describe("leaving the screen", () => {
-  it("sends both edit and archive to the same screen, where Archive is confirmed", async () => {
-    const user = userEvent.setup();
-    const props = open(account({ habits: ["workout"] }), "workout");
-
-    await user.click(screen.getByRole("button", { name: "edit" }));
-    await user.click(screen.getByRole("button", { name: "archive" }));
-    expect(props.onEdit).toHaveBeenCalledTimes(2);
-    // Nothing is archived from here; there is no unconfirmed destructive path.
-    expect(storedData().habits[0]?.archivedOn).toBeNull();
-  });
-
   it("renders nothing for a Habit that is not there", () => {
-    const data = account({ habits: ["workout"] });
-    onDevice(data);
-    const { container } = renderWithStore(
-      <DetailScreen habitId="ghost" onEdit={vi.fn()} />,
-    );
+    onDevice(account({ habits: ["workout"] }));
+    const { container } = renderWithStore(<DetailScreen habitId="ghost" />);
     expect(container).toBeEmptyDOMElement();
   });
 });

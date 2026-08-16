@@ -33,8 +33,10 @@ export function shareCardModel(data: AppData, today: DateKey): ShareCardModel {
     weekday: weekdayOf(today),
     levels,
     total: totalTicks(data, today),
-    // Archived Habits are excluded even when opted in: their opt-in can no
-    // longer be reached in settings, so it could not be withdrawn.
+    // Archived Habits are excluded even when opted in. A name on a Card reads
+    // as something the user does, and a retired Habit is not that. The opt-in
+    // is reachable again now that Archived Habits have a Screen — this is a
+    // rule about what the Card may claim, not a workaround for a dead control.
     names: data.habits
       .filter((habit) => habit.sharedName && !isArchived(habit, today))
       .map((habit) => habit.name.trim().toLowerCase()),

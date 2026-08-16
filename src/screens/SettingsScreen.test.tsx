@@ -9,20 +9,10 @@ import type { AppData } from "@/domain/types";
 
 function open(data: AppData = account({ habits: ["workout"] })) {
   onDevice(data);
-  const props = { onShare: vi.fn() };
+  const props = { onShare: vi.fn(), onOpenHabit: vi.fn() };
   renderWithStore(<SettingsScreen {...props} />);
   return props;
 }
-
-/** The switches under a given section label, in order. */
-function section(label: string): HTMLElement[] {
-  const heading = screen.getByText(label);
-  const list = heading.nextElementSibling as HTMLElement;
-  return within(list).queryAllByRole("switch");
-}
-
-const chains = () => section("chains · per habit");
-const names = () => section("share card · names off by default");
 
 const jsonFile = (contents: string) =>
   new File([contents], "squares.json", { type: "application/json" });
@@ -31,76 +21,21 @@ async function importFile(user: ReturnType<typeof userEvent.setup>, file: File) 
   await user.upload(document.querySelector<HTMLInputElement>('input[type="file"]')!, file);
 }
 
-describe("chain opt-ins", () => {
-  it("lists every live Habit, all off", () => {
+describe("settings holds nothing about one Habit", () => {
+  // A Habit's Chain and its Share Card name are set on that Habit's own Screen.
+  // Two places to change one flag is how they drift.
+  it("offers no per-Habit switches at all", () => {
     open(account({ habits: ["workout", "read"] }));
-    expect(chains()).toHaveLength(2);
-    expect(chains().every((s) => s.getAttribute("aria-checked") === "false")).toBe(true);
-    expect(screen.getAllByText("counts only")).toHaveLength(2);
+    expect(screen.queryAllByRole("switch")).toHaveLength(0);
   });
 
-  it("turns one on without touching the other", async () => {
-    const user = userEvent.setup();
-    const data = account({ habits: ["workout", "read"], ticks: { workout: [0, 1, 2] } });
-    open(data);
-
-    await user.click(chains()[0]!);
-
-    const stored = storedData();
-    expect(stored.habits.find((h) => h.name === "workout")?.chained).toBe(true);
-    expect(stored.habits.find((h) => h.name === "read")?.chained).toBe(false);
-    expect(screen.getByText("chain 3")).toBeInTheDocument();
-  });
-
-  // What off means is said on a Habit's own Screen, not here. These rows carry
-  // the state in a hint and nothing else — an explanation is read once and then
-  // costs the space forever.
-  it("says which state each Habit is in without explaining the feature", () => {
-    open(account({ habits: ["workout"] }));
-    expect(screen.getByText("counts only")).toBeInTheDocument();
-    expect(screen.queryByText(/no chain number/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/one missed day ends it/)).not.toBeInTheDocument();
-  });
-
-  it("says so plainly when there are no Habits to opt in", () => {
-    open(account({ habits: [] }));
-    expect(screen.getAllByText("no habits yet.")).toHaveLength(2);
-  });
-});
-
-describe("share card name opt-ins", () => {
-  it("are off for every Habit until each is turned on by hand", async () => {
-    const user = userEvent.setup();
-    open(account({ habits: ["took my meds", "no drinking"] }));
-    expect(names().every((s) => s.getAttribute("aria-checked") === "false")).toBe(true);
-
-    await user.click(names()[0]!);
-    const stored = storedData();
-    expect(stored.habits.find((h) => h.name === "took my meds")?.sharedName).toBe(true);
-    expect(stored.habits.find((h) => h.name === "no drinking")?.sharedName).toBe(false);
-  });
-
-  it("are withdrawn by the same switch", async () => {
-    const user = userEvent.setup();
-    open(account({ habits: ["workout"] }));
-    await user.click(names()[0]!);
-    await user.click(names()[0]!);
-    expect(storedData().habits[0]?.sharedName).toBe(false);
-  });
-
-  it("are not offered for an archived Habit, whose opt-in cannot be withdrawn", () => {
-    const data = account({ habits: ["workout", "no drinking"] });
-    open({
-      ...data,
-      habits: data.habits.map((h) => (h.name === "no drinking" ? { ...h, archivedOn: TODAY } : h)),
-    });
-    expect(names()).toHaveLength(1);
-    expect(screen.getByText("no drinking")).toBeInTheDocument(); // in the archived list only
-  });
-
-  it("sit directly above the card they govern", async () => {
+  it("leads to the card, and says what the card promises", async () => {
     const user = userEvent.setup();
     const props = open();
+    expect(
+      screen.getByText("anonymous unless you name a habit on its own screen."),
+    ).toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: "make a share card ›" }));
     expect(props.onShare).toHaveBeenCalled();
   });
@@ -278,20 +213,29 @@ describe("theme", () => {
   });
 });
 
-describe("the archived list", () => {
+describe("the archived list is the way back", () => {
   it("says none until something is archived", () => {
     open(account({ habits: ["workout"] }));
-    expect(screen.getByText("none")).toBeInTheDocument();
+    expect(screen.getByText("none.")).toBeInTheDocument();
   });
 
   it("names what has been retired, because nothing is ever deleted", () => {
-    const data = account({ habits: ["workout", "read"] });
-    open({
-      ...data,
-      habits: data.habits.map((h) => (h.name === "read" ? { ...h, archivedOn: TODAY } : h)),
-    });
-    expect(screen.getByText("read")).toBeInTheDocument();
-    expect(chains()).toHaveLength(1);
+    open(account({ habits: ["workout", "read"], archived: ["read"] }));
+    expect(screen.getByRole("button", { name: "read ›" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "workout ›" })).not.toBeInTheDocument();
+  });
+
+  // Without this route Archiving would be a switch that cannot be moved back:
+  // Home does not list an Archived Habit, so this is the only door to its
+  // Screen — and its Screen is where the switch is.
+  it("opens the Habit's own screen, which is where it can come back", async () => {
+    const user = userEvent.setup();
+    const data = account({ habits: ["workout", "read"], archived: ["read"] });
+    const props = open(data);
+
+    await user.click(screen.getByRole("button", { name: "read ›" }));
+
+    expect(props.onOpenHabit).toHaveBeenCalledWith(idOf(data, "read"));
   });
 });
 

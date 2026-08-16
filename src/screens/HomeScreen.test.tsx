@@ -304,12 +304,7 @@ describe("getting to the rest of the app", () => {
   });
 
   it("does not list an archived Habit", () => {
-    const data = account({ habits: ["workout", "read"] });
-    const archived = {
-      ...data,
-      habits: data.habits.map((h) => (h.name === "read" ? { ...h, archivedOn: TODAY } : h)),
-    };
-    open(archived);
+    open(account({ habits: ["workout", "read"], archived: ["read"] }));
     expect(screen.getByRole("button", { name: /^workout,/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^read,/ })).not.toBeInTheDocument();
   });

@@ -9,9 +9,9 @@ import type { AppData } from "@/domain/types";
 
 function open(data: AppData) {
   onDevice(data);
-  const onBack = vi.fn();
-  renderWithStore(<ShareScreen onBack={onBack} />);
-  return { onBack };
+  const onOpenHabit = vi.fn();
+  renderWithStore(<ShareScreen onOpenHabit={onOpenHabit} />);
+  return { onOpenHabit };
 }
 
 /** Everything the card actually painted, once the face has loaded. */
@@ -45,7 +45,8 @@ describe("the card is anonymous by default", () => {
     const data = account({ age: 60, habits: ["workout", "no drinking", "pickleball"] });
     open(named(data, "workout", "pickleball"));
 
-    expect(screen.getByText("workout · pickleball")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "workout" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "pickleball" })).toBeInTheDocument();
     expect(screen.getByText(/everything else stays anonymous/)).toBeInTheDocument();
 
     const text = await painted();
@@ -54,26 +55,32 @@ describe("the card is anonymous by default", () => {
     expect(text.some((line) => line.includes("drinking"))).toBe(false);
   });
 
-  it("drops an archived Habit's name, whose opt-in can no longer be reached", async () => {
-    const data = named(account({ age: 60, habits: ["no drinking"] }), "no drinking");
-    open({ ...data, habits: data.habits.map((h) => ({ ...h, archivedOn: TODAY })) });
+  // A name on a Card reads as something the user does, and a retired Habit is
+  // not that. The opt-in is reachable again — this is a rule about what the
+  // Card may claim, not a workaround for a control that could not be found.
+  it("drops an archived Habit's name, whatever its opt-in says", async () => {
+    const data = account({ age: 60, habits: ["no drinking"], archived: ["no drinking"] });
+    open(named(data, "no drinking"));
 
     expect(screen.getByText(/no habit names on this card/)).toBeInTheDocument();
     expect((await painted()).some((line) => line.includes("drinking"))).toBe(false);
   });
 
-  it("offers a way back to the opt-ins whenever it does name something", async () => {
+  // Withdrawing a name is the safety-critical act in this app, so it is one tap
+  // from the card that carries it.
+  it("makes each name the way to the switch that removes it", async () => {
     const user = userEvent.setup();
     const data = named(account({ habits: ["workout"] }), "workout");
-    const { onBack } = open(data);
+    const { onOpenHabit } = open(data);
 
-    await user.click(screen.getByRole("button", { name: "‹ change what is named" }));
-    expect(onBack).toHaveBeenCalled();
+    expect(screen.getByText("tap a name to stop naming it.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "workout" }));
+    expect(onOpenHabit).toHaveBeenCalledWith(idOf(data, "workout"));
   });
 
   it("offers no such link when there is nothing named to change", () => {
     open(account({ habits: ["workout"] }));
-    expect(screen.queryByRole("button", { name: /change what is named/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/tap a name/)).not.toBeInTheDocument();
   });
 });
 

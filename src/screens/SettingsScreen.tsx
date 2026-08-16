@@ -1,10 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ToggleRow } from "@/components/Toggle";
 import { handOff } from "@/domain/handoff";
-import { sealDays, setChained, setSharedName, setTheme } from "@/domain/mutations";
-import { archivedHabits, chainOf, liveHabits } from "@/domain/selectors";
+import { sealDays, setTheme } from "@/domain/mutations";
+import { archivedHabits } from "@/domain/selectors";
 import { exportFilename, parseAppData, serialise } from "@/domain/storage";
 import { useStore } from "@/domain/store";
 import type { AppData, ThemePreference } from "@/domain/types";
@@ -12,14 +11,18 @@ import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const THEMES: ThemePreference[] = ["system", "light", "dark"];
 
-export function SettingsScreen({ onShare }: { onShare: () => void }) {
+interface SettingsScreenProps {
+  onShare: () => void;
+  onOpenHabit: (habitId: string) => void;
+}
+
+export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
   const { data, today, update, replace } = useStore();
   const { canInstall, installed, install } = useInstallPrompt();
   const fileInput = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<AppData | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  const habits = liveHabits(data, today);
   const archived = archivedHabits(data, today);
 
   const exportJson = async () => {
@@ -60,44 +63,25 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
         settings
       </h1>
 
+      {/*
+        Nothing per-Habit lives here any more. A Habit's Chain and its Share Card
+        name are set on that Habit's own Screen, which is the only place that
+        knows anything about one Habit — two places to change one flag is how
+        they drift.
+      */}
       <p className="label" style={{ margin: "0 0 9px" }}>
-        chains · per habit
+        share card
       </p>
-      {/* No blurb under these toggles. The hint on each row already says which
-          state it is in, and a Habit's own Screen says what the two states
-          mean — an explanation is read once and then costs the space forever. */}
+      {/* The line the opt-ins used to carry, now that they are not next to the
+          card to say it themselves. */}
+      <p className="note" style={{ margin: "0 0 10px" }}>
+        anonymous unless you name a habit on its own screen.
+      </p>
       <div className="stack" style={{ gap: 7, marginBottom: 26 }}>
-        {habits.map((habit) => (
-          <ToggleRow
-            key={habit.id}
-            label={habit.name}
-            hint={habit.chained ? `chain ${chainOf(data, habit.id, today)}` : "counts only"}
-            on={habit.chained}
-            onToggle={() => update((current) => setChained(current, habit.id, !habit.chained))}
-          />
-        ))}
-        {habits.length === 0 ? <p className="note-faint">no habits yet.</p> : null}
+        <button type="button" className="btn-list" onClick={onShare}>
+          make a share card ›
+        </button>
       </div>
-
-      <p className="label" style={{ margin: "0 0 9px" }}>
-        share card · names off by default
-      </p>
-      <div className="stack" style={{ gap: 7, marginBottom: 10 }}>
-        {habits.map((habit) => (
-          <ToggleRow
-            key={habit.id}
-            label={habit.name}
-            on={habit.sharedName}
-            onToggle={() => update((current) => setSharedName(current, habit.id, !habit.sharedName))}
-          />
-        ))}
-        {habits.length === 0 ? <p className="note-faint">no habits yet.</p> : null}
-      </div>
-      {/* The card sits directly under the opt-ins that govern it, so what is
-          on it and what may be named are never on separate screens. */}
-      <button type="button" className="btn-list" onClick={onShare} style={{ marginBottom: 26 }}>
-        make a share card ›
-      </button>
 
       <p className="label" style={{ margin: "0 0 9px" }}>
         data · lives on this device only
@@ -205,12 +189,28 @@ export function SettingsScreen({ onShare }: { onShare: () => void }) {
             ))}
           </span>
         </div>
-        <div className="toggle-row" style={{ cursor: "default" }}>
-          <span className="toggle-label">archived</span>
-          <span className="toggle-value">
-            {archived.length > 0 ? archived.map((h) => h.name).join(" · ") : "none"}
-          </span>
-        </div>
+      </div>
+
+      {/*
+        Archived Habits are the one per-Habit thing still listed here, and it is
+        not a setting — it is the only route back to a Screen Home no longer
+        shows. Without it, Archiving would be a switch that cannot be moved back.
+      */}
+      <p className="label" style={{ margin: "26px 0 9px" }}>
+        archived
+      </p>
+      <div className="stack" style={{ gap: 7 }}>
+        {archived.map((habit) => (
+          <button
+            key={habit.id}
+            type="button"
+            className="btn-list"
+            onClick={() => onOpenHabit(habit.id)}
+          >
+            {habit.name} ›
+          </button>
+        ))}
+        {archived.length === 0 ? <p className="note-faint">none.</p> : null}
       </div>
 
       <p className="note-faint" style={{ marginTop: 22 }}>

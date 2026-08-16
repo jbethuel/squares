@@ -1,6 +1,6 @@
 import type { DateKey } from "./date";
-import { activeOn, dateAt, elapsedDays, isOpen } from "./selectors";
-import type { AppData, Habit, ThemePreference } from "./types";
+import { activeOn, dateAt, elapsedDays, isArchived, isOpen } from "./selectors";
+import type { AppData, Habit, Span, ThemePreference } from "./types";
 
 function sameSet(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((id) => b.includes(id));
@@ -57,8 +57,7 @@ export function addHabit(data: AppData, name: string, today: DateKey): AppData {
   const habit: Habit = {
     id: newId(),
     name: trimmed,
-    createdOn: today,
-    archivedOn: null,
+    spans: [{ from: today, to: null }],
     chained: false,
     sharedName: false,
   };
@@ -75,14 +74,42 @@ export function renameHabit(data: AppData, id: string, name: string): AppData {
   return patchHabit(data, id, { name: trimmed });
 }
 
+/** Close every open Span at today: the Habit is Active up to, but not on, today. */
+function closeSpans(spans: Span[], today: DateKey): Span[] {
+  return spans.map((span) => (span.to === null ? { ...span, to: today } : span));
+}
+
 /**
- * Retire a Habit from today forward. Every past Tick stays in the year and in
- * the Total; the Day Records that counted it are untouched. There is no delete.
+ * Reopen the Habit from today forward.
+ *
+ * Archiving and changing your mind on the same Day is an undo, not a new Span —
+ * otherwise every mis-tap would leave a zero-length Span in the record forever.
+ * On any later Day the old Span stays closed and a new one opens, so the Days
+ * spent Archived remain a gap.
  */
-export function archiveHabit(data: AppData, id: string, today: DateKey): AppData {
+function openSpan(spans: Span[], today: DateKey): Span[] {
+  const last = spans[spans.length - 1];
+  if (last && last.to === today) return [...spans.slice(0, -1), { ...last, to: null }];
+  return [...spans, { from: today, to: null }];
+}
+
+/**
+ * Archive a Habit or take it back out, from today forward either way.
+ *
+ * Every past Tick stays in the year and in the Total; the Day Records that
+ * counted it are untouched, and the Days it spends Archived are never
+ * backdated away. There is no delete. See ADR 0005.
+ */
+export function setArchived(
+  data: AppData,
+  id: string,
+  archived: boolean,
+  today: DateKey,
+): AppData {
   const habit = data.habits.find((h) => h.id === id);
-  if (!habit || habit.archivedOn !== null) return data;
-  return sealDays(patchHabit(data, id, { archivedOn: today }), today);
+  if (!habit || isArchived(habit, today) === archived) return data;
+  const spans = archived ? closeSpans(habit.spans, today) : openSpan(habit.spans, today);
+  return sealDays(patchHabit(data, id, { spans }), today);
 }
 
 export function setChained(data: AppData, id: string, chained: boolean): AppData {

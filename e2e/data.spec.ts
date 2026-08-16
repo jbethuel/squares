@@ -13,7 +13,7 @@ test.describe("the year lives on this device", () => {
     expect(file.suggestedFilename()).toMatch(/^squares-\d{4}-\d{2}-\d{2}\.json$/);
 
     const contents = JSON.parse(await readFile((await file.path())!, "utf8"));
-    expect(contents.version).toBe(1);
+    expect(contents.version).toBe(2);
     expect(contents.habits.map((h: { name: string }) => h.name)).toEqual(["workout", "read"]);
     await expect(page.getByRole("status")).toHaveText("exported");
   });

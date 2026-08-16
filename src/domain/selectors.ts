@@ -1,15 +1,28 @@
 import { addDays, daysBetween, type DateKey } from "./date";
 import { GRACE_DAYS, YEAR, type AppData, type DayRecord, type Habit, type Intensity } from "./types";
 
-/** Habits that existed and were not Archived on the given Day. */
-export function activeOn(habits: Habit[], date: DateKey): string[] {
-  return habits
-    .filter((h) => h.createdOn <= date && (h.archivedOn === null || date < h.archivedOn))
-    .map((h) => h.id);
+/** Whether the Day falls inside one of the Habit's Active Spans. */
+export function isActiveOn(habit: Habit, date: DateKey): boolean {
+  return habit.spans.some((span) => span.from <= date && (span.to === null || date < span.to));
 }
 
+/** Habits that were Active on the given Day. */
+export function activeOn(habits: Habit[], date: DateKey): string[] {
+  return habits.filter((h) => isActiveOn(h, date)).map((h) => h.id);
+}
+
+/**
+ * Archived is simply "not Active today". There is no separate flag to fall out
+ * of step with the Spans, and a Habit taken back out of the Archive stops being
+ * Archived the moment its new Span opens.
+ */
 export function isArchived(habit: Habit, today: DateKey): boolean {
-  return habit.archivedOn !== null && habit.archivedOn <= today;
+  return !isActiveOn(habit, today);
+}
+
+/** The first Day this Habit was ever Active. Survives Archiving. */
+export function firstDayOf(habit: Habit): DateKey | undefined {
+  return habit.spans[0]?.from;
 }
 
 export function liveHabits(data: AppData, today: DateKey): Habit[] {

@@ -4,15 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import { BackBar } from "@/components/BackBar";
 import { StoreProvider } from "@/domain/store";
 import { DetailScreen } from "@/screens/DetailScreen";
-import { EditScreen } from "@/screens/EditScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
+import { NewHabitScreen } from "@/screens/NewHabitScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
 import { ShareScreen } from "@/screens/ShareScreen";
 
 type Screen =
   | { name: "home" }
   | { name: "detail"; habitId: string }
-  | { name: "edit"; habitId: string | null }
+  | { name: "new" }
   | { name: "settings" }
   | { name: "share" };
 
@@ -66,27 +66,29 @@ function App() {
 
   const body = () => {
     switch (screen.name) {
+      // Everything about one Habit is on this Screen: its name, its Chain, its
+      // Share Card opt-in, and whether it is Archived.
       case "detail":
+        return <DetailScreen habitId={screen.habitId} />;
+      case "new":
+        return <NewHabitScreen onDone={home} />;
+      case "settings":
         return (
-          <DetailScreen
-            habitId={screen.habitId}
-            onEdit={() => push({ name: "edit", habitId: screen.habitId })}
+          <SettingsScreen
+            onShare={() => push({ name: "share" })}
+            // The only route to an Archived Habit, which Home no longer lists.
+            onOpenHabit={(habitId) => push({ name: "detail", habitId })}
           />
         );
-      case "edit":
-        return <EditScreen habitId={screen.habitId} onDone={home} />;
-      case "settings":
-        return <SettingsScreen onShare={() => push({ name: "share" })} />;
-      // The Share Card keeps a back of its own. `‹ change what is named` is a
-      // sentence about the opt-ins rather than chrome, and it leads one level
-      // up to settings — the same place the bar goes, said in words.
+      // A name on the card opens the Habit that put it there, one level deeper
+      // rather than back — the bar still leads to the card it came from.
       case "share":
-        return <ShareScreen onBack={back} />;
+        return <ShareScreen onOpenHabit={(habitId) => push({ name: "detail", habitId })} />;
       default:
         return (
           <HomeScreen
             onOpenHabit={(habitId) => push({ name: "detail", habitId })}
-            onNewHabit={() => push({ name: "edit", habitId: null })}
+            onNewHabit={() => push({ name: "new" })}
             onSettings={() => push({ name: "settings" })}
           />
         );

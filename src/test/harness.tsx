@@ -18,6 +18,8 @@ interface AccountSpec {
   habits?: string[];
   /** Habit name -> the Day offsets it was Ticked on. 0 is today. */
   ticks?: Record<string, number[]>;
+  /** Habits whose Span was closed at today, so they read as Archived. */
+  archived?: string[];
 }
 
 export function idOf(data: AppData, name: string): string {
@@ -45,7 +47,12 @@ export function seed(data: AppData, habitId: string, offsets: number[]): AppData
  * sealed up to today. Habits are built directly rather than through addHabit so
  * that the seal happens exactly once, at today.
  */
-export function account({ age = 30, habits = [], ticks = {} }: AccountSpec = {}): AppData {
+export function account({
+  age = 30,
+  habits = [],
+  ticks = {},
+  archived = [],
+}: AccountSpec = {}): AppData {
   const installedOn = addDays(TODAY, -(age - 1));
   let data = sealDays(
     {
@@ -53,8 +60,7 @@ export function account({ age = 30, habits = [], ticks = {} }: AccountSpec = {})
       habits: habits.map((name, index) => ({
         id: `h${index + 1}`,
         name,
-        createdOn: installedOn,
-        archivedOn: null,
+        spans: [{ from: installedOn, to: archived.includes(name) ? TODAY : null }],
         chained: false,
         sharedName: false,
       })),

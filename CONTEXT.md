@@ -27,11 +27,17 @@ The permanent record of one Day: which Habits were Active and which were Ticked.
 _Avoid_: entry, log, snapshot.
 
 **Active Habit**:
-A Habit that existed and was not Archived on a given Day. Only Active Habits count toward that Day's Intensity.
+A Habit inside one of its Active Spans on a given Day. Only Active Habits count toward that Day's Intensity.
 _Avoid_: enabled, current, live.
+
+**Active Span**:
+An unbroken run of Days from the Day a Habit was taken up to the Day it was Archived — the last Span left open while the Habit is still going. A Habit taken out of the Archive opens a new Span rather than extending the old one, so a Habit that was retired and later taken up again carries a gap in the middle that nothing can close.
+_Avoid_: period, interval, lifetime, stint.
 
 **Archive**:
 Retiring a Habit from today forward. History is untouched — Days on which it was Active still count it. There is no way to remove a Habit from the past.
+
+Archiving is a state, not an act: a Habit can be taken out of the Archive again, and is then Active from that Day forward. The Days it spent Archived stay Archived forever — coming back is never backdated, and the gap it leaves is as permanent as any other part of the record.
 _Avoid_: delete, remove, disable, pause, hide.
 
 ### Display
@@ -77,7 +83,7 @@ Strictly consecutive Days on which a Habit was Ticked. Belongs to a single Habit
 _Avoid_: streak, run, combo.
 
 **Chained Habit**:
-A Habit whose Chain the user has explicitly opted into seeing. Habits are unchained by default — an unchained Habit is Ticked and counts toward Intensity and Total exactly like any other, it is simply never shown a consecutive-Day count.
+A Habit whose Chain the user has explicitly opted into seeing. Habits are unchained by default — an unchained Habit is Ticked and counts toward Intensity and Total exactly like any other, it is simply never shown a consecutive-Day count. An Archived Habit is shown no Chain either: a Chain counts back from today, and a Habit that cannot be Ticked today would read 0 forever.
 _Avoid_: streak habit, tracked habit, untracked habit.
 
 **Total**:
@@ -101,5 +107,5 @@ A PNG of the Overview Heatmap and its Total, rendered on the device and saved to
 _Avoid_: badge, profile, screenshot, story.
 
 **Named Habit**:
-A Habit whose name the user has explicitly opted into showing on the Share Card. Habits are unnamed there by default — a Share Card carries no Habit names unless each one was individually opted in.
+A Habit whose name the user has explicitly opted into showing on the Share Card. Habits are unnamed there by default — a Share Card carries no Habit names unless each one was individually opted in. An Archived Habit is never named on a Card whatever its opt-in says: a name on a Card reads as something the user does, and a retired Habit is not that.
 _Avoid_: public habit, shared habit, visible habit.
