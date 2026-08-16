@@ -176,6 +176,32 @@ test.describe("theme", () => {
       const page = await app({ habits: ["workout"], theme: "dark" });
       await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     });
+
+    /*
+      The bootstrap script rewrites `data-theme` before React hydrates, so on
+      this device the server's `dark` and the client's `light` disagree by
+      design. `suppressHydrationWarning` on `<html>` is what makes that
+      deliberate rather than a warning on every launch — and it is scoped to
+      that one element, so a real mismatch anywhere else still surfaces here.
+
+      Only a light-preference device ever saw this: on a dark one the script
+      writes back the same `dark` the server rendered, and there is nothing to
+      disagree about.
+    */
+    test("hydrates without complaining about the theme it just resolved", async ({ app, page }) => {
+      const errors: string[] = [];
+      page.on("console", (message) => {
+        if (message.type() === "error") errors.push(message.text());
+      });
+      page.on("pageerror", (error) => errors.push(error.message));
+
+      await app({ habits: ["workout"], ticks: { workout: [0] } });
+      // Asserted so the test cannot pass by simply failing to boot.
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+      await expect(page.getByRole("button", { name: /^workout,/ })).toBeVisible();
+
+      expect(errors).toEqual([]);
+    });
   });
 
   test.describe("on a device set to dark", () => {
