@@ -29,7 +29,7 @@ pnpm dev              # http://localhost:3000
 | `pnpm preview` | Serve `out/` on :4173 |
 | `pnpm test` | Unit tests (vitest) |
 | `pnpm test:watch` | Unit tests, watching |
-| `pnpm test:e2e` | End-to-end against the dev server |
+| `pnpm test:e2e` | End-to-end, on its own dev server on :3100 |
 | `pnpm test:e2e:static` | End-to-end against the built export — the artefact that ships |
 | `pnpm test:all` | Typecheck, then unit, then end-to-end |
 | `pnpm typecheck` | `tsc --noEmit` |
@@ -188,6 +188,14 @@ asserts no text control is declared under 16px, which is the size below which iO
 zooms the page on focus.
 
 **End-to-end** (`playwright`), against a real browser and a real localStorage.
+
+It runs on port 3100, not the 3000 `pnpm dev` uses, and never adopts a server it
+did not start. It used to do both, and the failure was vile: a `next dev` left
+behind by an earlier run — on another branch, or wedged and answering 500 —
+would be reused, and every test failed at page load with nothing to say why. A
+dedicated port lets `pnpm dev` and `pnpm test:e2e` run side by side; refusing to
+reuse turns a stale server into a loud "port in use". Set `PLAYWRIGHT_BASE_URL`
+to point the suite at a server you are running yourself.
 `e2e/fixtures.ts` seeds the device once, before the app's first script runs and
 *not* on later navigations, so a reload restores what the test did rather than
 what it started with. `share.spec.ts` reads the canvas back as a PNG rather than
