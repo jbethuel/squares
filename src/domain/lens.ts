@@ -24,7 +24,7 @@ import {
   weekdayOf,
   type DateKey,
 } from "./date";
-import type { Frame } from "./grid";
+import { CALENDAR_ROWS, type Frame } from "./grid";
 import { YEAR } from "./types";
 
 export type Lens = "week" | "month" | "year";
@@ -55,6 +55,19 @@ export function lensFrame(lens: Lens, today: DateKey): Frame {
     case "year":
       return { back: YEAR, ahead: 0 };
   }
+}
+
+/**
+ * Rows the Lens draws its Frame in.
+ *
+ * The Month and the Year are calendar blocks — a column is a week, a row is a
+ * weekday — because the weekday rows lining up across columns is the whole
+ * reason the shape reads. The Week has no second column to line up with, so it
+ * is one row, Sunday to Saturday, left to right: seven Squares at the size the
+ * width allows rather than a vertical strip that reads as nothing.
+ */
+export function lensRows(lens: Lens): number {
+  return lens === "week" ? 1 : CALENDAR_ROWS;
 }
 
 /** Squares a Lens draws: 7, 28-31, or 365. */

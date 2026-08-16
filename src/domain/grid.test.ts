@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { frameDays, gridColumns, gridGeometry, gridSquares, MAX_SQUARE, type Frame } from "./grid";
+import {
+  frameDays,
+  gridColumns,
+  gridGeometry,
+  gridHeight,
+  gridSquares,
+  MAX_SQUARE,
+  type Frame,
+} from "./grid";
 
 const PHONE = 350;
 /** A Wednesday, so a Square's row is predictable. */
 const WEEKDAY = 3;
+/** The Week is drawn on its side: one row of seven, not seven rows of one. */
+const WEEK_ROWS = 1;
 
 /** The three frames the app actually draws, on a Wednesday the 10th of a 31-day month. */
 const WEEK: Frame = { back: WEEKDAY + 1, ahead: 6 - WEEKDAY };
@@ -11,9 +21,23 @@ const MONTH: Frame = { back: 10, ahead: 21 };
 const YEAR: Frame = { back: 365, ahead: 0 };
 
 describe("grid geometry", () => {
-  it("gives a week a single column of 40px Squares", () => {
-    expect(gridColumns(WEEK, WEEKDAY)).toBe(1);
-    expect(gridGeometry(PHONE, WEEK, WEEKDAY).size).toBe(MAX_SQUARE);
+  it("gives a week a single row of 40px Squares", () => {
+    // Sunday to Saturday, left to right. A single week has no second column
+    // for a weekday row to line up with, so it is laid on its side.
+    expect(gridColumns(WEEK, WEEKDAY, WEEK_ROWS)).toBe(7);
+    const g = gridGeometry(PHONE, WEEK, WEEKDAY, WEEK_ROWS);
+    expect(g.rows).toBe(1);
+    expect(g.size).toBe(MAX_SQUARE);
+    // One row of Squares is exactly one Square tall.
+    expect(gridHeight(g)).toBe(MAX_SQUARE);
+  });
+
+  it("keeps the month and the year as seven-row calendar blocks", () => {
+    for (const frame of [MONTH, YEAR]) {
+      const g = gridGeometry(PHONE, frame, WEEKDAY);
+      expect(g.rows).toBe(7);
+      expect(gridHeight(g)).toBeCloseTo(g.size * 7 + g.gap * 6, 5);
+    }
   });
 
   it("fits a year on a phone with no scrolling", () => {
@@ -57,27 +81,29 @@ describe("grid geometry", () => {
     }
   });
 
-  it("is one column for a week whatever weekday today is", () => {
+  it("is seven columns for a week whatever weekday today is", () => {
     for (let weekday = 0; weekday < 7; weekday++) {
       const week: Frame = { back: weekday + 1, ahead: 6 - weekday };
       expect(frameDays(week)).toBe(7);
-      expect(gridColumns(week, weekday)).toBe(1);
+      expect(gridColumns(week, weekday, WEEK_ROWS)).toBe(7);
     }
   });
 });
 
 describe("grid squares", () => {
-  const drawn = (frame: Frame, weekday: number) =>
-    gridSquares(gridColumns(frame, weekday), frame, weekday).filter((s) => s.kind === "framed");
+  const drawn = (frame: Frame, weekday: number, rows = 7) =>
+    gridSquares(gridColumns(frame, weekday, rows), frame, weekday, rows).filter(
+      (s) => s.kind === "framed",
+    );
 
   it("draws every Day the frame covers, and no more", () => {
-    expect(drawn(WEEK, WEEKDAY)).toHaveLength(7);
+    expect(drawn(WEEK, WEEKDAY, WEEK_ROWS)).toHaveLength(7);
     expect(drawn(MONTH, WEEKDAY)).toHaveLength(31);
     expect(drawn(YEAR, WEEKDAY)).toHaveLength(365);
   });
 
-  it("puts today at its own weekday row, under every frame", () => {
-    for (const frame of [WEEK, MONTH, YEAR]) {
+  it("puts today at its own weekday row in a calendar block", () => {
+    for (const frame of [MONTH, YEAR]) {
       const squares = gridSquares(gridColumns(frame, WEEKDAY), frame, WEEKDAY);
       const today = squares.find((s) => s.offset === 0);
       expect(today?.row).toBe(WEEKDAY);
@@ -85,13 +111,24 @@ describe("grid squares", () => {
     }
   });
 
-  it("runs a week from Sunday to Saturday in one column, today in the middle", () => {
-    const squares = gridSquares(1, WEEK, WEEKDAY);
+  it("puts today at its own weekday column when the week is a row", () => {
+    // The weekday still places today — along the row rather than down it.
+    const squares = gridSquares(7, WEEK, WEEKDAY, WEEK_ROWS);
+    const today = squares.find((s) => s.offset === 0);
+    expect(today?.row).toBe(0);
+    expect(today?.column).toBe(WEEKDAY);
+  });
+
+  it("runs a week from Sunday to Saturday in one row, today in the middle", () => {
+    const squares = gridSquares(7, WEEK, WEEKDAY, WEEK_ROWS);
     expect(squares).toHaveLength(7);
     expect(squares.every((s) => s.kind === "framed")).toBe(true);
-    // Row 0 is Sunday, three Days back; row 6 is Saturday, three Days on.
+    // Column 0 is Sunday, three Days back; column 6 is Saturday, three Days on.
     expect(squares[0]?.offset).toBe(3);
     expect(squares[6]?.offset).toBe(-3);
+    // Every Square is on the one row, and they run oldest to newest rightwards.
+    expect(squares.every((s) => s.row === 0)).toBe(true);
+    expect(squares.map((s) => s.column)).toEqual([0, 1, 2, 3, 4, 5, 6]);
   });
 
   it("draws nothing for what spills past either end of the frame", () => {

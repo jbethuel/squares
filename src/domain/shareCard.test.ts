@@ -20,30 +20,30 @@ describe("the Share Card is anonymous by default", () => {
   it("carries no Habit names at all unless one was opted in", () => {
     const data = account(60, ["took my meds", "no drinking"]);
     expect(data.habits.every((habit) => habit.sharedName === false)).toBe(true);
-    expect(shareCardModel(data, TODAY).names).toEqual([]);
+    expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
   });
 
   it("carries only the Habits individually opted in, not the rest", () => {
     let data = account(60, ["workout", "no drinking", "pickleball"]);
     data = setSharedName(data, idOf(data, "workout"), true);
     data = setSharedName(data, idOf(data, "pickleball"), true);
-    expect(shareCardModel(data, TODAY).names).toEqual(["workout", "pickleball"]);
+    expect(shareCardModel(data, TODAY, "year").names).toEqual(["workout", "pickleball"]);
   });
 
   it("drops a name the moment the opt-in is withdrawn", () => {
     let data = account(60, ["took my meds"]);
     const meds = idOf(data, "took my meds");
     data = setSharedName(data, meds, true);
-    expect(shareCardModel(data, TODAY).names).toEqual(["took my meds"]);
+    expect(shareCardModel(data, TODAY, "year").names).toEqual(["took my meds"]);
     data = setSharedName(data, meds, false);
-    expect(shareCardModel(data, TODAY).names).toEqual([]);
+    expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
   });
 
-  it("drops an archived Habit's name, whose opt-in can no longer be withdrawn", () => {
+  it("drops an archived Habit's name, whatever its opt-in says", () => {
     let data = account(60, ["no drinking"]);
     data = setSharedName(data, idOf(data, "no drinking"), true);
     data = setArchived(data, idOf(data, "no drinking"), true, TODAY);
-    expect(shareCardModel(data, TODAY).names).toEqual([]);
+    expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
   });
 
   it("treats a missing opt-in in an imported file as off, never as on", () => {
@@ -55,7 +55,7 @@ describe("the Share Card is anonymous by default", () => {
       theme: "system",
     });
     expect(parsed!.habits[0]!.sharedName).toBe(false);
-    expect(shareCardModel(parsed!, TODAY).names).toEqual([]);
+    expect(shareCardModel(parsed!, TODAY, "year").names).toEqual([]);
   });
 
   it("keeps a deliberate opt-in across an export and re-import", () => {
@@ -65,37 +65,75 @@ describe("the Share Card is anonymous by default", () => {
     let data = account(60, ["workout"]);
     data = setSharedName(data, idOf(data, "workout"), true);
     const restored = parseAppData(JSON.parse(JSON.stringify(data)));
-    expect(shareCardModel(restored!, TODAY).names).toEqual(["workout"]);
+    expect(shareCardModel(restored!, TODAY, "year").names).toEqual(["workout"]);
   });
 });
 
 describe("the Share Card model", () => {
-  it("shows the Total and the same Intensity as the Overview", () => {
-    let data = account(30, ["a", "b"]);
+  /** Two Habits, both Ticked today, one of two yesterday. */
+  function ticked(age: number): AppData {
+    const data = account(age, ["a", "b"]);
     const days = { ...data.days };
     days[TODAY] = { ...days[TODAY]!, ticked: [idOf(data, "a"), idOf(data, "b")] };
     days[addDays(TODAY, -1)] = { ...days[addDays(TODAY, -1)]!, ticked: [idOf(data, "a")] };
-    data = { ...data, days };
+    return { ...data, days };
+  }
 
-    const model = shareCardModel(data, TODAY);
-    expect(model.total).toBe(3);
+  it("draws the same Intensity as the Overview", () => {
+    const model = shareCardModel(ticked(30), TODAY, "year");
     expect(model.levels[0]).toBe(4); // both Habits today
     expect(model.levels[1]).toBe(2); // one of two yesterday
     expect(model.levels[2]).toBe(0);
-    expect(model.levels).toHaveLength(30);
   });
 
-  it("is one Square on day one, like the Overview", () => {
-    const model = shareCardModel(account(1, ["a"]), TODAY);
-    expect(model.elapsed).toBe(1);
-    expect(model.levels).toHaveLength(1);
+  // The Tally counts the Frame drawn, so it is not the Total and it can fall.
+  // A number that can fall may not be called a Total — see CONTEXT.md.
+  it("tallies only the Days it drew", () => {
+    const data = ticked(30);
+    expect(shareCardModel(data, TODAY, "year").tally).toBe(3);
+    // Today is a Monday, so the week reaches back two Days: both Ticks today
+    // and the single one yesterday.
+    expect(shareCardModel(data, TODAY, "week").tally).toBe(3);
+    // The same three, drawn over a whole week rather than a whole year.
+    expect(shareCardModel(data, TODAY, "week").levels).toHaveLength(2);
+  });
+
+  it("draws the Week in one row, and the rest as calendar blocks", () => {
+    const data = account(60, ["a"]);
+    expect(shareCardModel(data, TODAY, "week").rows).toBe(1);
+    expect(shareCardModel(data, TODAY, "month").rows).toBe(7);
+    expect(shareCardModel(data, TODAY, "year").rows).toBe(7);
+  });
+
+  // A Week card made on a Wednesday used to be four Squares, which does not
+  // read as a week. The Frame is a calendar and does not shrink to fit.
+  it("draws the whole Frame, including the Days still to come", () => {
+    const model = shareCardModel(account(60, ["a"]), TODAY, "week");
+    // Monday: two Days back including today, five still to come.
+    expect(model.frame).toEqual({ back: 2, ahead: 5 });
+  });
+
+  it("draws a full year from day one, exactly as the Overview does", () => {
+    const model = shareCardModel(account(1, ["a"]), TODAY, "year");
+    expect(model.frame).toEqual({ back: 365, ahead: 0 });
+    // Days from before the account existed are drawn, at Intensity 0.
+    expect(model.levels).toHaveLength(365);
+    expect(model.levels[364]).toBe(0);
   });
 
   it("carries no date, handle or per-Habit breakdown", () => {
     let data = account(60, ["workout"]);
     data = setSharedName(data, idOf(data, "workout"), true);
-    const model = shareCardModel(data, TODAY);
-    // The whole surface of the card is these five fields.
-    expect(Object.keys(model).sort()).toEqual(["elapsed", "levels", "names", "total", "weekday"]);
+    const model = shareCardModel(data, TODAY, "year");
+    // The whole surface of the card is these seven fields.
+    expect(Object.keys(model).sort()).toEqual([
+      "frame",
+      "lens",
+      "levels",
+      "names",
+      "rows",
+      "tally",
+      "weekday",
+    ]);
   });
 });

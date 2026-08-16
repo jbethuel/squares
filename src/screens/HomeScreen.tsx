@@ -6,7 +6,14 @@ import { HabitRow } from "@/components/HabitRow";
 import { LensPicker } from "@/components/LensPicker";
 import { Total } from "@/components/Total";
 import { longLabel, weekdayOf, type DateKey } from "@/domain/date";
-import { DEFAULT_LENS, lensFrame, lensLegend, lensNoun, type Lens } from "@/domain/lens";
+import {
+  DEFAULT_LENS,
+  lensFrame,
+  lensLegend,
+  lensNoun,
+  lensRows,
+  type Lens,
+} from "@/domain/lens";
 import { toggleTick } from "@/domain/mutations";
 import {
   dateAt,
@@ -88,6 +95,7 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
       <Heatmap
         frame={frame}
         weekday={weekdayOf(today)}
+        rows={lensRows(lens)}
         levelFor={(offset) => intensityAt(data, dateAt(today, offset))}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
         // Ticks are counted over the part of the frame that has happened: the

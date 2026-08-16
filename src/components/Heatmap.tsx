@@ -2,7 +2,7 @@
 
 import { useMemo, type CSSProperties } from "react";
 import { useElementWidth } from "@/hooks/useElementWidth";
-import { gridGeometry, gridSquares, type Frame } from "@/domain/grid";
+import { CALENDAR_ROWS, gridGeometry, gridSquares, type Frame } from "@/domain/grid";
 import type { Intensity } from "@/domain/types";
 
 interface HeatmapProps {
@@ -10,6 +10,11 @@ interface HeatmapProps {
   frame: Frame;
   /** Today's weekday, 0 = Sunday, which fixes today's row in its column. */
   weekday: number;
+  /**
+   * Rows to draw the frame in: seven for a calendar block, one for a Week on
+   * its side. Comes from the Lens — see `lensRows`.
+   */
+  rows?: number;
   levelFor: (offset: number) => Intensity;
   titleFor?: (offset: number) => string;
   ariaLabel: string;
@@ -22,6 +27,7 @@ interface HeatmapProps {
 export function Heatmap({
   frame,
   weekday,
+  rows = CALENDAR_ROWS,
   levelFor,
   titleFor,
   ariaLabel,
@@ -33,12 +39,12 @@ export function Heatmap({
   // inline would otherwise rebuild the whole grid on every render.
   const { back, ahead } = frame;
   const geometry = useMemo(
-    () => (width > 0 ? gridGeometry(width, { back, ahead }, weekday) : null),
-    [width, back, ahead, weekday],
+    () => (width > 0 ? gridGeometry(width, { back, ahead }, weekday, rows) : null),
+    [width, back, ahead, weekday, rows],
   );
   const squares = useMemo(
-    () => (geometry ? gridSquares(geometry.cols, { back, ahead }, weekday) : []),
-    [geometry, back, ahead, weekday],
+    () => (geometry ? gridSquares(geometry.cols, { back, ahead }, weekday, rows) : []),
+    [geometry, back, ahead, weekday, rows],
   );
 
   return (
@@ -48,7 +54,7 @@ export function Heatmap({
           className="heatmap"
           style={
             {
-              gridTemplateRows: `repeat(7, ${geometry.size}px)`,
+              gridTemplateRows: `repeat(${geometry.rows}, ${geometry.size}px)`,
               gap: `${geometry.gap}px`,
               "--sq-size": `${geometry.size}px`,
               "--sq-radius": `${geometry.radius}px`,

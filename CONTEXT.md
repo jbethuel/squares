@@ -52,9 +52,12 @@ _Avoid_: cell, tile, box, dot, pixel.
 
 **Lens**:
 How much of the record a Heatmap draws: the Week, the Month or the Year. A Lens
-changes how many Squares are drawn, and therefore how large they are. It never
-changes what a Square means — one Square is one Day under every Lens — and it
-never changes the Total, which is always the Year's.
+changes how many Squares are drawn, how large they are, and what shape they are
+drawn in — the Month and the Year are calendar blocks of weekday rows, the Week
+is a single row running Sunday to Saturday. It never changes what a Square means
+— one Square is one Day under every Lens — and it never changes the Total, which
+is always the Year's. A Share Card has a Lens of its own, chosen where the card
+is made, and shows a Tally rather than the Total.
 _Avoid_: view, range, period, zoom, filter.
 
 **Frame**:
@@ -63,7 +66,10 @@ Squares, Sunday to Saturday; the Month is always the whole month; the Year is
 always 365 Squares ending today. Every Day in the Frame is drawn, including Days
 still to come and Days from before the account existed — all of them at
 Intensity 0, which is also what a Day you missed draws at. A Frame is a calendar
-and does not shrink to fit what you did with it.
+and does not shrink to fit what you did with it. This holds on a Share Card as
+much as on a Screen: wherever a Frame runs past today, today is ringed, because
+otherwise a Day you missed and a Day that has not happened are the same empty
+Square.
 _Avoid_: window, span, range, view.
 
 **Overview Heatmap**:
@@ -87,8 +93,12 @@ A Habit whose Chain the user has explicitly opted into seeing. Habits are unchai
 _Avoid_: streak habit, tracked habit, untracked habit.
 
 **Total**:
-The number of Ticks across all Habits in the last year, shown on the Overview Heatmap. Only ever rises; nothing can break it.
+The number of Ticks across all Habits in the last year, shown on the Overview Heatmap. Only ever rises; nothing can break it. The Lens never changes it — a Total scoped to the week would fall to zero every Sunday, and nothing that can go to zero is on Home.
 _Avoid_: score, points, streak, contributions.
+
+**Tally**:
+The number of Ticks inside the Frame that is drawn. A Share Card carries one, because a card of a single Week over a number counting the Year is a card nobody can read. Unlike the Total a Tally is not the Year's, can be small or zero, and falls as the Frame moves — which is why it is a different word and never appears on Home.
+_Avoid_: total, score, count, subtotal.
 
 **Theme**:
 Which of the two palettes the app draws itself in — the Dark one it was designed in, or the Light port. The user's choice is System, Light or Dark, and System means dark unless the device asks for light. It is a property of the app, not of the record: no Day, Tick or Share Card changes with it, and a Share Card is always Dark.
@@ -103,7 +113,7 @@ _Avoid_: backup, download, save, dump.
 ### Sharing
 
 **Share Card**:
-A PNG of the Overview Heatmap and its Total, rendered on the device and saved to it. There is no hosted page and no link between users.
+A PNG of the Overview Heatmap and its Tally, rendered on the device and saved to it. It is drawn at a Lens of its own, picked where the card is made, and it draws that Lens's whole Frame — a Week card made on a Wednesday still shows all seven Days, or it would not read as a week. There is no hosted page and no link between users.
 _Avoid_: badge, profile, screenshot, story.
 
 **Named Habit**:

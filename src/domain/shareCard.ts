@@ -1,7 +1,8 @@
 import { weekdayOf, type DateKey } from "./date";
-import { gridGeometry, gridSquares, squareRadius, type Frame } from "./grid";
+import { gridGeometry, gridHeight, gridSquares, squareRadius, type Frame } from "./grid";
+import { lensFrame, lensNoun, lensRows, type Lens } from "./lens";
 import { CARD, css, DARK_LEVELS } from "./palette";
-import { dateAt, elapsedDays, intensityAt, isArchived, totalTicks } from "./selectors";
+import { dateAt, intensityAt, isArchived, totalTicksIn } from "./selectors";
 import type { AppData, Intensity } from "./types";
 
 /**
@@ -13,26 +14,41 @@ import type { AppData, Intensity } from "./types";
  * and "no drinking", and a card that leaks a name is the one unforgivable bug.
  */
 export interface ShareCardModel {
-  elapsed: number;
+  /** How much of the record this card draws. Chosen on the card's own Screen. */
+  lens: Lens;
+  frame: Frame;
+  /** Rows the frame is drawn in: one for the Week, seven otherwise. */
+  rows: number;
   weekday: number;
-  /** Intensity by offset; index 0 is today. */
+  /**
+   * Intensity by offset; index 0 is today. A Day still to come has a negative
+   * offset and is simply absent, which reads as Intensity 0 — which is what it
+   * is, and what the Overview draws it at too.
+   */
   levels: Intensity[];
-  total: number;
+  /**
+   * The Tally: Ticks inside the Frame drawn. This is *not* the Total — under
+   * the Week or the Month it counts a handful of Days and can be zero. A number
+   * that can fall may not be called a Total; see CONTEXT.md.
+   */
+  tally: number;
   /** Named Habits only. Empty unless the user opted a Habit in by hand. */
   names: string[];
 }
 
-export function shareCardModel(data: AppData, today: DateKey): ShareCardModel {
-  const elapsed = elapsedDays(data, today);
+export function shareCardModel(data: AppData, today: DateKey, lens: Lens): ShareCardModel {
+  const frame = lensFrame(lens, today);
   const levels: Intensity[] = [];
-  for (let offset = 0; offset < elapsed; offset++) {
+  for (let offset = 0; offset < frame.back; offset++) {
     levels.push(intensityAt(data, dateAt(today, offset)));
   }
   return {
-    elapsed,
+    lens,
+    frame,
+    rows: lensRows(lens),
     weekday: weekdayOf(today),
     levels,
-    total: totalTicks(data, today),
+    tally: totalTicksIn(data, today, frame.back),
     // Archived Habits are excluded even when opted in. A name on a Card reads
     // as something the user does, and a retired Habit is not that. The opt-in
     // is reachable again now that Archived Habits have a Screen — this is a
@@ -56,20 +72,32 @@ const MARK_SIZE = 9;
 const FONT = '"Hack", ui-monospace, SFMono-Regular, Menlo, monospace';
 
 /**
- * The card's frame ends at today and reaches back only as far as the account
- * goes, so the card keeps drawing exactly the Days that have happened. It is a
- * record, not a screen: it has no Lens and no empty future.
+ * The card draws the Lens's Frame exactly as the Overview does — the whole
+ * Week, the whole Month, the whole Year — including Days still to come and Days
+ * from before the account existed, all at Intensity 0.
+ *
+ * It used to trim to the Days that had happened, on the grounds that a card is a
+ * record rather than a screen. That stopped working the moment the card had a
+ * Lens: a Week card made on a Wednesday would be four Squares, and four Squares
+ * do not read as a week. One rule for all three Lenses, and the shape of a card
+ * no longer depends on the day you made it.
  */
-function cardFrame(model: ShareCardModel): Frame {
-  return { back: model.elapsed, ahead: 0 };
+function cardGeometry(model: ShareCardModel) {
+  return gridGeometry(CARD_WIDTH - PAD * 2, model.frame, model.weekday, model.rows);
 }
 
 export function cardHeight(model: ShareCardModel): number {
-  const content = CARD_WIDTH - PAD * 2;
-  const geometry = gridGeometry(content, cardFrame(model), model.weekday);
-  const gridHeight = geometry.size * 7 + geometry.gap * 6;
   const names = model.names.length > 0 ? NAMES_SIZE + 6 : 0;
-  return PAD + gridHeight + GRID_TO_TOTAL + TOTAL_SIZE + 5 + CAPTION_SIZE + names + PAD;
+  return (
+    PAD +
+    gridHeight(cardGeometry(model)) +
+    GRID_TO_TOTAL +
+    TOTAL_SIZE +
+    5 +
+    CAPTION_SIZE +
+    names +
+    PAD
+  );
 }
 
 export function cardSize(model: ShareCardModel, scale: number) {
@@ -122,9 +150,8 @@ export function drawShareCard(
   ctx.stroke();
 
   const content = CARD_WIDTH - PAD * 2;
-  const frame = cardFrame(model);
-  const geometry = gridGeometry(content, frame, model.weekday);
-  const squares = gridSquares(geometry.cols, frame, model.weekday);
+  const geometry = cardGeometry(model);
+  const squares = gridSquares(geometry.cols, model.frame, model.weekday, geometry.rows);
   const gridWidth = geometry.cols * geometry.size + (geometry.cols - 1) * geometry.gap;
   const originX = PAD + (content - gridWidth) / 2;
 
@@ -134,19 +161,29 @@ export function drawShareCard(
   const radiusPx = squareRadius(squarePx);
 
   for (const square of squares) {
-    // The card shows only Days that have happened, and no today ring. It is a
-    // record, not a live screen.
     if (square.kind !== "framed") continue;
+    // A Day still to come has a negative offset and no entry: Intensity 0,
+    // which is also what a Day you missed draws at.
     const level = model.levels[square.offset] ?? 0;
     const x = originX + square.column * (geometry.size + geometry.gap);
     const y = PAD + square.row * (geometry.size + geometry.gap);
     ctx.fillStyle = css(DARK_LEVELS[level]!);
     roundRect(ctx, u(x), u(y), squarePx, squarePx, radiusPx);
     ctx.fill();
+
+    // Today is ringed only where the frame runs on past it. Under the Week and
+    // the Month there are Squares after today, and without the ring a Day you
+    // missed and a Day that has not happened are the same empty Square. The
+    // Year ends at today and needs no ring, so it ships unchanged.
+    if (model.frame.ahead > 0 && square.offset === 0) {
+      ctx.strokeStyle = css(CARD.fg, 0.55);
+      ctx.lineWidth = Math.max(1, u(1.5));
+      roundRect(ctx, u(x), u(y), squarePx, squarePx, radiusPx);
+      ctx.stroke();
+    }
   }
 
-  const gridHeight = geometry.size * 7 + geometry.gap * 6;
-  const totalY = PAD + gridHeight + GRID_TO_TOTAL;
+  const totalY = PAD + gridHeight(geometry) + GRID_TO_TOTAL;
 
   ctx.textBaseline = "top";
   ctx.textAlign = "left";
@@ -154,16 +191,16 @@ export function drawShareCard(
   if ("letterSpacing" in ctx) ctx.letterSpacing = `${u(-1)}px`;
   ctx.fillStyle = css(CARD.fg);
   ctx.font = `700 ${u(TOTAL_SIZE)}px ${FONT}`;
-  ctx.fillText(String(model.total), u(PAD), u(totalY));
+  ctx.fillText(String(model.tally), u(PAD), u(totalY));
   if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
 
   const captionY = totalY + TOTAL_SIZE + 5;
   ctx.fillStyle = css(CARD.muted);
   ctx.font = `400 ${u(CAPTION_SIZE)}px ${FONT}`;
-  // Same caption as Home, day one included: a card made on the first morning
-  // used to read "last 1 days".
-  const caption = model.elapsed === 1 ? "ticks" : `ticks · last ${model.elapsed} days`;
-  ctx.fillText(caption, u(PAD), u(captionY));
+  // The caption names what the number counts. It has to: the number is a Tally
+  // of the Frame drawn, not the Total, so "6" over seven Squares means six ticks
+  // this week — and the card is handed to someone with no other context.
+  ctx.fillText(`ticks · ${lensNoun(model.lens)}`, u(PAD), u(captionY));
 
   if (model.names.length > 0) {
     // One lowercase line, never separate rows — a per-Habit breakdown is a
