@@ -114,6 +114,46 @@ export function gridWidth(geometry: GridGeometry): number {
   return geometry.size * geometry.cols + geometry.gap * (geometry.cols - 1);
 }
 
+/**
+ * Room for the weekday names beside a calendar block, in px.
+ *
+ * This comes out of the grid's width, so it is the whole price of the side
+ * axis: on the Year, the one Frame wide enough to be width-bound, it takes a
+ * Square from 5.43px to 4.96px. The Week and the Month cap at MAX_SQUARE and
+ * lose nothing — the gutter only re-centres them.
+ */
+export const AXIS_GUTTER = 26;
+
+/**
+ * A Square in a grid that scrolls instead of fitting, and the gap beside it.
+ *
+ * The Year used to be squeezed to whatever made 53 columns fit a phone — 4.96px
+ * once the weekday names took their gutter, which is smaller than the gap
+ * between your fingertip and the thing you are looking at. A Frame this long
+ * now keeps a Square the size the contribution graph draws one and runs off the
+ * side of the Screen, opening at today.
+ */
+export const SCROLL_SQUARE = 11;
+export const SCROLL_GAP = 3;
+
+/**
+ * Geometry for a grid that is not trying to fit. The width it ends up is
+ * whatever the frame needs; the container scrolls to reach the rest.
+ */
+export function scrollGeometry(
+  frame: Frame,
+  weekday: number,
+  rows = CALENDAR_ROWS,
+): GridGeometry {
+  return {
+    cols: gridColumns(frame, weekday, rows),
+    rows,
+    size: SCROLL_SQUARE,
+    gap: SCROLL_GAP,
+    radius: squareRadius(SCROLL_SQUARE),
+  };
+}
+
 export type SquareKind =
   /** A Day the frame covers. Drawn, and shaded by whatever its record says. */
   | "framed"

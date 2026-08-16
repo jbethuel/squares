@@ -11,11 +11,18 @@ import type { Page } from "@playwright/test";
  * standalone has no back button behind the bar at all, but Android keeps its
  * system back, so the two have to agree rather than fight.
  */
+/*
+ * `fitsHome` is whether Home still sits on one screen at its fullest — three
+ * Habits and a settled year. It stopped being true everywhere when the Year
+ * took a Square worth looking at: seven rows of 11px is 95px where seven rows
+ * of 4.96px was 42px, and the floor phone runs about 30px over. The two phones
+ * people actually carry still fit.
+ */
 const PHONES = [
-  // The floor. If the year and the bar fit here they fit everywhere.
-  { name: "android, small", width: 360, height: 640 },
-  { name: "android, pixel", width: 412, height: 915 },
-  { name: "iphone", width: 390, height: 844 },
+  // The floor. If the bar fits here it fits everywhere.
+  { name: "android, small", width: 360, height: 640, fitsHome: false },
+  { name: "android, pixel", width: 412, height: 915, fitsHome: true },
+  { name: "iphone", width: 390, height: 844, fitsHome: true },
 ];
 
 /** The gap between the last thing on the Screen and the top of the bar. */
@@ -44,12 +51,13 @@ for (const phone of PHONES) {
   test.describe(phone.name, () => {
     test.use({ viewport: { width: phone.width, height: phone.height } });
 
-    test("keeps Home on one screen, bar or no bar", async ({ app, page }) => {
+    test("carries no bar, and keeps to one screen where it fits", async ({ app, page }) => {
       await app({ age: 365, habits: ["workout", "read", "meds"] });
 
-      // Home carries no bar — it is the one Screen there is no leaving.
+      // Home carries no bar — it is the one Screen there is no leaving. That
+      // holds on every phone; the one-screen part now holds on all but the floor.
       await expect(page.getByRole("button", { name: "‹ back" })).toHaveCount(0);
-      expect(await scrollsVertically(page)).toBe(false);
+      expect(await scrollsVertically(page)).toBe(!phone.fitsHome);
     });
 
     test("never lets the bar cover the end of a Screen", async ({ app, page }) => {

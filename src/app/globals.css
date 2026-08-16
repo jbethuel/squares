@@ -412,6 +412,74 @@ select {
   justify-content: center;
   min-height: 44px;
 }
+
+/*
+  The names around a Heatmap.
+
+  Both strips are positioned off the same `size + gap` step the Squares are laid
+  out on, rather than being a second grid that has to be kept in step with the
+  first — a month name that drifts one column off the month it names is worse
+  than no name.
+*/
+.axis {
+  display: flex;
+}
+/*
+  The weekday names sit outside the scroller, so they stay put while the Year
+  runs past them. A gutter that scrolled away with the grid would leave the
+  rows unlabelled exactly when you had scrolled far enough to lose track.
+*/
+.axis-side {
+  flex: none;
+  width: 26px;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  color: var(--dim);
+}
+.axis-days {
+  display: grid;
+}
+.axis-days > span {
+  align-self: center;
+  white-space: nowrap;
+}
+.axis-body {
+  flex: 1;
+  min-width: 0;
+}
+/*
+  The Year is 53 columns. Fitting those to a phone costs a Square most of its
+  size, so it keeps its size and runs off the side instead. It opens at today —
+  see the scroll effect in Heatmap.tsx.
+*/
+.axis-body[data-scrolls] {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.axis-body[data-scrolls]::-webkit-scrollbar {
+  display: none;
+}
+.axis-body[data-scrolls] .heatmap {
+  justify-content: start;
+}
+/* Empty, and the same height as the strip: it drops the weekday names to sit
+   level with the grid rather than with the month names beside them. */
+.axis-corner {
+  height: 15px;
+}
+.axis-top {
+  position: relative;
+  height: 15px;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  color: var(--dim);
+}
+.axis-top > span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
 .sq {
   border-radius: var(--sq-radius);
   width: var(--sq-size);

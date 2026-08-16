@@ -80,16 +80,37 @@ test.describe("the whole app, one tap at a time", () => {
     await expect(page.locator(".sq-today")).toHaveCount(1);
   });
 
-  test("fits a settled year on a phone with no scrolling", async ({ app }) => {
-    const page = await app({ age: 365, habits: ["workout"] });
+  /*
+    The year used to be squeezed until 53 columns fitted the phone, which cost a
+    Square most of its size once the weekday names took a gutter. It now keeps
+    its size and runs off the side — but only inside its own scroller: the page
+    itself must still never scroll sideways.
+  */
+  test("scrolls a settled year sideways, and never the page with it", async ({ app, page }) => {
+    await app({ age: 365, habits: ["workout"] });
 
-    await expect(page.getByText("today", { exact: true })).toBeVisible();
     await expect(page.locator(".heatmap .sq")).toHaveCount(53 * 7);
 
-    const scrolls = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    );
-    expect(scrolls).toBe(false);
+    const box = await page.locator(".axis-body").evaluate((el) => ({
+      overflows: el.scrollWidth > el.clientWidth,
+      page: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    }));
+    expect(box.overflows).toBe(true);
+    expect(box.page).toBe(false);
+  });
+
+  test("opens the year at today, not at the year before it", async ({ app, page }) => {
+    await app({ age: 365, habits: ["workout"] });
+
+    // The record reads the way it is written: today first, the year behind it.
+    const at = await page
+      .locator(".axis-body")
+      .evaluate((el) => ({ left: el.scrollLeft, max: el.scrollWidth - el.clientWidth }));
+    expect(at.max).toBeGreaterThan(0);
+    expect(at.left).toBe(at.max);
+
+    // And today's Square is one you can actually see without scrolling.
+    await expect(page.locator(".sq-today")).toBeInViewport();
   });
 
   test("opens a Habit's own year and comes back", async ({ app }) => {

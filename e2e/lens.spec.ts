@@ -102,9 +102,11 @@ test.describe("the Lens", () => {
     await expect(total(page)).toHaveText("3");
   });
 
-  test("still fits the phone at every Lens, with no scrolling", async ({ app }) => {
+  test("never lets any Lens push the page sideways", async ({ app }) => {
     const page = await app({ age: 365, habits: ["workout"] });
 
+    // The Year scrolls inside its own box; the page never does. A sideways page
+    // takes the whole Screen with it, which is a different thing entirely.
     for (const name of ["week", "month", "year"]) {
       await lens(page, name).click();
       const scrolls = await page.evaluate(
@@ -112,6 +114,23 @@ test.describe("the Lens", () => {
       );
       expect(scrolls, `${name} overflows the viewport`).toBe(false);
     }
+  });
+
+  test("fits the week and the month outright, and scrolls only the year", async ({ app }) => {
+    const page = await app({ age: 365, habits: ["workout"] });
+    const overflows = () =>
+      page.locator(".axis-body").evaluate((el) => el.scrollWidth > el.clientWidth);
+
+    // Seven Squares and five columns sit on a phone at the largest size the app
+    // draws. Fitting 53 columns is what costs a Square its size.
+    await lens(page, "week").click();
+    expect(await overflows()).toBe(false);
+
+    await lens(page, "month").click();
+    expect(await overflows()).toBe(false);
+
+    await lens(page, "year").click();
+    expect(await overflows()).toBe(true);
   });
 
   test("is offered over a Habit's own Heatmap too", async ({ app }) => {

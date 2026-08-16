@@ -160,12 +160,28 @@ describe("what Home says about the year", () => {
     expect(screen.getByText("ticks · last 12 days")).toBeInTheDocument();
   });
 
-  it("names both edges of the year, which are the same at any age", () => {
+  it("names the months across the top of the year", () => {
     open(account({ age: 100, habits: ["workout"] }));
-    // A rolling year ending today: the same frame on day one and on day 365.
-    // The edges carry it alone — there is no note between them to restate them.
-    expect(screen.getByText("aug 2025")).toBeInTheDocument();
-    expect(screen.getByText("today")).toBeInTheDocument();
+
+    // A rolling year ending today, 3 August 2026: it opens in August 2025 and
+    // closes in August 2026, so every month is named and August twice.
+    const strip = document.querySelector(".axis-top")!;
+    expect(strip.textContent).toContain("aug");
+    expect(strip.textContent).toContain("jan");
+    expect(strip.textContent).toContain("dec");
+    // No legend underneath restating where it began: the strip already said.
+    expect(screen.queryByText("aug 2025")).not.toBeInTheDocument();
+    expect(screen.queryByText("today")).not.toBeInTheDocument();
+  });
+
+  it("names monday, wednesday and friday down the side, and no other day", () => {
+    open(account({ age: 100, habits: ["workout"] }));
+
+    const side = document.querySelector(".axis-side")!;
+    expect(side.textContent).toBe("monwedfri");
+    // At the year's 4.9px rows, seven names would overlap into a stack.
+    expect(side.textContent).not.toContain("tue");
+    expect(side.textContent).not.toContain("sat");
   });
 
   it("draws the same 365 Squares however old the account is", () => {
@@ -239,21 +255,27 @@ describe("the Lens over the Overview", () => {
     expect(screen.getByText("ticks · last 30 days")).toBeInTheDocument();
   });
 
-  it("names both edges of whatever it is drawing", async () => {
+  it("says what it is drawing, above the grid or under it", async () => {
     const user = userEvent.setup();
     open(account({ age: 100, habits: ["workout"] }));
-    expect(screen.getByText("aug 2025")).toBeInTheDocument();
-    expect(screen.getByText("today")).toBeInTheDocument();
 
+    const strip = () => document.querySelector(".axis-top")!.textContent;
+    // The year names its months and needs no legend under it.
+    expect(strip()).toContain("jan");
+    expect(document.querySelector(".legend")).toBeNull();
+
+    // The week is a single row, so its weekdays go on top — and the legend
+    // stays, because `mon wed fri` never says the row runs Sunday to Saturday.
     await user.click(lens("week"));
+    expect(strip()).toBe("monwedfri");
     expect(screen.getByText("sunday")).toBeInTheDocument();
     expect(screen.getByText("this week")).toBeInTheDocument();
     expect(screen.getByText("saturday")).toBeInTheDocument();
 
+    // The month names itself, and carries the year no other line has.
     await user.click(lens("month"));
-    expect(screen.getByText("1 aug")).toBeInTheDocument();
-    expect(screen.getByText("aug 2026")).toBeInTheDocument();
-    expect(screen.getByText("31 aug")).toBeInTheDocument();
+    expect(strip()).toBe("aug 2026");
+    expect(document.querySelector(".legend")).toBeNull();
   });
 
   it("marks today, so a Day still to come cannot read as a Day that was missed", async () => {

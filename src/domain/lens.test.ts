@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { weekdayOf, type DateKey } from "./date";
 import { frameDays, gridColumns, gridGeometry, gridSquares, MAX_SQUARE } from "./grid";
-import { lensDays, lensFrame, lensLegend, LENSES, lensNoun } from "./lens";
+import { lensDays, lensFrame, lensLegend, LENSES, lensMonths, lensNoun } from "./lens";
 
 /** A Monday, the 3rd of August 2026 — a 31-day month. */
 const TODAY: DateKey = "2026-08-03";
@@ -90,31 +90,30 @@ describe("the Lens and the grid", () => {
 });
 
 describe("what the legend says under each Lens", () => {
-  it("names both edges, because the right edge is no longer always today", () => {
-    expect(lensLegend("week", TODAY)).toEqual({
+  // The Week's row is the one Frame whose ends nothing else names. Its strip
+  // carries `mon wed fri`, which never says the row runs Sunday to Saturday.
+  it("names both ends of the week, which its weekday names do not", () => {
+    expect(lensLegend("week")).toEqual({
       start: "sunday",
       note: "this week",
       end: "saturday",
     });
-    expect(lensLegend("month", TODAY)).toEqual({
-      start: "1 aug",
-      note: "aug 2026",
-      end: "31 aug",
-    });
   });
 
-  it("ends the year at today, and says where it began", () => {
-    expect(lensLegend("year", TODAY)).toEqual({
-      start: "aug 2025",
-      // Nothing between the edges: they already read "aug 2025" and "today",
-      // and a note there would only restate them.
-      note: "",
-      end: "today",
-    });
+  // The Year names its months across the top and the Month names itself, so a
+  // second line underneath restates what is already on screen.
+  it("is silent under the Lenses that name themselves above the grid", () => {
+    expect(lensLegend("month")).toBeNull();
+    expect(lensLegend("year")).toBeNull();
   });
+});
 
-  it("names the real length of a short month", () => {
-    expect(lensLegend("month", "2026-02-10").end).toBe("28 feb");
-    expect(lensLegend("month", "2028-02-10").end).toBe("29 feb");
+describe("what the strip above the grid carries", () => {
+  it("gives the year its months, the month its own name, the week neither", () => {
+    expect(lensMonths("year")).toBe("months");
+    expect(lensMonths("month")).toBe("month");
+    // The Week's strip is its weekday names, which have no side to sit on once
+    // the Frame is a single row.
+    expect(lensMonths("week")).toBe("none");
   });
 });

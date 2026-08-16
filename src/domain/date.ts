@@ -72,6 +72,11 @@ const MONTHS = [
   "jul", "aug", "sep", "oct", "nov", "dec",
 ];
 
+/** "aug" — the strip above a Heatmap, where the year is carried by the grid. */
+export function monthLabel(key: DateKey): string {
+  return MONTHS[fromKey(key).getMonth()]!;
+}
+
 export function monthYearLabel(key: DateKey): string {
   const date = fromKey(key);
   return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
