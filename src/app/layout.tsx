@@ -27,6 +27,10 @@ export const viewport: Viewport = {
  * Resolve the theme before first paint. The app is dark by default and the
  * preference lives in the same blob as everything else, so without this the
  * first frame of a light-theme launch is a flash of the dark one.
+ *
+ * This runs before React hydrates and rewrites `data-theme` on the very element
+ * the server rendered as `dark`, which is a hydration mismatch by construction —
+ * see `suppressHydrationWarning` on `<html>` below.
  */
 const THEME_BOOTSTRAP = `
 (function () {
@@ -43,7 +47,14 @@ const THEME_BOOTSTRAP = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark">
+    /*
+      The bootstrap script above sets `data-theme` on this element before React
+      hydrates, so on a light-preference device the server's `dark` and the
+      client's `light` disagree — deliberately, because the alternative is a
+      dark flash on every launch. This suppression applies to this element
+      alone and one level deep; every child is still checked normally.
+    */
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
         <main className="app">{children}</main>
