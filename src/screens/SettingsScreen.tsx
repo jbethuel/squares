@@ -11,6 +11,18 @@ import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const THEMES: ThemePreference[] = ["system", "light", "dark"];
 
+/**
+ * The rule between two blocks of settings.
+ *
+ * Every block is a label and the controls under it. Without a rule the label
+ * does the whole job of saying where one block ends, and a label reads as a
+ * caption on the block *above* it as readily as a heading for the one below —
+ * so the export buttons look like they belong to the share card.
+ */
+function Rule() {
+  return <hr className="divider" style={{ margin: "22px 0" }} />;
+}
+
 interface SettingsScreenProps {
   onShare: () => void;
   onOpenHabit: (habitId: string) => void;
@@ -69,24 +81,28 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
         knows anything about one Habit — two places to change one flag is how
         they drift.
       */}
-      <p className="label" style={{ margin: "0 0 9px" }}>
+      {/* Real headings, not styled paragraphs: settings is a Screen of blocks,
+          and a heading is how you jump between them without reading each one. */}
+      <h2 className="title-sub" style={{ margin: "0 0 9px" }}>
         share card
-      </p>
+      </h2>
       {/* The line the opt-ins used to carry, now that they are not next to the
           card to say it themselves. */}
       <p className="note" style={{ margin: "0 0 10px" }}>
         anonymous unless you name a habit on its own screen.
       </p>
-      <div className="stack" style={{ gap: 7, marginBottom: 26 }}>
+      <div className="stack" style={{ gap: 7 }}>
         <button type="button" className="btn-list" onClick={onShare}>
           make a share card ›
         </button>
       </div>
 
-      <p className="label" style={{ margin: "0 0 9px" }}>
+      <Rule />
+
+      <h2 className="title-sub" style={{ margin: "0 0 9px" }}>
         data · lives on this device only
-      </p>
-      <div className="stack" style={{ gap: 7, marginBottom: 8 }}>
+      </h2>
+      <div className="stack" style={{ gap: 7 }}>
         <button type="button" className="btn-list" onClick={() => void exportJson()}>
           export .json
         </button>
@@ -110,7 +126,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
         />
       </div>
       {pending ? (
-        <div className="card card-accent" style={{ marginBottom: 8 }}>
+        <div className="card card-accent" style={{ marginTop: 10 }}>
           <p className="note" style={{ margin: "0 0 12px" }}>
             replace this device&apos;s year with {pending.habits.length} habits and{" "}
             {Object.keys(pending.days).length} days? this cannot be undone.
@@ -139,40 +155,53 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
           </div>
         </div>
       ) : null}
+      {/*
+        No empty stand-in under the buttons. A slot held open for a status that
+        is absent almost always is a permanent gap paid for a jump that happens
+        on the user's own tap — and with a rule beneath it, the gap reads as
+        something missing rather than as breathing room.
+      */}
       {status ? (
-        <p className="note-faint" role="status" style={{ marginBottom: 26 }}>
+        <p className="note-faint" role="status" style={{ margin: "10px 0 0" }}>
           {status}
         </p>
-      ) : (
-        <div style={{ height: 18 }} />
-      )}
-
-      {!installed ? (
-        <div className="card card-accent">
-          <h2 className="title-sub" style={{ margin: "0 0 6px" }}>
-            install to home screen
-          </h2>
-          <p className="note" style={{ margin: "0 0 13px" }}>
-            a tab you have to find is a habit you&apos;ll drop. put it next to the thumb.
-          </p>
-          {canInstall ? (
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ padding: "12px 16px" }}
-              onClick={() => void install()}
-            >
-              install
-            </button>
-          ) : (
-            <p className="note-faint" style={{ margin: 0 }}>
-              use your browser&apos;s share or menu button, then &quot;add to home screen&quot;.
-            </p>
-          )}
-        </div>
       ) : null}
 
-      <div className="stack" style={{ gap: 7, marginTop: 26 }}>
+      {/* The install block carries its own rule, because it is not always here:
+          a rule left outside the condition would double up once it is gone. */}
+      {!installed ? (
+        <>
+          <Rule />
+          <div className="card card-accent">
+            <h2 className="title-sub" style={{ margin: "0 0 6px" }}>
+              install to home screen
+            </h2>
+            <p className="note" style={{ margin: "0 0 13px" }}>
+              a tab you have to find is a habit you&apos;ll drop. put it next to the thumb.
+            </p>
+            {canInstall ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ padding: "12px 16px" }}
+                onClick={() => void install()}
+              >
+                install
+              </button>
+            ) : (
+              <p className="note-faint" style={{ margin: 0 }}>
+                use your browser&apos;s share or menu button, then &quot;add to home screen&quot;.
+              </p>
+            )}
+          </div>
+        </>
+      ) : null}
+
+      <Rule />
+
+      {/* No label over this one: the row says "theme" itself, and a heading
+          above it saying the same word twice is worse than none. */}
+      <div className="stack" style={{ gap: 7 }}>
         <div className="toggle-row" style={{ cursor: "default" }}>
           <span className="toggle-label">theme</span>
           <span style={{ display: "flex", gap: 6 }}>
@@ -191,14 +220,16 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
         </div>
       </div>
 
+      <Rule />
+
       {/*
         Archived Habits are the one per-Habit thing still listed here, and it is
         not a setting — it is the only route back to a Screen Home no longer
         shows. Without it, Archiving would be a switch that cannot be moved back.
       */}
-      <p className="label" style={{ margin: "26px 0 9px" }}>
+      <h2 className="title-sub" style={{ margin: "0 0 9px" }}>
         archived
-      </p>
+      </h2>
       <div className="stack" style={{ gap: 7 }}>
         {archived.map((habit) => (
           <button
@@ -213,7 +244,11 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
         {archived.length === 0 ? <p className="note-faint">none.</p> : null}
       </div>
 
-      <p className="note-faint" style={{ marginTop: 22 }}>
+      <Rule />
+
+      {/* Below the last rule and under no label: this is what the Screen
+          promises, not another thing on it to set. */}
+      <p className="note-faint" style={{ margin: 0 }}>
         no account. no sync. no analytics. clearing site data clears your progress. do frequent
         backups using export .json.
       </p>
