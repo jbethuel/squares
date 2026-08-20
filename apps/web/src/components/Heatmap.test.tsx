@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Heatmap } from "./Heatmap";
-import { gridGeometry, type Frame } from "@/domain/grid";
+import { gridGeometry, type Frame } from "@squares/domain/grid";
 import { PHONE_WIDTH, setElementWidth } from "@/test/dom";
-import type { Intensity } from "@/domain/types";
+import type { Intensity } from "@squares/domain/types";
 
 const YEAR: Frame = { back: 365, ahead: 0 };
 

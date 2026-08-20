@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { LensPicker } from "./LensPicker";
-import type { Lens } from "@/domain/lens";
+import type { Lens } from "@squares/domain/lens";
 
 function open(value: Lens = "year") {
   const onChange = vi.fn();

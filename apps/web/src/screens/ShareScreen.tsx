@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { handOff } from "@/domain/handoff";
+import { handOff } from "@/platform/handoff";
 import { LensPicker } from "@/components/LensPicker";
-import { DEFAULT_LENS, lensNoun, type Lens } from "@/domain/lens";
-import { liveHabits } from "@/domain/selectors";
-import { cardSize, drawShareCard, shareCardModel } from "@/domain/shareCard";
-import { useStore } from "@/domain/store";
+import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
+import { liveHabits } from "@squares/domain/selectors";
+import { cardSize, shareCardModel } from "@squares/domain/shareCard";
+import { drawShareCard } from "@/platform/shareCardCanvas";
+import { useStore } from "@squares/domain/store";
 
 /** The PNG is drawn at 4x the card's design units: 1280px wide. */
 const EXPORT_SCALE = 4;

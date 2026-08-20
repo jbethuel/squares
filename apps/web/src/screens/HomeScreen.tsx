@@ -5,7 +5,7 @@ import { Heatmap } from "@/components/Heatmap";
 import { HabitRow } from "@/components/HabitRow";
 import { LensPicker } from "@/components/LensPicker";
 import { Total } from "@/components/Total";
-import { longLabel, weekdayOf, type DateKey } from "@/domain/date";
+import { longLabel, weekdayOf, type DateKey } from "@squares/domain/date";
 import {
   DEFAULT_LENS,
   lensFrame,
@@ -15,8 +15,8 @@ import {
   lensRows,
   lensScrolls,
   type Lens,
-} from "@/domain/lens";
-import { toggleTick } from "@/domain/mutations";
+} from "@squares/domain/lens";
+import { toggleTick } from "@squares/domain/mutations";
 import {
   dateAt,
   elapsedDays,
@@ -25,8 +25,8 @@ import {
   stillOpenYesterday,
   totalTicks,
   totalTicksIn,
-} from "@/domain/selectors";
-import { useStore } from "@/domain/store";
+} from "@squares/domain/selectors";
+import { useStore } from "@squares/domain/store";
 
 const ECHO_MS = 300;
 

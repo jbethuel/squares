@@ -1,8 +1,8 @@
 import { test as base, expect, type Locator, type Page } from "@playwright/test";
-import { addDays, todayKey, type DateKey } from "../src/domain/date";
-import { sealDays } from "../src/domain/mutations";
-import { STORAGE_KEY } from "../src/domain/storage";
-import { emptyData, type AppData } from "../src/domain/types";
+import { addDays, todayKey, type DateKey } from "@squares/domain/date";
+import { sealDays } from "@squares/domain/mutations";
+import { STORAGE_KEY } from "@squares/domain/storage";
+import { emptyData, type AppData } from "@squares/domain/types";
 
 /**
  * The browser and this process share a clock and a timezone, so "today" is

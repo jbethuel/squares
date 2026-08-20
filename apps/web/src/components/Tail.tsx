@@ -1,6 +1,6 @@
 "use client";
 
-import { GRACE_DAYS } from "@/domain/types";
+import { GRACE_DAYS } from "@squares/domain/types";
 
 export const TAIL_DAYS = 8;
 

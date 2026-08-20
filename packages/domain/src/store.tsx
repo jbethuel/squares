@@ -11,8 +11,7 @@ import {
 } from "react";
 import { todayKey, type DateKey } from "./date";
 import { sealDays } from "./mutations";
-import { loadData, saveData } from "./storage";
-import type { AppData, ThemePreference } from "./types";
+import type { AppData } from "./types";
 
 interface Store {
   data: AppData;
@@ -22,18 +21,30 @@ interface Store {
   replace: (data: AppData) => void;
 }
 
-const StoreContext = createContext<Store | null>(null);
-
-export type ResolvedTheme = "light" | "dark";
-
-/** Dark is the designed theme; light is a port. */
-export function resolveTheme(preference: ThemePreference): ResolvedTheme {
-  if (preference !== "system") return preference;
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+/**
+ * Where the record is kept. Injected rather than imported, because the engine
+ * differs by platform — localStorage on the web, an app-private store on the
+ * phone — while everything below has to be identical on both (ADR 0006). The
+ * rollover-and-`sealDays` effect *is* the Grace Window, and two copies of it
+ * could disagree about which Days are still open.
+ */
+export interface StorageAdapter {
+  load: (today: DateKey) => AppData;
+  save: (data: AppData) => void;
 }
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+const StoreContext = createContext<Store | null>(null);
+
+/** How often the clock is re-read while the app is open. */
+const ROLLOVER_POLL_MS = 30_000;
+
+export function StoreProvider({
+  storage,
+  children,
+}: {
+  storage: StorageAdapter;
+  children: ReactNode;
+}) {
   const [today, setToday] = useState<DateKey>(() => todayKey());
   // Storage is only readable on the client, so the first paint is deliberately
   // blank rather than a skeleton of data that may not exist.
@@ -42,17 +53,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const now = todayKey();
     setToday(now);
-    setData(loadData(now));
+    setData(storage.load(now));
+    // The adapter is a module constant on both platforms; re-running this on a
+    // new identity would reload the record over unsaved state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Bare `setInterval`, not `window.setInterval`: there is no window on the
+  // phone. A backgrounded app stops getting these, so a native shell has to
+  // re-read the clock on resume as well — see ADR 0006.
   useEffect(() => {
-    const id = window.setInterval(() => {
+    const id = setInterval(() => {
       setToday((previous) => {
         const now = todayKey();
         return previous === now ? previous : now;
       });
-    }, 30_000);
-    return () => window.clearInterval(id);
+    }, ROLLOVER_POLL_MS);
+    return () => clearInterval(id);
   }, []);
 
   // A rollover seals yesterday and opens today. sealDays returns the same
@@ -62,8 +79,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [today]);
 
   useEffect(() => {
-    if (data) saveData(data);
-  }, [data]);
+    if (data) storage.save(data);
+  }, [data, storage]);
 
   const update = useCallback((change: (data: AppData) => AppData) => {
     setData((previous) => (previous ? change(previous) : previous));
@@ -76,27 +93,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [data, today, update, replace],
   );
 
-  useApplyTheme(data?.theme ?? "system");
-
   if (!value) return null;
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
-}
-
-function useApplyTheme(preference: ThemePreference) {
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: light)");
-    const apply = () => {
-      const resolved = resolveTheme(preference);
-      document.documentElement.dataset.theme = resolved;
-      document
-        .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", resolved === "light" ? "#ffffff" : "#1c211b");
-    };
-    apply();
-    if (preference !== "system") return;
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, [preference]);
 }
 
 export function useStore(): Store {

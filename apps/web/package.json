@@ -15,6 +15,7 @@
     "test:all": "pnpm typecheck && pnpm test && pnpm test:e2e"
   },
   "dependencies": {
+    "@squares/domain": "workspace:*",
     "next": "^15.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

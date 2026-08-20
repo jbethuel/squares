@@ -4,7 +4,7 @@ import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Page from "./page";
 import { account, onDevice, storedData } from "@/test/harness";
-import type { AppData } from "@/domain/types";
+import type { AppData } from "@squares/domain/types";
 
 /**
  * jsdom has a history but no back button, so the browser's is modelled here:

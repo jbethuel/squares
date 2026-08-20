@@ -1,12 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { handOff } from "@/domain/handoff";
-import { sealDays, setTheme } from "@/domain/mutations";
-import { archivedHabits } from "@/domain/selectors";
-import { exportFilename, parseAppData, serialise } from "@/domain/storage";
-import { useStore } from "@/domain/store";
-import type { AppData, ThemePreference } from "@/domain/types";
+import { handOff } from "@/platform/handoff";
+import { sealDays, setTheme } from "@squares/domain/mutations";
+import { archivedHabits } from "@squares/domain/selectors";
+import { exportFilename, parseAppData, serialise } from "@squares/domain/storage";
+import { useStore } from "@squares/domain/store";
+import type { AppData, ThemePreference } from "@squares/domain/types";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const THEMES: ThemePreference[] = ["system", "light", "dark"];

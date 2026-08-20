@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CARD, DARK_LEVELS, toRgb } from "./palette";
+import { CARD, DARK_LEVELS, toRgb } from "@squares/domain/palette";
 
-const CSS = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+const CSS = readFileSync(new URL("./globals.css", import.meta.url), "utf8");
 
 /** The dark block is first in the file, so the first five matches are its ramp. */
 function levelsFromCss() {
