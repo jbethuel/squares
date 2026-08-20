@@ -4,32 +4,15 @@
   "private": true,
   "packageManager": "pnpm@11.21.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "preview": "pnpm dlx serve out -l 4173",
-    "icons": "node scripts/make-icons.mjs",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "test:e2e:static": "E2E_STATIC=1 playwright test",
+    "dev": "pnpm --filter @squares/web dev",
+    "build": "pnpm --filter @squares/web build",
+    "preview": "pnpm --filter @squares/web preview",
+    "icons": "pnpm --filter @squares/web icons",
+    "typecheck": "pnpm --filter @squares/web typecheck",
+    "test": "pnpm --filter @squares/web test",
+    "test:watch": "pnpm --filter @squares/web test:watch",
+    "test:e2e": "pnpm --filter @squares/web test:e2e",
+    "test:e2e:static": "pnpm --filter @squares/web test:e2e:static",
     "test:all": "pnpm typecheck && pnpm test && pnpm test:e2e"
-  },
-  "dependencies": {
-    "next": "^15.5.4",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.62.1",
-    "@testing-library/jest-dom": "^7.0.0",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.3",
-    "@types/node": "^22.10.2",
-    "@types/react": "^19.1.1",
-    "@types/react-dom": "^19.1.1",
-    "jsdom": "^30.0.1",
-    "typescript": "^5.7.2",
-    "vitest": "^3.0.5"
   }
 }
