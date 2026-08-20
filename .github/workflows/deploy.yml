@@ -49,7 +49,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # ADR 0002: `out/` is the whole artefact — static files, no server.
+      # ADR 0002: `apps/web/out/` is the whole artefact — static files, no server.
       - run: pnpm build
 
       # A tag build sits on a detached HEAD, so wrangler has no branch to infer.
@@ -62,7 +62,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          command: pages deploy out --project-name=squares --branch=main
+          command: pages deploy apps/web/out --project-name=squares --branch=main
 
       - env:
           TAG: ${{ github.ref_name }}

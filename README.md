@@ -25,8 +25,8 @@ pnpm dev              # http://localhost:3000
 | Command | What it does |
 | --- | --- |
 | `pnpm dev` | Dev server on :3000 |
-| `pnpm build` | Static export into `out/` |
-| `pnpm preview` | Serve `out/` on :4173 |
+| `pnpm build` | Static export into `apps/web/out/` |
+| `pnpm preview` | Serve the export on :4173 |
 | `pnpm test` | Unit tests (vitest) |
 | `pnpm test:watch` | Unit tests, watching |
 | `pnpm test:e2e` | End-to-end, on its own dev server on :3100 |
@@ -37,24 +37,34 @@ pnpm dev              # http://localhost:3000
 
 ## Layout
 
+This is a pnpm workspace. Everything below `apps/web/` is the web app, and every
+path elsewhere in this file is relative to it — `src/domain/date.ts` means
+`apps/web/src/domain/date.ts`. The root carries the workspace, the glossary and
+the ADRs, and its scripts delegate to the app, so `pnpm dev` and `pnpm test`
+still work from wherever you are.
+
 ```
-src/domain/     the rules — no React, fully tested
-  date.ts         local calendar Days as YYYY-MM-DD
-  types.ts        Habit and its Active Spans, DayRecord, Intensity
-  selectors.ts    Intensity, Chain, Total, the Grace Window
-  mutations.ts    Tick, add/rename/archive, and sealDays
-  grid.ts         Heatmap geometry
-  lens.ts         how much of the record a Heatmap draws
-  palette.ts      the Intensity ramp as numbers, for canvas
-  shareCard.ts    what a Share Card may contain, and how it is drawn
-  storage.ts      localStorage + import validation
-  store.tsx       the one React context
-src/components/ Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
-src/screens/    Home, Detail, NewHabit, Settings, Share
-src/hooks/      element width, delayed value, install prompt
-src/app/        Next shell, globals.css (all design tokens)
-src/test/       jsdom stubs and the fixture harness
-e2e/            playwright specs and the device seed
+docs/adr/       the decisions, system-wide
+CONTEXT.md      the glossary, system-wide
+apps/web/       the Next.js app, statically exported
+  src/domain/     the rules — no React, fully tested
+    date.ts         local calendar Days as YYYY-MM-DD
+    types.ts        Habit and its Active Spans, DayRecord, Intensity
+    selectors.ts    Intensity, Chain, Total, the Grace Window
+    mutations.ts    Tick, add/rename/archive, and sealDays
+    grid.ts         Heatmap geometry
+    lens.ts         how much of the record a Heatmap draws
+    palette.ts      the Intensity ramp as numbers, for canvas
+    shareCard.ts    what a Share Card may contain, and how it is drawn
+    storage.ts      localStorage + import validation
+    store.tsx       the one React context
+  src/components/ Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
+  src/screens/    Home, Detail, NewHabit, Settings, Share
+  src/hooks/      element width, delayed value, install prompt
+  src/app/        Next shell, globals.css (all design tokens)
+  src/test/       jsdom stubs and the fixture harness
+  e2e/            playwright specs and the device seed
+  scripts/        make-icons.mjs, run by `pnpm icons`
 ```
 
 ## Vocabulary

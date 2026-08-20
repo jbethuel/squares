@@ -53,7 +53,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # The only project in playwright.config.ts is chromium.
-      - run: pnpm exec playwright install --with-deps chromium
+      # playwright is a dependency of the web app, not of the workspace root.
+      - run: pnpm --filter @squares/web exec playwright install --with-deps chromium
 
       - run: pnpm test:e2e
 
