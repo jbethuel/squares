@@ -21,3 +21,13 @@ The Lens buttons stay under 44 pixels, deliberately. They are a group of three s
 On Android the bar sits directly above the system navigation bar, and `viewport-fit` is `cover`, so whether the two collide depends on whether Chrome reports a bottom safe-area inset for that device's navigation mode. The bar pads by `env(safe-area-inset-bottom)` and is correct either way — clear of the gesture pill when an inset is reported, and already above the navigation bar when the viewport stops short of it. This is the one part of the design that reading cannot settle; it wants a look on a real Android handset in gesture mode.
 
 The name field no longer takes focus by itself. A fixed bar and a software keyboard contend for the same pixels, and a new Habit used to open with the keyboard already up — so the one Screen a first-time user meets would have opened with its exit behind the keyboard. One tap on the field is the price of every Screen always showing its way out.
+
+## Amendment: the native target (ADR 0006)
+
+The phone app draws no back bar. Navigation is a native stack, and the visible way out of every Screen is the platform's own header.
+
+This changes the implementation and keeps the decision. The bar exists because a standalone web app on iOS has nothing behind its corner control; a native app has a header, exposed to VoiceOver and TalkBack by the platform rather than by this app's markup. A drawn bar beneath a native header would be a second way out of the same Screen.
+
+The swipe rides along and is welcome there — iOS gives the interactive pop by default, and Android's edge gesture is the system back. This is not a reversal of the rejection above, which was of an edge swipe *as the route back*. As an addition to a visible control it was always allowed, and the header is that control.
+
+The rejection of a bottom tab bar is untouched and holds for the same reasons: the Screens are a stack three deep rather than a set of peers, and Home is where 95% of the app happens.

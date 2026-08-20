@@ -40,6 +40,16 @@ Retiring a Habit from today forward. History is untouched — Days on which it w
 Archiving is a state, not an act: a Habit can be taken out of the Archive again, and is then Active from that Day forward. The Days it spent Archived stay Archived forever — coming back is never backdated, and the gap it leaves is as permanent as any other part of the record.
 _Avoid_: delete, remove, disable, pause, hide.
 
+### Reminding
+
+**Daily Reminder**:
+One notification a day, at a time the user picks, prompting the Day's Ticks. Off until the user turns it on — the app asks nothing of someone who never does. It stays silent on a Day whose Active Habits were all Ticked, because a prompt arriving after the work is done is noise. A Reminder belongs to the device and not to the record: it is not in an Export, a record carried to another phone arrives with none set, and nothing about one reaches the network.
+_Avoid_: nudge, alert, alarm, push, ping.
+
+**Reminded Habit**:
+A Habit whose Reminder the user has explicitly opted into, at a time of that Habit's own. Habits are unreminded by default. Its Reminder is silent once that Habit is Ticked, and stops entirely while the Habit is Archived — a Habit that cannot be Ticked today has nothing to prompt. Where the Daily Reminder counts a Day, this names one thing, which is why the two are different terms and why both can be on at once: turn on both and you get both.
+_Avoid_: habit alarm, per-habit reminder, streak reminder.
+
 ### Display
 
 **Heatmap**:
@@ -119,5 +129,5 @@ A PNG of the Overview Heatmap and its Tally, rendered on the device and saved to
 _Avoid_: badge, profile, screenshot, story.
 
 **Named Habit**:
-A Habit whose name the user has explicitly opted into showing on the Share Card. Habits are unnamed there by default — a Share Card carries no Habit names unless each one was individually opted in. An Archived Habit is never named on a Card whatever its opt-in says: a name on a Card reads as something the user does, and a retired Habit is not that.
+A Habit whose name the user has explicitly opted into showing outside the app — on a Share Card, and on the lock screen when a Reminded Habit's Reminder is raised. Habits are unnamed in both places by default: a Share Card carries no Habit names unless each one was individually opted in, and an unnamed Reminded Habit is prompted as "1 Habit left". One opt-in covers both, because both are the same act — letting a name be read by whoever is looking at the screen. An Archived Habit is never named on a Card whatever its opt-in says: a name on a Card reads as something the user does, and a retired Habit is not that.
 _Avoid_: public habit, shared habit, visible habit.
