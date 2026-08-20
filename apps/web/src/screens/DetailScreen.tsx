@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Heatmap } from "@/components/Heatmap";
 import { LensPicker } from "@/components/LensPicker";
 import { ToggleRow } from "@/components/Toggle";
-import { longLabel, weekdayOf } from "@/domain/date";
+import { longLabel, weekdayOf } from "@squares/domain/date";
 import {
   DEFAULT_LENS,
   lensFrame,
@@ -13,8 +13,8 @@ import {
   lensRows,
   lensScrolls,
   type Lens,
-} from "@/domain/lens";
-import { renameHabit, setArchived, setChained, setSharedName } from "@/domain/mutations";
+} from "@squares/domain/lens";
+import { renameHabit, setArchived, setChained, setSharedName } from "@squares/domain/mutations";
 import {
   chainOf,
   dateAt,
@@ -23,8 +23,8 @@ import {
   longestChainOf,
   tickCountIn,
   tickCountOf,
-} from "@/domain/selectors";
-import { useStore } from "@/domain/store";
+} from "@squares/domain/selectors";
+import { useStore } from "@squares/domain/store";
 
 export function DetailScreen({ habitId }: { habitId: string }) {
   const { data, today, update } = useStore();

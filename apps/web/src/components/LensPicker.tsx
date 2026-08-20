@@ -1,6 +1,6 @@
 "use client";
 
-import { LENSES, type Lens } from "@/domain/lens";
+import { LENSES, type Lens } from "@squares/domain/lens";
 
 interface LensPickerProps {
   value: Lens;

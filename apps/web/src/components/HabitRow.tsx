@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tail } from "./Tail";
-import { longLabel, type DateKey } from "@/domain/date";
-import { chainOf, dateAt, isTicked, tickCountOf } from "@/domain/selectors";
-import type { AppData, Habit } from "@/domain/types";
+import { longLabel, type DateKey } from "@squares/domain/date";
+import { chainOf, dateAt, isTicked, tickCountOf } from "@squares/domain/selectors";
+import type { AppData, Habit } from "@squares/domain/types";
 
 /** The spring is 260ms; the pulse is released just after it lands. */
 const PULSE_MS = 300;

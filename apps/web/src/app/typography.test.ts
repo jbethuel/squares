@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /** Comments are stripped so prose above a rule can never read as a selector. */
-const CSS = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8").replace(
+const CSS = readFileSync(new URL("./globals.css", import.meta.url), "utf8").replace(
   /\/\*[\s\S]*?\*\//g,
   "",
 );

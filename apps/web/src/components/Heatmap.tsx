@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 import { useElementWidth } from "@/hooks/useElementWidth";
-import { monthLabels, weekdayLabels, type AxisLabel } from "@/domain/axis";
-import { monthYearLabel, type DateKey } from "@/domain/date";
+import { monthLabels, weekdayLabels, type AxisLabel } from "@squares/domain/axis";
+import { monthYearLabel, type DateKey } from "@squares/domain/date";
 import {
   AXIS_GUTTER,
   CALENDAR_ROWS,
@@ -12,9 +12,9 @@ import {
   gridWidth,
   scrollGeometry,
   type Frame,
-} from "@/domain/grid";
-import type { MonthAxis } from "@/domain/lens";
-import type { Intensity } from "@/domain/types";
+} from "@squares/domain/grid";
+import type { MonthAxis } from "@squares/domain/lens";
+import type { Intensity } from "@squares/domain/types";
 
 interface HeatmapProps {
   /** The run of Days to draw. Every Day in it gets a Square. */

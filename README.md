@@ -34,45 +34,58 @@ pnpm dev              # http://localhost:3000
 | `pnpm test:all` | Typecheck, then unit, then end-to-end |
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm icons` | Regenerate `public/*.png` from the Intensity ramp |
+| `pnpm tokens` | Regenerate `tokens.css` from the Intensity ramp |
 
 ## Layout
 
-This is a pnpm workspace. Everything below `apps/web/` is the web app, and every
-path elsewhere in this file is relative to it — `src/domain/date.ts` means
-`apps/web/src/domain/date.ts`. The root carries the workspace, the glossary and
-the ADRs, and its scripts delegate to the app, so `pnpm dev` and `pnpm test`
-still work from wherever you are.
+This is a pnpm workspace. The rules live in `packages/domain` and are consumed,
+never reimplemented; each app owns its own interface and its own platform seam.
+Root scripts delegate, so `pnpm dev` and `pnpm test` work from wherever you are —
+`pnpm test` runs every package.
 
 ```
 docs/adr/       the decisions, system-wide
 CONTEXT.md      the glossary, system-wide
-apps/web/       the Next.js app, statically exported
-  src/domain/     the rules — no React, fully tested
-    date.ts         local calendar Days as YYYY-MM-DD
-    types.ts        Habit and its Active Spans, DayRecord, Intensity
-    selectors.ts    Intensity, Chain, Total, the Grace Window
-    mutations.ts    Tick, add/rename/archive, and sealDays
-    grid.ts         Heatmap geometry
-    lens.ts         how much of the record a Heatmap draws
-    palette.ts      the Intensity ramp as numbers, for canvas
-    shareCard.ts    what a Share Card may contain, and how it is drawn
-    storage.ts      localStorage + import validation
-    store.tsx       the one React context
-  src/components/ Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
-  src/screens/    Home, Detail, NewHabit, Settings, Share
-  src/hooks/      element width, delayed value, install prompt
-  src/app/        Next shell, globals.css (all design tokens)
-  src/test/       jsdom stubs and the fixture harness
-  e2e/            playwright specs and the device seed
-  scripts/        make-icons.mjs, run by `pnpm icons`
+
+packages/domain/  the rules — no DOM, tested in node
+  date.ts           local calendar Days as YYYY-MM-DD
+  types.ts          Habit and its Active Spans, DayRecord, Intensity
+  selectors.ts      Intensity, Chain, Total, the Grace Window
+  mutations.ts      Tick, add/rename/archive, and sealDays
+  grid.ts           Heatmap geometry
+  lens.ts           how much of the record a Heatmap draws
+  axis.ts           what a Heatmap is named around its edges
+  palette.ts        the Intensity ramp — the one definition of it
+  shareCard.ts      what a Share Card may contain, and its measurements
+  storage.ts        the record's format: validation, migration, Export
+  store.tsx         the one React context, over an injected storage adapter
+
+apps/web/         the Next.js app, statically exported
+  src/platform/     what only the web can do
+    storage.ts        localStorage, and the adapter the store is given
+    handoff.ts        handing a file to the device
+    theme.tsx         painting the Theme onto the document
+    shareCardCanvas.ts  the Share Card drawn to a Canvas2D
+  src/components/   Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
+  src/screens/      Home, Detail, NewHabit, Settings, Share
+  src/hooks/        element width, delayed value, install prompt
+  src/app/          Next shell, globals.css, tokens.css (generated)
+  src/test/         jsdom stubs and the fixture harness
+  e2e/              playwright specs and the device seed
+  scripts/          make-icons.mjs and generate-tokens.mts
 ```
+
+`packages/domain` publishes no barrel — every module is its own entry point, so
+importing a rule cannot drag React in behind it. Its tsconfig omits the `dom`
+lib on purpose: that is the guard that catches a browser type before the phone
+app does.
 
 ## Vocabulary
 
 `CONTEXT.md` is the glossary, and its terms are used verbatim in code: Habit,
 Tick, Day, Square, Intensity, Chain, Total, Tally, Archive, Grace Window, Lens,
 Frame.
-Read it before changing anything in `src/domain/`.
+Read it before changing anything in `packages/domain/`.
 
 ## The three rules the code exists to protect
 
@@ -108,7 +121,7 @@ answers the four open questions in `docs/design-brief.md`:
 - **Colour** — the four Intensity levels ramp monotonically in lightness
   (0.40 → 0.55 → 0.70 → 0.85 in dark), with hue rotating 178 → 120 across the
   blue–yellow axis, so the ramp survives deuteranopia and greyscale. Defined once
-  as `--lv0`…`--lv4` in `src/app/globals.css`.
+  in `packages/domain/palette.ts`; `--lv0`…`--lv4` are generated from it.
 
 Three design facts are load-bearing enough to state here. Everything else about
 how the app got its shape is in `docs/build-log.md`.
@@ -176,14 +189,17 @@ no external request. The stack falls back to the system monospace.
 The suite is organised around the three rules rather than around files, so a test
 that fails names the promise that broke.
 
-**Unit** (`vitest`), two projects:
+**Unit** (`vitest`), one project per concern:
 
-- `domain` runs in node. The rules are plain TypeScript and are tested without a
-  DOM, so a component can never quietly become load-bearing for them.
-- `ui` runs in jsdom. `src/test/dom.ts` stubs what jsdom does not bring — a 350px
-  viewport, a canvas that records instead of painting, a link that reports what it
-  was asked to download. `src/test/harness.tsx` builds an account with the app's
-  own mutations, so a fixture cannot drift from the rules it exercises.
+- `packages/domain` runs in node. The rules are plain TypeScript and are tested
+  without a DOM, so a component can never quietly become load-bearing for them.
+- `apps/web`'s `web` project runs in jsdom. `src/test/dom.ts` stubs what jsdom
+  does not bring — a 350px viewport, a canvas that records instead of painting, a
+  link that reports what it was asked to download. `src/test/harness.tsx` builds
+  an account with the app's own mutations, so a fixture cannot drift from the
+  rules it exercises, and wires the store exactly as `page.tsx` does.
+- `apps/web`'s `css` project runs in node, for the two tests below that read the
+  stylesheet as source text.
 
 Only the clock is faked, never `setTimeout`. The tick's 260ms spring, the echo
 and the Total's 180ms roll are real timers and are asserted as such.
@@ -191,11 +207,12 @@ and the Total's 180ms roll are real timers and are asserted as such.
 `src/app/page.test.tsx` renders under `StrictMode`, because `next.config.ts`
 turns it on. An impure screen push fails there rather than in a browser.
 
-Two tests read `src/app/globals.css` as source text, because the values in it
-cannot be reached any other way: `palette.test.ts` asserts the Intensity ramp
-matches the numbers `palette.ts` gives the canvas, and `typography.test.ts`
-asserts no text control is declared under 16px, which is the size below which iOS
-zooms the page on focus.
+Two tests read stylesheets as source text, because the values in them cannot be
+reached any other way. `typography.test.ts` asserts no text control is declared
+under 16px, which is the size below which iOS zooms the page on focus.
+`palette.test.ts` asserts the committed `tokens.css` is exactly what
+`tokens.ts` renders from the ramp, and that `globals.css` declares no `--lv`
+of its own.
 
 **End-to-end** (`playwright`), against a real browser and a real localStorage.
 

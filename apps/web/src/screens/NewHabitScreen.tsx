@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { addHabit } from "@/domain/mutations";
-import { useStore } from "@/domain/store";
+import { addHabit } from "@squares/domain/mutations";
+import { useStore } from "@squares/domain/store";
 
 /**
  * Naming a new Habit, and nothing else.

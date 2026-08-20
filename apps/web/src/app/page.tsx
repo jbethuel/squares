@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { BackBar } from "@/components/BackBar";
-import { StoreProvider } from "@/domain/store";
+import { StoreProvider } from "@squares/domain/store";
+import { webStorage } from "@/platform/storage";
+import { ApplyTheme } from "@/platform/theme";
 import { DetailScreen } from "@/screens/DetailScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { NewHabitScreen } from "@/screens/NewHabitScreen";
@@ -18,7 +20,8 @@ type Screen =
 
 export default function Page() {
   return (
-    <StoreProvider>
+    <StoreProvider storage={webStorage}>
+      <ApplyTheme />
       <App />
     </StoreProvider>
   );

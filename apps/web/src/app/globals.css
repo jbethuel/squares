@@ -1,3 +1,5 @@
+@import "./tokens.css";
+
 @font-face {
   font-family: "Hack";
   src: url("/fonts/hack-regular.woff2") format("woff2");
@@ -21,15 +23,14 @@
  * blue–yellow axis, which is intact under red-green deficiency, so it reads as
  * a second cue rather than a mush. Level 4 is the only saturated thing in the
  * app.
+ *
+ * The five levels themselves are not written here. They are generated into
+ * `tokens.css` from `@squares/domain/palette`, which is also what the Share
+ * Card's canvas and the phone app read, so the ramp cannot fork. Change it
+ * there and run `pnpm tokens`.
  */
 :root,
 :root[data-theme="dark"] {
-  --lv0: oklch(0.235 0.012 128);
-  --lv1: oklch(0.4 0.055 178);
-  --lv2: oklch(0.55 0.085 155);
-  --lv3: oklch(0.7 0.125 138);
-  --lv4: oklch(0.85 0.155 118);
-
   --bg: oklch(0.16 0.014 128);
   --surface: oklch(0.205 0.016 128);
   --surface-on: oklch(0.245 0.022 130);
@@ -56,12 +57,6 @@
 }
 
 :root[data-theme="light"] {
-  --lv0: oklch(0.925 0.008 128);
-  --lv1: oklch(0.855 0.055 178);
-  --lv2: oklch(0.745 0.085 155);
-  --lv3: oklch(0.605 0.105 138);
-  --lv4: oklch(0.47 0.1 120);
-
   --bg: oklch(1 0 0);
   --surface: oklch(0.975 0.004 128);
   --surface-on: oklch(0.955 0.012 130);

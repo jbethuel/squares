@@ -1,6 +1,6 @@
 import { expect, test, today, total } from "./fixtures";
-import { daysInMonth } from "../src/domain/date";
-import { lensDays } from "../src/domain/lens";
+import { daysInMonth } from "@squares/domain/date";
+import { lensDays } from "@squares/domain/lens";
 import type { Page } from "@playwright/test";
 
 /**

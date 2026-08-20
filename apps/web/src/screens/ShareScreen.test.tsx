@@ -2,10 +2,10 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ShareScreen } from "./ShareScreen";
-import { setSharedName } from "@/domain/mutations";
+import { setSharedName } from "@squares/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, TODAY } from "@/test/harness";
 import { downloads, drawnText, shared, stubSharing } from "@/test/dom";
-import type { AppData } from "@/domain/types";
+import type { AppData } from "@squares/domain/types";
 
 function open(data: AppData) {
   onDevice(data);

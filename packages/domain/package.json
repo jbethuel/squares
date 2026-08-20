@@ -1,0 +1,32 @@
+{
+  "name": "@squares/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./axis": "./src/axis.ts",
+    "./date": "./src/date.ts",
+    "./grid": "./src/grid.ts",
+    "./lens": "./src/lens.ts",
+    "./mutations": "./src/mutations.ts",
+    "./palette": "./src/palette.ts",
+    "./selectors": "./src/selectors.ts",
+    "./shareCard": "./src/shareCard.ts",
+    "./storage": "./src/storage.ts",
+    "./store": "./src/store.tsx",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.1.1",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.5"
+  }
+}

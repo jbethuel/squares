@@ -2,11 +2,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { HabitRow } from "./HabitRow";
-import { longLabel } from "@/domain/date";
-import { setChained } from "@/domain/mutations";
-import { elapsedDays } from "@/domain/selectors";
+import { longLabel } from "@squares/domain/date";
+import { setChained } from "@squares/domain/mutations";
+import { elapsedDays } from "@squares/domain/selectors";
 import { account, idOf, TODAY, YESTERDAY } from "@/test/harness";
-import type { AppData } from "@/domain/types";
+import type { AppData } from "@squares/domain/types";
 
 function renderRow(data: AppData, name: string, overrides: { offset?: number; onOpen?: () => void } = {}) {
   const onTick = vi.fn();

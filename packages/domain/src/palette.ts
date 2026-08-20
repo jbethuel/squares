@@ -1,9 +1,12 @@
 /**
  * The Intensity ramp as numbers.
  *
- * `globals.css` is where the app gets its colour; this module exists because a
- * Share Card is drawn to a canvas, which needs sRGB rather than a CSS custom
- * property. `palette.test.ts` asserts the two agree, so neither can drift.
+ * This module is the ramp's one source. The web's `--lv0`..`--lv4` are generated
+ * from it (`apps/web/scripts/generate-tokens.mts`), the Share Card's canvas
+ * needs sRGB rather than a CSS custom property, and the phone app will want the
+ * same numbers as style values — three consumers, one definition. It used to be
+ * two definitions kept honest by a test, which is a guard that only works while
+ * someone remembers to extend it.
  *
  * A Share Card is always the dark theme. It is a standalone image rather than a
  * screen, and dark is the designed theme — light is a port.
@@ -20,6 +23,19 @@ export const DARK_LEVELS: readonly Oklch[] = [
   { l: 0.55, c: 0.085, h: 155 },
   { l: 0.7, c: 0.125, h: 138 },
   { l: 0.85, c: 0.155, h: 118 },
+];
+
+/**
+ * The Light port. Lightness runs the other way — a Tick darkens a pale Square
+ * rather than lightening a dark one — so the ramp is monotonically *decreasing*
+ * here while carrying the same data in the same channel.
+ */
+export const LIGHT_LEVELS: readonly Oklch[] = [
+  { l: 0.925, c: 0.008, h: 128 },
+  { l: 0.855, c: 0.055, h: 178 },
+  { l: 0.745, c: 0.085, h: 155 },
+  { l: 0.605, c: 0.105, h: 138 },
+  { l: 0.47, c: 0.1, h: 120 },
 ];
 
 export const CARD = {

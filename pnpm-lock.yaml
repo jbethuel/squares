@@ -10,6 +10,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@squares/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       next:
         specifier: ^15.5.4
         version: 15.5.23(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -44,6 +47,25 @@ importers:
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.5
+        version: 3.2.7(@types/node@22.20.1)(jsdom@30.0.1)
+
+  packages/domain:
+    dependencies:
+      react:
+        specifier: ^19.1.1
+        version: 19.2.8
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.1.1
+        version: 19.2.18
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

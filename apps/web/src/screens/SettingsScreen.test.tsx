@@ -2,10 +2,10 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { SettingsScreen } from "./SettingsScreen";
-import { serialise } from "@/domain/storage";
+import { serialise } from "@squares/domain/storage";
 import { account, idOf, onDevice, renderWithStore, storedData, TODAY } from "@/test/harness";
 import { downloads, shared, stubSharing } from "@/test/dom";
-import type { AppData } from "@/domain/types";
+import type { AppData } from "@squares/domain/types";
 
 function open(data: AppData = account({ habits: ["workout"] })) {
   onDevice(data);

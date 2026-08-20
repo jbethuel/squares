@@ -12,9 +12,11 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:static": "E2E_STATIC=1 playwright test",
-    "test:all": "pnpm typecheck && pnpm test && pnpm test:e2e"
+    "test:all": "pnpm typecheck && pnpm test && pnpm test:e2e",
+    "tokens": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-tokens.mts"
   },
   "dependencies": {
+    "@squares/domain": "workspace:*",
     "next": "^15.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

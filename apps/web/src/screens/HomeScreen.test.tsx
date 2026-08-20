@@ -2,10 +2,10 @@ import { cleanup, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { HomeScreen } from "./HomeScreen";
-import { MAX_SQUARE } from "@/domain/grid";
-import { setChained } from "@/domain/mutations";
+import { MAX_SQUARE } from "@squares/domain/grid";
+import { setChained } from "@squares/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, storedData, TODAY, YESTERDAY } from "@/test/harness";
-import type { AppData } from "@/domain/types";
+import type { AppData } from "@squares/domain/types";
 
 function open(data: AppData = account({ habits: ["workout"] })) {
   onDevice(data);

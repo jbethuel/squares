@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { resolveTheme, StoreProvider, useStore } from "./store";
-import { addHabit, toggleTick } from "./mutations";
-import { STORAGE_KEY } from "./storage";
+import { StoreProvider, useStore } from "@squares/domain/store";
+import { webStorage } from "./storage";
+import { ApplyTheme, resolveTheme } from "./theme";
+import { addHabit, toggleTick } from "@squares/domain/mutations";
+import { STORAGE_KEY } from "@squares/domain/storage";
 import { account, onDevice, storedData, TODAY, withStore, YESTERDAY } from "@/test/harness";
 import { matchedMedia } from "@/test/dom";
 
@@ -59,7 +61,7 @@ describe("the store is the one source of the year", () => {
       return null;
     }
     render(
-      <StoreProvider>
+      <StoreProvider storage={webStorage}>
         <Peek />
       </StoreProvider>,
     );

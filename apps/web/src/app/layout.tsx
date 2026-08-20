@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ServiceWorker } from "@/components/ServiceWorker";
-import { STORAGE_KEY } from "@/domain/storage";
+import { STORAGE_KEY } from "@squares/domain/storage";
 import "./globals.css";
 
 export const metadata: Metadata = {

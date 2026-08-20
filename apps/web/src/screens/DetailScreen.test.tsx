@@ -2,9 +2,9 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { DetailScreen } from "./DetailScreen";
-import { setChained } from "@/domain/mutations";
+import { setChained } from "@squares/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, storedData } from "@/test/harness";
-import type { AppData } from "@/domain/types";
+import type { AppData } from "@squares/domain/types";
 
 function open(data: AppData, name: string) {
   onDevice(data);

@@ -7,30 +7,34 @@ const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
 // compile it. That is the whole reason no React plugin is needed here.
 const shared = { esbuild: { jsx: "automatic" }, resolve: { alias } } as const;
 
+/**
+ * The rules moved to `packages/domain` and are tested in node there, which is
+ * what keeps a component from quietly becoming load-bearing for them. What is
+ * left here is the app — and two tests that read `globals.css` as source text.
+ * `pnpm test` at the root runs every package.
+ */
+const CSS_TESTS = ["src/app/palette.test.ts", "src/app/typography.test.ts"];
+
 export default defineConfig({
   ...shared,
   test: {
     projects: [
       {
-        // The rules are plain TypeScript and are tested without a DOM, so a
-        // component can never quietly become load-bearing for them.
         ...shared,
         test: {
-          name: "domain",
-          include: ["src/domain/**/*.test.ts"],
-          // handoff is the one file under domain/ that is not a rule: it hands
-          // a file to the device, so it is browser plumbing and needs a DOM to
-          // hand it to. It runs in the ui project instead. Named here rather
-          // than renamed to .tsx, so the split keeps meaning what it says.
-          exclude: [...defaultExclude, "src/domain/handoff.test.ts"],
+          // Source text, not a rendered document: these read the stylesheet off
+          // disk, so they run in node and `import.meta.url` stays a file URL.
+          name: "css",
+          include: CSS_TESTS,
           environment: "node",
         },
       },
       {
         ...shared,
         test: {
-          name: "ui",
-          include: ["src/**/*.test.tsx", "src/domain/handoff.test.ts"],
+          name: "web",
+          include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+          exclude: [...defaultExclude, ...CSS_TESTS],
           environment: "jsdom",
           setupFiles: ["./src/test/setup.ts"],
           restoreMocks: true,

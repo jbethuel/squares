@@ -1,10 +1,12 @@
 import { render, type RenderResult } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
-import { addDays, type DateKey } from "@/domain/date";
-import { sealDays } from "@/domain/mutations";
-import { STORAGE_KEY } from "@/domain/storage";
-import { StoreProvider } from "@/domain/store";
-import { emptyData, type AppData } from "@/domain/types";
+import { addDays, type DateKey } from "@squares/domain/date";
+import { sealDays } from "@squares/domain/mutations";
+import { STORAGE_KEY } from "@squares/domain/storage";
+import { StoreProvider } from "@squares/domain/store";
+import { webStorage } from "@/platform/storage";
+import { ApplyTheme } from "@/platform/theme";
+import { emptyData, type AppData } from "@squares/domain/types";
 
 /** A Monday, so the weekday row of a Square is predictable. */
 export const TODAY: DateKey = "2026-08-03";
@@ -85,8 +87,18 @@ export function storedData(): AppData {
   return JSON.parse(blob) as AppData;
 }
 
+/**
+ * The app's own wiring, so a screen under test sees what it sees in the app:
+ * the shared store over the web's localStorage, with the Theme painted onto the
+ * document by the same component `page.tsx` mounts.
+ */
 export function withStore(children: ReactNode) {
-  return <StoreProvider>{children}</StoreProvider>;
+  return (
+    <StoreProvider storage={webStorage}>
+      <ApplyTheme />
+      {children}
+    </StoreProvider>
+  );
 }
 
 /** Render a screen against whatever account is currently on the device. */

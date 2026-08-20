@@ -1,4 +1,4 @@
-import { weekdayOf } from "../src/domain/date";
+import { weekdayOf } from "@squares/domain/date";
 import { expect, optIn, test, today } from "./fixtures";
 
 /**
