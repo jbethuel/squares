@@ -2,46 +2,22 @@
  * Generate the app icons from the same Intensity ramp the app uses, so the icon
  * cannot drift from the palette. Writes PNGs directly — no image dependency.
  *
- *   node scripts/make-icons.mjs
+ * The ramp is imported rather than restated. This file used to carry its own
+ * copy of both the values and the oklch conversion, which made three copies of
+ * the ramp in a repo whose test only guarded two of them.
+ *
+ *   node scripts/make-icons.mts
  */
 import { deflateSync } from "node:zlib";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { CARD, DARK_LEVELS, toRgb } from "@squares/domain/palette";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
-/** oklch -> sRGB, so the icon uses the palette's own values verbatim. */
-function oklch(L, C, hDeg) {
-  const h = (hDeg * Math.PI) / 180;
-  const a = C * Math.cos(h);
-  const b = C * Math.sin(h);
-
-  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
-  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
-
-  const linear = [
-    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
-  ];
-
-  return linear.map((v) => {
-    const clamped = Math.max(0, Math.min(1, v));
-    const gamma = clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055;
-    return Math.round(gamma * 255);
-  });
-}
-
-const BG = oklch(0.16, 0.014, 128);
-const LEVELS = [
-  oklch(0.235, 0.012, 128),
-  oklch(0.4, 0.055, 178),
-  oklch(0.55, 0.085, 155),
-  oklch(0.7, 0.125, 138),
-  oklch(0.85, 0.155, 118),
-];
+const BG = toRgb(CARD.bg);
+const LEVELS = DARK_LEVELS.map(toRgb);
 
 /** A 4x4 patch of the Heatmap: a week that mostly went well. */
 const PATTERN = [

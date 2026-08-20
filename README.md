@@ -34,6 +34,7 @@ pnpm dev              # http://localhost:3000
 | `pnpm test:all` | Typecheck, then unit, then end-to-end |
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm icons` | Regenerate `public/*.png` from the Intensity ramp |
+| `pnpm tokens` | Regenerate `tokens.css` from the Intensity ramp |
 
 ## Layout
 
@@ -54,7 +55,7 @@ packages/domain/  the rules — no DOM, tested in node
   grid.ts           Heatmap geometry
   lens.ts           how much of the record a Heatmap draws
   axis.ts           what a Heatmap is named around its edges
-  palette.ts        the Intensity ramp as numbers
+  palette.ts        the Intensity ramp — the one definition of it
   shareCard.ts      what a Share Card may contain, and its measurements
   storage.ts        the record's format: validation, migration, Export
   store.tsx         the one React context, over an injected storage adapter
@@ -68,10 +69,10 @@ apps/web/         the Next.js app, statically exported
   src/components/   Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
   src/screens/      Home, Detail, NewHabit, Settings, Share
   src/hooks/        element width, delayed value, install prompt
-  src/app/          Next shell, globals.css (all design tokens)
+  src/app/          Next shell, globals.css, tokens.css (generated)
   src/test/         jsdom stubs and the fixture harness
   e2e/              playwright specs and the device seed
-  scripts/          make-icons.mjs, run by `pnpm icons`
+  scripts/          make-icons.mjs and generate-tokens.mts
 ```
 
 `packages/domain` publishes no barrel — every module is its own entry point, so
@@ -120,7 +121,7 @@ answers the four open questions in `docs/design-brief.md`:
 - **Colour** — the four Intensity levels ramp monotonically in lightness
   (0.40 → 0.55 → 0.70 → 0.85 in dark), with hue rotating 178 → 120 across the
   blue–yellow axis, so the ramp survives deuteranopia and greyscale. Defined once
-  as `--lv0`…`--lv4` in `src/app/globals.css`.
+  in `packages/domain/palette.ts`; `--lv0`…`--lv4` are generated from it.
 
 Three design facts are load-bearing enough to state here. Everything else about
 how the app got its shape is in `docs/build-log.md`.
@@ -206,12 +207,12 @@ and the Total's 180ms roll are real timers and are asserted as such.
 `src/app/page.test.tsx` renders under `StrictMode`, because `next.config.ts`
 turns it on. An impure screen push fails there rather than in a browser.
 
-Two tests read `src/app/globals.css` as source text, because the values in it
-cannot be reached any other way: `palette.test.ts` asserts the Intensity ramp
-matches the numbers `packages/domain/palette.ts` gives the canvas, and
-`typography.test.ts`
-asserts no text control is declared under 16px, which is the size below which iOS
-zooms the page on focus.
+Two tests read stylesheets as source text, because the values in them cannot be
+reached any other way. `typography.test.ts` asserts no text control is declared
+under 16px, which is the size below which iOS zooms the page on focus.
+`palette.test.ts` asserts the committed `tokens.css` is exactly what
+`tokens.ts` renders from the ramp, and that `globals.css` declares no `--lv`
+of its own.
 
 **End-to-end** (`playwright`), against a real browser and a real localStorage.
 

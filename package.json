@@ -13,6 +13,7 @@
     "test:watch": "pnpm --filter @squares/web test:watch",
     "test:e2e": "pnpm --filter @squares/web test:e2e",
     "test:e2e:static": "pnpm --filter @squares/web test:e2e:static",
-    "test:all": "pnpm typecheck && pnpm test && pnpm test:e2e"
+    "test:all": "pnpm typecheck && pnpm test && pnpm test:e2e",
+    "tokens": "pnpm --filter @squares/web tokens"
   }
 }
