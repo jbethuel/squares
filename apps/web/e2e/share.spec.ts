@@ -1,4 +1,5 @@
-import { expect, optIn, test } from "./fixtures";
+import { weekdayOf } from "../src/domain/date";
+import { expect, optIn, test, today } from "./fixtures";
 
 /**
  * A card that leaks a name is the one unforgivable bug, so these drive the
@@ -135,10 +136,17 @@ test.describe("the Share Card's own Lens", () => {
 
     // Today's Square carries a stroke its neighbours do not. A Week card used
     // to be however many Days had happened, which does not read as a week.
-    const today = await columnTop(page, 0);
-    const neighbour = await columnTop(page, 1);
-    expect(new Set(today).size).toBeGreaterThan(new Set(neighbour).size);
-    expect(today).not.toEqual(neighbour);
+    //
+    // The Week runs Sunday to Saturday, so today's column is its weekday. This
+    // used to read column 0 and therefore only passed on a Sunday — on every
+    // other day it compared two plain Squares and found them alike. The column
+    // comes from the app's own rule rather than a second copy of it, the same
+    // reason `fixtures.ts` builds its account with `sealDays`.
+    const column = weekdayOf(today());
+    const ringed = await columnTop(page, column);
+    const plain = await columnTop(page, (column + 1) % 7);
+    expect(new Set(ringed).size).toBeGreaterThan(new Set(plain).size);
+    expect(ringed).not.toEqual(plain);
   });
 
   test("counts only what it drew, so the number matches the picture", async ({ app, page }) => {
