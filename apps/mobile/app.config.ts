@@ -3,9 +3,9 @@ import { CARD, DARK_LEVELS, toRgb, type Oklch } from "@squares/domain/palette";
 
 /**
  * Android's icon and splash colours are written into resource XML, which wants
- * `#rrggbb`. `css()` emits the space-separated `rgb()` the canvas and React
- * Native take, and that does not parse there — so this converts rather than
- * reusing it.
+ * `#rrggbb`. `css()` emits the `rgb()`/`rgba()` the canvas, React Native and
+ * Reanimated all take, and that does not parse there — so this converts rather
+ * than reusing it.
  */
 const hex = (colour: Oklch) =>
   `#${toRgb(colour)

@@ -14,9 +14,9 @@
 }
 
 /*
- * The Intensity ramp.
+ * The palette.
  *
- * Lightness carries the data: the four levels step monotonically in L
+ * Lightness carries the data: the four Intensity levels step monotonically in L
  * (dark 0.40 → 0.55 → 0.70 → 0.85), which is the one channel every form of
  * colour vision agrees on, so the ramp survives deuteranopia, protanopia,
  * greyscale and a phone in sunlight. Hue then rotates 178 → 120 across the
@@ -24,63 +24,12 @@
  * a second cue rather than a mush. Level 4 is the only saturated thing in the
  * app.
  *
- * The five levels themselves are not written here. They are generated into
- * `tokens.css` from `@squares/domain/palette`, which is also what the Share
- * Card's canvas and the phone app read, so the ramp cannot fork. Change it
- * there and run `pnpm tokens`.
+ * None of the values are written here — not the ramp, and since the phone app
+ * grew Screens, not the surfaces either. They are generated into `tokens.css`
+ * from `@squares/domain/palette`, which is also what the Share Card's canvas
+ * and React Native read. A stylesheet is one consumer of the palette now, not
+ * its home. Change it there and run `pnpm tokens`.
  */
-:root,
-:root[data-theme="dark"] {
-  --bg: oklch(0.16 0.014 128);
-  --surface: oklch(0.205 0.016 128);
-  --surface-on: oklch(0.245 0.022 130);
-  --surface-input: oklch(0.21 0.017 128);
-  --surface-raised: oklch(0.27 0.02 128);
-
-  --fg: oklch(0.97 0.006 120);
-  --muted: oklch(0.71 0.02 125);
-  --dim: oklch(0.55 0.015 125);
-  --faint: oklch(0.5 0.012 125);
-
-  --line: oklch(0.97 0.006 120 / 0.09);
-  --line-strong: oklch(0.97 0.006 120 / 0.14);
-  --ghost: oklch(0.97 0.006 120 / 0.13);
-  --ring: oklch(0.97 0.006 120 / 0.4);
-  --tail-ring: oklch(0.97 0.006 120 / 0.32);
-
-  --accent: oklch(0.7 0.095 128);
-  --on-accent: oklch(0.16 0.014 128);
-  --chain-fg: oklch(0.8 0.11 124);
-  --row-on-line: oklch(0.7 0.125 138 / 0.3);
-  --knob-off: oklch(0.62 0.018 125);
-  --track-off: oklch(0.3 0.02 128);
-}
-
-:root[data-theme="light"] {
-  --bg: oklch(1 0 0);
-  --surface: oklch(0.975 0.004 128);
-  --surface-on: oklch(0.955 0.012 130);
-  --surface-input: oklch(0.98 0.004 128);
-  --surface-raised: oklch(0.94 0.008 128);
-
-  --fg: oklch(0.2 0.01 128);
-  --muted: oklch(0.5 0.012 128);
-  --dim: oklch(0.55 0.012 128);
-  --faint: oklch(0.58 0.012 128);
-
-  --line: oklch(0.141 0.005 285 / 0.09);
-  --line-strong: oklch(0.141 0.005 285 / 0.14);
-  --ghost: oklch(0.141 0.005 285 / 0.13);
-  --ring: oklch(0.141 0.005 285 / 0.35);
-  --tail-ring: oklch(0.141 0.005 285 / 0.3);
-
-  --accent: oklch(0.47 0.1 120);
-  --on-accent: oklch(1 0 0);
-  --chain-fg: oklch(0.47 0.1 120);
-  --row-on-line: oklch(0.605 0.105 138 / 0.3);
-  --knob-off: oklch(1 0 0);
-  --track-off: oklch(0.85 0.008 128);
-}
 
 *,
 *::before,
