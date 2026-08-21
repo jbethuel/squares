@@ -3,6 +3,12 @@ packages:
   - "packages/*"
 
 allowBuilds:
+  # The same call as workerd below, for the same reason. Its postinstall unpacks
+  # the prebuilt Skia binaries the native build links against. Expo Go has Skia
+  # compiled in already and would not miss them, so denying this looks fine
+  # right up until the first `expo run:ios` or EAS build, which is exactly the
+  # kind of delayed breakage the ruling exists to avoid.
+  '@shopify/react-native-skia': true
   esbuild: false
   sharp: false
   # Not the app's — wrangler pulls it in when the deploy workflow installs it,
@@ -15,3 +21,5 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - expo-constants@57.0.13
   - expo-notifications@57.0.13
+  - expo-file-system@57.0.5
+  - expo-sharing@57.0.14
