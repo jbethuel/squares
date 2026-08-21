@@ -10,6 +10,7 @@
     "./lens": "./src/lens.ts",
     "./mutations": "./src/mutations.ts",
     "./palette": "./src/palette.ts",
+    "./reminders": "./src/reminders.ts",
     "./selectors": "./src/selectors.ts",
     "./shareCard": "./src/shareCard.ts",
     "./storage": "./src/storage.ts",
