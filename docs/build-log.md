@@ -1,7 +1,7 @@
 # Build log
 
 What was built from the design, what was decided along the way, and what is
-still open. Written 2026-08-03, brought up to date 2026-08-11.
+still open. Written 2026-08-03, brought up to date 2026-08-21.
 
 The source is the Claude Design project `Squares.dc.html` (turn 1), read through
 the design MCP. It answers the four OPEN questions in `docs/design-brief.md` and
@@ -261,6 +261,75 @@ starts was restating what was already on screen. The Week's `sunday · this week
 saturday` survives because `mon wed fri` never says the row runs Sunday to
 Saturday.
 
+_The log skips from #9 to #30: PR #28 (the monorepo move) and PR #29 (the domain
+package and the ramp's single source) are not written up here._
+
+## PR #30 — the phone app, and the Reminder it exists for
+
+ADR 0006 says the Reminder forced a second runtime and nothing else did, so the
+scaffold and the feature landed together rather than as an empty shell followed
+later by a reason for it.
+
+`apps/mobile` is Expo SDK 57 with Expo Router, Android first. Home is a scaffold
+— the Heatmap, the Tail and the Total are still to be written in React Native
+primitives — but it draws real numbers from the real record through
+`packages/domain`, which is the seam worth proving before any of that. Storage
+is `expo-sqlite/kv-store` rather than AsyncStorage, because `StorageAdapter` is
+synchronous and that is the one Expo store with a synchronous API: the record
+loads before first paint, or every launch opens on a frame of nothing.
+
+The obvious way to build a daily Reminder is a repeating daily trigger at the
+time the user picked, and it cannot work. Both terms in `CONTEXT.md` are defined
+by their silence — the Daily Reminder is quiet on a Day whose Active Habits were
+all Ticked, a Reminded Habit's is quiet once that Habit is Ticked — and there is
+no way to cancel one occurrence of a repeat. So the rules emit a plan of dated
+one-shots over a seven-Day horizon instead, and the device is reconciled against
+it after every change. That is complete rather than best-effort only because the
+record cannot change while the app is closed; the horizon is what survives the
+app being left alone, with seven Days already on the device before the user
+stops opening it.
+
+Every silence rule then collapsed into one predicate. `outstandingOn` is "Active
+on that Day, Square still empty", and the rest fall out of it rather than
+branching separately: an Archived Habit is not Active, so its Reminder stops; a
+Ticked Habit drops out; a Day whose Active Habits were all Ticked yields nothing
+to say; and a Day still to come has no Day Record, so everything Active on it is
+outstanding — which is exactly true at the moment the plan is made.
+
+ADR 0007 is structural here rather than promised. `ReminderSettings` is not part
+of `AppData` and lives under its own key, so `serialise` cannot carry a Reminder
+into an Export — it never sees one. Off is absence, not a flag sitting beside a
+time that could disagree with it. And unlike `parseAppData`, the reminder parser
+never refuses a blob it cannot read: a rejected Export is a destroyed backup,
+but there is no backup of an alarm clock to lose, so taking the app down over
+one would be the wrong trade.
+
+On the device the reconcile diffs on an identifier of `key#hash(time|body)`
+rather than on the key alone. The key survives a replan by design, but the body
+changes as Habits are Ticked and the time changes when the user moves it, so a
+key-only diff would leave a stale notification pending. Folding both in means
+same identifier implies same notification, so an unchanged Reminder is left
+alone. Nothing relies on reusing an identifier to overwrite, which
+`docs/research/` records as undocumented — anything being replaced is cancelled
+first.
+
+Two things the specs do not fix were decided here. The Daily Reminder never
+names a Habit even when it is a Named Habit, because `CONTEXT.md` scopes the
+lock-screen exposure to "a Reminded Habit's Reminder"; and a named per-Habit
+Reminder's body is bare the Habit name. Separately, a Reminder arriving while
+the app is open shows no banner: a prompt to open the app, in front of someone
+already in it, is the noise the glossary rules out. It still lands in the tray.
+
+No `SCHEDULE_EXACT_ALARM` is requested. expo-notifications falls back to an
+inexact alarm on its own, which costs a once-daily Reminder minutes of drift in
+Doze and nothing else, against a permission Android actively discourages for
+anything that is not an alarm clock.
+
+Every API shape was read off the installed 57.0.13 type definitions rather than
+recalled, as `apps/mobile/AGENTS.md` demands. That caught one immediately:
+`shouldShowAlert` is deprecated in SDK 57 in favour of `shouldShowBanner` and
+`shouldShowList`.
+
 ## Decisions taken beyond the design
 
 | Decision | Why |
@@ -290,9 +359,14 @@ Saturday.
 
 ## Verification
 
-As of 2026-08-16: **311 unit tests across 22 files** and **68 end-to-end across
-7 specs**, with `tsc --noEmit` and `next build` clean. `pnpm test:all` runs the
-three in order.
+As of 2026-08-21: **347 unit tests across 25 files** (168 in `packages/domain`,
+179 in `apps/web`) and **69 end-to-end across 7 specs**, with `tsc --noEmit` and
+`next build` clean. `pnpm test:all` runs the three in order.
+
+`apps/mobile` has no test runner, so nothing in it is covered by that. Its
+Reminder rules are tested because they live in `packages/domain`; its scheduling
+is not, and has been verified only as far as a clean typecheck and an
+`expo config` that resolves. No notification has been observed to fire.
 
 PR #1 and #2 shipped before the suite existed, with 59 tests across 5 files
 (`date`, `grid`, `rules`, `palette`, `shareCard`). What stood in for the rest
@@ -314,11 +388,11 @@ than appearance:
   of shape and one number and nothing else; the named card carries exactly the
   Habits opted in.
 
-The Intensity ramp exists twice — CSS custom properties for the app, numbers in
-`palette.ts` for the canvas, which cannot read a custom property.
-`palette.test.ts` parses `globals.css` and asserts the two agree, and pins the
-two properties the ramp exists for: monotonic in lightness, and still separable
-in Rec. 709 luma.
+The Intensity ramp has one definition, `palette.ts`, and everything else is
+generated from it: the app's custom properties, the Share Card's canvas colours,
+and the phone's React Native strings. `palette.test.ts` asserts the committed CSS
+is what the renderer produces, and pins the two properties the ramp exists for
+across both themes: monotonic in lightness, and still separable in Rec. 709 luma.
 
 ## Not built
 
@@ -327,6 +401,16 @@ in Rec. 709 luma.
 - **A global wipe.** ADR 0001 allows one as the only form of real deletion. The
   design's settings does not show it, and its footer note already says clearing
   site data clears the year.
+- **The phone app's Screens.** `apps/mobile` has Home as a scaffold and nothing
+  else. The web's five Screens — Home, Detail, New Habit, Settings, Share — are
+  all still to be built in React Native primitives.
+- **Any way to turn a Reminder on.** The rules and the scheduling are done and
+  nothing imports `useReminders`, because the two controls belong on Screens
+  that do not exist yet: the Daily Reminder on Settings, a Reminded Habit's time
+  on that Habit's own Screen. A time picker is not installed either.
+- **Reminder taps that go anywhere.** ADR 0007 has an unnamed Reminder say "1
+  Habit left" and open the app. It opens by default; nothing routes the tap to
+  the Habit it was about.
 
 ## Open questions
 
@@ -336,3 +420,16 @@ in Rec. 709 luma.
   invisible on touch; per-Day precision is otherwise a detail-screen job.
 - Day Records outside the last year are kept rather than pruned. Storage is
   small and export then carries full history, but nothing reads them.
+- Whether a one-shot `DATE` trigger survives a reboot. expo-notifications bundles
+  `RECEIVE_BOOT_COMPLETED` and the docs say it is used to set scheduled
+  notifications up again when the device restarts, but `docs/research/` checked
+  that around the daily trigger, not this one. If it does not hold, the seven-Day
+  horizon empties on every restart until the app is next opened, which is most of
+  the reason the horizon exists. Worth answering on a device before the rest of
+  the Reminder is built on top of it.
+- A phone left untouched for more than seven Days stops being prompted, which is
+  the horizon working as designed and may still be the wrong number. It is
+  currently recorded only as a constant in `reminders.ts`.
+- The reconcile's identifier hash is the part of the Reminder most likely to be
+  subtly wrong and the only part no test reaches, because it sits in `apps/mobile`.
+  Either lift it into `packages/domain` or accept it as device-verified only.
