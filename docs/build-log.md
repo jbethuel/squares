@@ -330,6 +330,106 @@ recalled, as `apps/mobile/AGENTS.md` demands. That caught one immediately:
 `shouldShowAlert` is deprecated in SDK 57 in favour of `shouldShowBanner` and
 `shouldShowList`.
 
+## The phone app's Screens
+
+The web's five Screens — Home, Detail, New Habit, Settings, Share — now exist in
+`apps/mobile` in React Native primitives, which is the last thing ADR 0006's
+"two interfaces over one set of rules" was promising and had not delivered.
+
+Nothing about a rule was rewritten. Every date, Intensity, Chain and Grace Window
+question is still answered in `packages/domain`, and the Screens read the same
+selectors the web reads. The Heatmap is the case worth naming: `gridGeometry`,
+`gridSquares`, `monthLabels` and the rest already answered every question about
+where a Square goes, so the React Native component only places what comes back.
+The web draws that with CSS grid and positions the month names in px off the
+`size + gap` step; with no CSS grid here the Squares are positioned off that step
+too, which leaves the two implementations closer rather than further apart.
+
+**The palette moved into the domain.** The Intensity ramp already lived in
+`@squares/domain/palette` with the web's custom properties generated from it. The
+twenty surface colours did not — they were hand-written under the `@import` in
+`globals.css`, which is unreadable from React Native. They are in `palette.ts`
+now and `tokens.css` is generated from both, so `--surface-on` and its React
+Native equivalent cannot drift. `Oklch` gained an optional alpha to carry the
+tokens that are the foreground at 9%.
+
+**The Share Card is the one thing that forked, as ADR 0006 said it would.** The
+Skia version is `shareCardCanvas.ts` with the Canvas2D calls swapped, reading the
+same `shareCardModel` and the same measurements out of `@squares/domain/shareCard`.
+Three Canvas2D conveniences have no Skia equivalent and are done by hand:
+`textBaseline = "top"` against Skia's baseline origin, `textAlign = "right"`, and
+`letterSpacing`, which the Tally needs and which costs a `drawGlyphs` call
+placing each digit. As on the web the card is drawn once at export size and the
+preview is that bitmap, so what is on screen is the file that gets saved.
+
+**Export cannot claim as much here as it does on the web.** `navigator.share()`
+rejects when the user backs out of the sheet, which is what lets the web say
+"exported". `expo-sharing`'s `shareAsync` returns `Promise<void>` and resolves
+the same way whether the file was saved or the sheet was dismissed, so both
+Screens say "sent to the share sheet" instead. Telling someone their year is
+backed up when it is not is the one thing that line must never do. Import needs
+no third dependency: `File.pickFileAsync` is in `expo-file-system`, and as on the
+web it applies no type filter, because a file round-tripped through a share sheet
+comes back renamed or untyped and `parseAppData` is the real gate.
+
+ADR 0004 is kept and not re-implemented: the native header is the visible way
+out, with `headerBackTitle` set to `back` so it says the ADR's word rather than
+the route's name.
+
+Everything runs in Expo Go — Skia, `expo-file-system`, `expo-sharing` and
+`expo-haptics` are all compiled into it — so the simulator loop needs no
+development build.
+
+## Haptics, and things that move
+
+The Screens landed with one haptic and one spring — both on the Tick, both
+ported from what `globals.css` already described. This is the rest of it.
+
+**The phone has a vocabulary the web does not.** `navigator.vibrate(8)` is the
+whole of the web's haptic API; iOS has impacts in five weights, a selection
+click and three notification patterns. Picking from that at each call site is
+how an app ends up buzzing at everything, so `platform/haptics.ts` holds the
+policy and the Screens ask for an intent — `tick`, `switched`, `selected`,
+`committed`, `refused`. The Tick keeps the design's rule exactly: a haptic on
+the tap that adds and none on the tap that takes back, because correcting a
+mistake should feel administrative. That second branch is a named no-op rather
+than an absence, because "we forgot the untick" and "the untick is deliberately
+silent" read identically at the call site otherwise.
+
+**`platform/motion.ts` is the same idea for durations.** They are `globals.css`'s
+numbers — 90ms for a surface answering a press, 160ms for an edge following a
+fill, 300ms for a Square changing shade. The web keeps them in `transition`
+rules; React Native has no cascade to keep them in, so without one file they
+would be thirty literals typed on thirty different days.
+
+Reduced motion needed no work: Reanimated defaults every `withTiming`,
+`withSpring` and layout builder to `ReduceMotion.System`, so all of it switches
+itself off when the OS setting is on — the same guarantee `globals.css` gets from
+its `prefers-reduced-motion` block.
+
+What moves now: the switch knob slides and its track and knob colours cross-fade
+(the web's knob *jumps*, because `justify-content` is not animatable — it jumps
+because CSS cannot do better, not because jumping was the design); buttons and
+chips spring under the thumb; a Ticked row eases its fill over 90ms and its edge
+over 160ms, separately, so the fill lands with the tap and the edge follows;
+today's Square in the Overview eases between shades and cross-fades its ring
+into the echo; the grace strip, the import confirm, the status lines and the
+Chain's extra stat columns fade in and resettle rather than snapping; and a Lens
+change fades the new grid in, keyed on the shape rather than the Lens, so a Tick
+never remounts the year.
+
+Only today's Square is animated, out of up to 365. It is the only one that can
+change while it is on screen, and giving every Square its own hook to watch a
+colour that cannot change would cost the whole year to move one Day.
+
+**One bug fell out of this and it was in `packages/domain`.** `css()` emitted the
+space-separated CSS Color Level 4 form, `rgb(r g b / a)`. Canvas2D and React
+Native both take it; Reanimated's colour parser — a smaller implementation that
+runs on the UI thread — does not, and threw on every alpha token the moment a
+row interpolated its edge from `--line` to `--row-on-line`. It emits the legacy
+comma form now, which all three parse. The stylesheet is untouched: `tokens.css`
+is rendered from the raw numbers and stays in `oklch()`.
+
 ## Decisions taken beyond the design
 
 | Decision | Why |
@@ -368,6 +468,31 @@ Reminder rules are tested because they live in `packages/domain`; its scheduling
 is not, and has been verified only as far as a clean typecheck and an
 `expo config` that resolves. No notification has been observed to fire.
 
+Its Screens were verified by eye on the iOS simulator against a seeded record —
+three Habits, 201 Days, 311 Ticks, one Chained and Named, one Archived — built
+by running `packages/domain`'s own mutations forward a Day at a time, so the
+fixture could not be a shape the rules would never produce. What that pass
+confirms is rendering: all five Screens; both Themes, with System following the
+device without a relaunch; all three Lenses, including the Week's single row
+with its legend and the Year scrolled to open at today; the hollow Square for an
+open yesterday and the bridges across a Chain; an Archived Habit's Screen with
+the Chain and Card switches gone; and the Skia Share Card naming exactly the one
+Habit opted in.
+
+Taps were exercised once the simulator's window became scriptable again. A tap
+on a row moved the Total 311 → 312, the row's subtitle 99 → 100 ticks, the
+rightmost Tail Square to filled-and-ringed and today's Square in the Overview up
+a shade — and all of it survived terminating the app and relaunching it, so the
+Tick, the echo and the write to `expo-sqlite/kv-store` are confirmed together.
+
+The animations were confirmed by slowing every duration in `platform/motion.ts`
+tenfold, tapping a switch, and screenshotting mid-flight: the knob is caught
+between the two ends with the track and the knob's own colour both partway
+through their interpolations. A still cannot show motion, and a still of a
+deliberately slowed animation can.
+
+What is still unexercised: the two share sheets, and Import.
+
 PR #1 and #2 shipped before the suite existed, with 59 tests across 5 files
 (`date`, `grid`, `rules`, `palette`, `shareCard`). What stood in for the rest
 was a manual pass: the Chrome extension was not connected, so the built static
@@ -401,13 +526,22 @@ across both themes: monotonic in lightness, and still separable in Rec. 709 luma
 - **A global wipe.** ADR 0001 allows one as the only form of real deletion. The
   design's settings does not show it, and its footer note already says clearing
   site data clears the year.
-- **The phone app's Screens.** `apps/mobile` has Home as a scaffold and nothing
-  else. The web's five Screens — Home, Detail, New Habit, Settings, Share — are
-  all still to be built in React Native primitives.
+- **Hack on the phone.** The web loads it as two woff2 files, which React
+  Native cannot use. `apps/mobile` draws in the platform monospace — the same
+  fallback the web stylesheet declares one name down its own stack — so the two
+  interfaces agree on the shape of the type but not on the face. Shipping it
+  means adding the TTFs to `assets/` and loading them through `expo-font`.
 - **Any way to turn a Reminder on.** The rules and the scheduling are done and
-  nothing imports `useReminders`, because the two controls belong on Screens
-  that do not exist yet: the Daily Reminder on Settings, a Reminded Habit's time
-  on that Habit's own Screen. A time picker is not installed either.
+  nothing imports `useReminders`. The Screens the two controls belong on now
+  exist — the Daily Reminder on Settings, a Reminded Habit's time on that
+  Habit's own Screen — so what is left is the controls themselves. A time picker
+  is not installed either.
+- **The `AppState` listener ADR 0006 promises.** `StoreProvider` re-reads the
+  clock on a 30-second interval and nothing else, so a Day that rolls over while
+  the app is backgrounded is sealed up to 30 seconds after the app is next
+  brought forward rather than immediately. The interval is inside the shared
+  store and React Native is not, so closing this means giving `StoreProvider` a
+  way to be poked from outside rather than adding a listener beside it.
 - **Reminder taps that go anywhere.** ADR 0007 has an unnamed Reminder say "1
   Habit left" and open the app. It opens by default; nothing routes the tap to
   the Habit it was about.
