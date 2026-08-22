@@ -15,6 +15,7 @@
     "test:e2e:static": "pnpm --filter @squares/web test:e2e:static",
     "test:all": "pnpm typecheck && pnpm test && pnpm test:e2e",
     "tokens": "pnpm --filter @squares/web tokens",
-    "mobile": "pnpm --filter @squares/mobile start"
+    "mobile": "pnpm --filter @squares/mobile start",
+    "mobile:ios": "pnpm --filter @squares/mobile ios"
   }
 }
