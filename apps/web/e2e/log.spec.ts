@@ -19,7 +19,7 @@ test.describe("the whole app, one tap at a time", () => {
 
     await expect(row).toHaveAttribute("aria-pressed", "true");
     await expect(total(page)).toHaveText("1");
-    expect((await readDevice(page)).days[today()]?.ticked).toHaveLength(1);
+    expect((await readDevice(page)).days[today()]?.logged).toHaveLength(1);
   });
 
   test("keeps the year across a reload, because it lives on the device", async ({ app }) => {
@@ -35,8 +35,8 @@ test.describe("the whole app, one tap at a time", () => {
     await expect(total(page)).toHaveText("1");
   });
 
-  test("takes a Tick back, and the Total with it", async ({ app }) => {
-    const page = await app({ habits: ["workout"], ticks: { workout: [0] } });
+  test("takes a Log back, and the Total with it", async ({ app }) => {
+    const page = await app({ habits: ["workout"], logs: { workout: [0] } });
     await expect(total(page)).toHaveText("1");
 
     await habitRow(page, "workout").click();
@@ -71,7 +71,7 @@ test.describe("the whole app, one tap at a time", () => {
   test("draws the year in full from day one, with no progress number", async ({ app }) => {
     const page = await app({ age: 1, habits: ["workout"] });
 
-    await expect(page.getByText("ticks", { exact: true })).toBeVisible();
+    await expect(page.getByText("logs", { exact: true })).toBeVisible();
 
     // The frame is a calendar and does not grow into one: the same 365 Squares
     // on day one as on day 365, and still nothing counting down anywhere.
@@ -114,11 +114,11 @@ test.describe("the whole app, one tap at a time", () => {
   });
 
   test("opens a Habit's own year and comes back", async ({ app }) => {
-    const page = await app({ age: 60, habits: ["workout"], ticks: { workout: [0, 1, 2] } });
+    const page = await app({ age: 60, habits: ["workout"], logs: { workout: [0, 1, 2] } });
 
     await page.getByRole("button", { name: "Open workout" }).click();
     await expect(page.getByRole("heading", { name: "workout" })).toBeVisible();
-    await expect(page.getByText("ticks", { exact: true })).toBeVisible();
+    await expect(page.getByText("logs", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "‹ back" }).click();
     await expect(habitRow(page, "workout")).toBeVisible();

@@ -214,7 +214,7 @@ export function ListButton({ label, onPress, style }: ButtonProps) {
   const t = useTheme();
   const press = usePressScale(0.985);
   return (
-    // `layout` so a list that gains or loses a row — the Archived block, when a
+    // `layout` so a list that gains or loses a row — the Hidden block, when a
     // Habit comes back out of it — closes the gap rather than snapping shut.
     <Animated.View layout={settle()} style={[press.style, style]}>
       <Pressable

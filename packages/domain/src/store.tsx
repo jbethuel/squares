@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from "react";
 import { todayKey, type DateKey } from "./date";
-import { sealDays } from "./mutations";
 import type { AppData } from "./types";
 
 interface Store {
@@ -24,9 +23,10 @@ interface Store {
 /**
  * Where the record is kept. Injected rather than imported, because the engine
  * differs by platform — localStorage on the web, an app-private store on the
- * phone — while everything below has to be identical on both (ADR 0006). The
- * rollover-and-`sealDays` effect *is* the Grace Window, and two copies of it
- * could disagree about which Days are still open.
+ * phone — while everything below has to be identical on both (ADR 0007). The
+ * rollover effect below decides which Day is open, and by ADR 0002 that is the
+ * only Day that can be Logged, so two copies of it could disagree about the one
+ * thing the user is allowed to do.
  */
 export interface StorageAdapter {
   load: (today: DateKey) => AppData;
@@ -61,7 +61,7 @@ export function StoreProvider({
 
   // Bare `setInterval`, not `window.setInterval`: there is no window on the
   // phone. A backgrounded app stops getting these, so a native shell has to
-  // re-read the clock on resume as well — see ADR 0006.
+  // re-read the clock on resume as well — see ADR 0007.
   useEffect(() => {
     const id = setInterval(() => {
       setToday((previous) => {
@@ -71,12 +71,6 @@ export function StoreProvider({
     }, ROLLOVER_POLL_MS);
     return () => clearInterval(id);
   }, []);
-
-  // A rollover seals yesterday and opens today. sealDays returns the same
-  // object when there is nothing to do, so this cannot loop.
-  useEffect(() => {
-    setData((previous) => (previous ? sealDays(previous, today) : previous));
-  }, [today]);
 
   useEffect(() => {
     if (data) storage.save(data);

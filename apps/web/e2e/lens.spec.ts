@@ -31,7 +31,7 @@ test.describe("the Lens", () => {
   });
 
   test("draws a whole week as one row of the largest Squares in the app", async ({ app }) => {
-    const page = await app({ age: AGE, habits: ["workout"], ticks: { workout: [0] } });
+    const page = await app({ age: AGE, habits: ["workout"], logs: { workout: [0] } });
 
     await lens(page, "week").click();
 
@@ -92,12 +92,12 @@ test.describe("the Lens", () => {
   });
 
   test("never moves the Total, because the Total is the year's", async ({ app }) => {
-    const page = await app({ age: AGE, habits: ["workout"], ticks: { workout: [0, 20, 40] } });
+    const page = await app({ age: AGE, habits: ["workout"], logs: { workout: [0, 20, 40] } });
     await expect(total(page)).toHaveText("3");
 
     await lens(page, "week").click();
 
-    // Two of those Ticks are off screen now. Nothing that can fall is on Home.
+    // Two of those Logs are off screen now. Nothing that can fall is on Home.
     await expect(drawn(page)).toHaveCount(7);
     await expect(total(page)).toHaveText("3");
   });
@@ -134,19 +134,19 @@ test.describe("the Lens", () => {
   });
 
   test("is offered over a Habit's own Heatmap too", async ({ app }) => {
-    const page = await app({ age: AGE, habits: ["workout"], ticks: { workout: [0] } });
+    const page = await app({ age: AGE, habits: ["workout"], logs: { workout: [0] } });
 
     await page.getByRole("button", { name: "Open workout" }).click();
-    await expect(page.getByText("every day of the year · ticked or not")).toBeVisible();
+    await expect(page.getByText("every day of the year · logged or not")).toBeVisible();
 
     await lens(page, "week").click();
 
-    await expect(page.getByText("every day of the week · ticked or not")).toBeVisible();
+    await expect(page.getByText("every day of the week · logged or not")).toBeVisible();
     await expect(drawn(page)).toHaveCount(7);
     // Today is marked here as well, so a Day still to come cannot be mistaken
     // for one that was missed.
     await expect(page.locator(".sq-today")).toHaveCount(1);
     // The stats above it stay on the year, so nothing on the screen can fall.
-    await expect(page.getByText("ticks", { exact: true }).locator("xpath=preceding-sibling::div[1]")).toHaveText("1");
+    await expect(page.getByText("logs", { exact: true }).locator("xpath=preceding-sibling::div[1]")).toHaveText("1");
   });
 });

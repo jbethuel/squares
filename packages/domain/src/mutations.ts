@@ -1,50 +1,6 @@
 import type { DateKey } from "./date";
-import { activeOn, dateAt, elapsedDays, isArchived, isOpen } from "./selectors";
+import { isActiveOn, isHidden, isToday } from "./selectors";
 import type { AppData, Habit, Span, ThemePreference } from "./types";
-
-function sameSet(a: readonly string[], b: readonly string[]): boolean {
-  return a.length === b.length && a.every((id) => b.includes(id));
-}
-
-/**
- * Materialise the Day Records for every elapsed Day.
- *
- * Open Days (today, yesterday) have their Active set refreshed, so a Habit
- * added today counts toward today's Intensity. A closed Day is written once —
- * with whatever was Active and nothing Ticked if it was never opened — and is
- * then never touched again. That is the whole of ADR 0001 in one loop.
- */
-export function sealDays(data: AppData, today: DateKey): AppData {
-  const span = elapsedDays(data, today);
-  const days = { ...data.days };
-  let changed = false;
-
-  for (let offset = 0; offset < span; offset++) {
-    const date = dateAt(today, offset);
-    const active = activeOn(data.habits, date);
-    const existing = days[date];
-
-    if (isOpen(date, today)) {
-      const ticked = existing ? existing.ticked.filter((id) => active.includes(id)) : [];
-      if (active.length === 0) {
-        if (existing) {
-          delete days[date];
-          changed = true;
-        }
-        continue;
-      }
-      if (!existing || !sameSet(existing.active, active) || !sameSet(existing.ticked, ticked)) {
-        days[date] = { date, active, ticked };
-        changed = true;
-      }
-    } else if (!existing && active.length > 0) {
-      days[date] = { date, active, ticked: [] };
-      changed = true;
-    }
-  }
-
-  return changed ? { ...data, days } : data;
-}
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -58,10 +14,10 @@ export function addHabit(data: AppData, name: string, today: DateKey): AppData {
     id: newId(),
     name: trimmed,
     spans: [{ from: today, to: null }],
-    chained: false,
+    streaks: false,
     sharedName: false,
   };
-  return sealDays({ ...data, habits: [...data.habits, habit] }, today);
+  return { ...data, habits: [...data.habits, habit] };
 }
 
 function patchHabit(data: AppData, id: string, patch: Partial<Habit>): AppData {
@@ -82,10 +38,10 @@ function closeSpans(spans: Span[], today: DateKey): Span[] {
 /**
  * Reopen the Habit from today forward.
  *
- * Archiving and changing your mind on the same Day is an undo, not a new Span —
+ * Hiding and changing your mind on the same Day is an undo, not a new Span —
  * otherwise every mis-tap would leave a zero-length Span in the record forever.
  * On any later Day the old Span stays closed and a new one opens, so the Days
- * spent Archived remain a gap.
+ * spent Hidden remain a gap.
  */
 function openSpan(spans: Span[], today: DateKey): Span[] {
   const last = spans[spans.length - 1];
@@ -94,26 +50,22 @@ function openSpan(spans: Span[], today: DateKey): Span[] {
 }
 
 /**
- * Archive a Habit or take it back out, from today forward either way.
+ * Hide a Habit or bring it back, from today forward either way.
  *
- * Every past Tick stays in the year and in the Total; the Day Records that
- * counted it are untouched, and the Days it spends Archived are never
- * backdated away. There is no delete. See ADR 0005.
+ * ADR 0001: every Log the Habit ever made stays in the record, but a Hidden
+ * Habit is out of the Overview and out of the Total, so Hiding re-shades the
+ * year behind it. Bringing it back restores those Squares. The Days it spent
+ * Hidden are never backdated away. See ADR 0003. There is no delete.
  */
-export function setArchived(
-  data: AppData,
-  id: string,
-  archived: boolean,
-  today: DateKey,
-): AppData {
+export function setHidden(data: AppData, id: string, hidden: boolean, today: DateKey): AppData {
   const habit = data.habits.find((h) => h.id === id);
-  if (!habit || isArchived(habit, today) === archived) return data;
-  const spans = archived ? closeSpans(habit.spans, today) : openSpan(habit.spans, today);
-  return sealDays(patchHabit(data, id, { spans }), today);
+  if (!habit || isHidden(habit, today) === hidden) return data;
+  const spans = hidden ? closeSpans(habit.spans, today) : openSpan(habit.spans, today);
+  return patchHabit(data, id, { spans });
 }
 
-export function setChained(data: AppData, id: string, chained: boolean): AppData {
-  return patchHabit(data, id, { chained });
+export function setStreaks(data: AppData, id: string, streaks: boolean): AppData {
+  return patchHabit(data, id, { streaks });
 }
 
 export function setSharedName(data: AppData, id: string, sharedName: boolean): AppData {
@@ -125,15 +77,28 @@ export function setTheme(data: AppData, theme: ThemePreference): AppData {
 }
 
 /**
- * The Tick. Binary, and only ever on a Day inside the Grace Window on which the
- * Habit was Active — the past is not editable, and neither is the future.
+ * The Log. Binary, and only ever on today, on a Habit that is Active today.
+ *
+ * ADR 0002 is enforced here rather than in the interface: the past is not
+ * editable, and neither is the future. Un-logging today stays possible right up
+ * to local midnight, because today is not yet a record.
+ *
+ * A Day with no Logs keeps no record — an empty one would carry nothing, now
+ * that the Active set is derived rather than stored.
  */
-export function toggleTick(data: AppData, habitId: string, date: DateKey, today: DateKey): AppData {
-  if (!isOpen(date, today)) return data;
+export function toggleLog(data: AppData, habitId: string, date: DateKey, today: DateKey): AppData {
+  if (!isToday(date, today)) return data;
+  const habit = data.habits.find((h) => h.id === habitId);
+  if (!habit || !isActiveOn(habit, date)) return data;
+
   const record = data.days[date];
-  if (!record || !record.active.includes(habitId)) return data;
-  const ticked = record.ticked.includes(habitId)
-    ? record.ticked.filter((id) => id !== habitId)
-    : [...record.ticked, habitId];
-  return { ...data, days: { ...data.days, [date]: { ...record, ticked } } };
+  const logged = record?.logged ?? [];
+  const next = logged.includes(habitId)
+    ? logged.filter((id) => id !== habitId)
+    : [...logged, habitId];
+
+  const days = { ...data.days };
+  if (next.length === 0) delete days[date];
+  else days[date] = { date, logged: next };
+  return { ...data, days };
 }

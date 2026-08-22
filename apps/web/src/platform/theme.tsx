@@ -17,7 +17,7 @@ export function resolveTheme(preference: ThemePreference): ResolvedTheme {
  * Paint the chosen Theme onto the document.
  *
  * This is the web's alone — there is no `documentElement` on the phone — so it
- * sits beside the store rather than inside it (ADR 0006). It renders nothing
+ * sits beside the store rather than inside it (ADR 0007). It renders nothing
  * and lives under `StoreProvider` because the preference is part of the record.
  * The first frame is already correct without it: `layout.tsx` inlines a
  * bootstrap script that sets `data-theme` before React hydrates.

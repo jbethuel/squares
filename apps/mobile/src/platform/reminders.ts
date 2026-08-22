@@ -18,7 +18,7 @@ import type { AppData } from "@squares/domain/types";
  * Reminder is allowed to say — are in `@squares/domain/reminders`; nothing here
  * decides any of that. This file only makes the device hold what the plan says.
  *
- * ADR 0007: local scheduling only. There is no push service, no token and no
+ * ADR 0008: local scheduling only. There is no push service, no token and no
  * subscription endpoint in this file, and there must never be one.
  */
 
@@ -34,7 +34,7 @@ const PREFIX = "squares.reminder:";
 const CHANNEL = "reminders";
 
 /**
- * Reminders live beside the record, in their own slot. ADR 0007: they are not in
+ * Reminders live beside the record, in their own slot. ADR 0008: they are not in
  * an Export and a record carried to another phone arrives with none set — which
  * is only true because they are never written into `squares.v1`.
  */
@@ -96,7 +96,7 @@ export async function ensureRemindersAllowed(): Promise<boolean> {
  * FNV-1a over everything about a Reminder that is not already in its key.
  *
  * The key names the Day and the Habit, so it survives a replan — but the body
- * changes as Habits are Ticked and the time changes when the user moves it, and
+ * changes as Habits are Logged and the time changes when the user moves it, and
  * a diff on the key alone would leave the device holding a stale one. Folding
  * both into the identifier means "same identifier" implies "same notification",
  * so an unchanged Reminder is left alone and a changed one is replaced.
@@ -123,7 +123,7 @@ async function cancelAllOurs(): Promise<void> {
 }
 
 /**
- * One sync at a time. Every Tick asks for one, and two overlapping runs would
+ * One sync at a time. Every Log asks for one, and two overlapping runs would
  * read the same pending list and schedule the same Reminder twice.
  */
 let inFlight: Promise<void> = Promise.resolve();
@@ -131,7 +131,7 @@ let inFlight: Promise<void> = Promise.resolve();
 /**
  * Make the device hold exactly the Reminders the plan calls for.
  *
- * Call this after anything that can change the answer: a Tick, an Archive, a
+ * Call this after anything that can change the answer: a Log, an Hide, a
  * change to the settings, a Day rolling over, and the app coming forward — the
  * plan covers a horizon precisely so that missing one of these is survivable,
  * but a Reminder the user has already earned their way out of should go quiet

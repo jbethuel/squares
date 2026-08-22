@@ -83,7 +83,7 @@ describe("the Heatmap", () => {
     expect(document.querySelectorAll(".sq-today")).toHaveLength(0);
   });
 
-  it("echoes today's Square instead of ringing it, in the frame a Tick lands", () => {
+  it("echoes today's Square instead of ringing it, in the frame a Log lands", () => {
     renderHeatmap({ markToday: true, echo: true });
     expect(document.querySelectorAll(".sq-echo")).toHaveLength(1);
     expect(document.querySelectorAll(".sq-today")).toHaveLength(0);

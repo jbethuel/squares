@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { handOff } from "@/platform/handoff";
 import { LensPicker } from "@/components/LensPicker";
 import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
-import { liveHabits } from "@squares/domain/selectors";
+import { visibleHabits } from "@squares/domain/selectors";
 import { cardSize, shareCardModel } from "@squares/domain/shareCard";
 import { drawShareCard } from "@/platform/shareCardCanvas";
 import { useStore } from "@squares/domain/store";
@@ -23,9 +23,9 @@ export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) =>
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
   const model = useMemo(() => shareCardModel(data, today, lens), [data, today, lens]);
   const size = cardSize(model, EXPORT_SCALE);
-  // The Habits behind the names on the card. Archived Habits are never named,
+  // The Habits behind the names on the card. Hidden Habits are never named,
   // so every one of these still has a live Screen to open.
-  const named = liveHabits(data, today).filter((habit) => habit.sharedName);
+  const named = visibleHabits(data, today).filter((habit) => habit.sharedName);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +85,7 @@ export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) =>
         width={size.width}
         height={size.height}
         className="share-preview"
-        aria-label={`Share card: ${model.tally} ticks across ${lensNoun(model.lens)}${
+        aria-label={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}${
           model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ", no habit names"
         }`}
         role="img"

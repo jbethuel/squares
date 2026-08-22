@@ -101,7 +101,7 @@ export function ToggleRow({
         }}
       >
         {/* The hint changes as the switch moves — "stops counting today" becomes
-            "off home. past ticks stay." — so the row resettles rather than
+            "off home. past logs stay." — so the row resettles rather than
             snapping to its new height. */}
         <Animated.View layout={settle()} style={{ flexShrink: 1, gap: 3 }}>
           <Text style={{ fontFamily: MONO, fontSize: FS.md, color: t.fg }}>{label}</Text>

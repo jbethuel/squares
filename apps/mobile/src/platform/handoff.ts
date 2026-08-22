@@ -7,8 +7,8 @@ import type { AppData } from "@squares/domain/types";
 /**
  * Handing a file to the device, and taking one back.
  *
- * ADR 0002: the file is the only copy of the year that survives this app's
- * storage being cleared, and ADR 0006 notes that uninstalling an app is
+ * ADR 0004: the file is the only copy of the year that survives this app's
+ * storage being cleared, and ADR 0007 notes that uninstalling an app is
  * precisely that event, arriving with no warning in front of it. So the phone
  * ships Export and Import in v1.
  *

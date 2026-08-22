@@ -39,7 +39,7 @@ export function useReminders(): Reminders {
   const [settings, setSettings] = useState<ReminderSettings>(loadReminders);
 
   /**
-   * ADR 0007: Import drops Reminders it cannot match. Reminder times are keyed
+   * ADR 0008: Import drops Reminders it cannot match. Reminder times are keyed
    * by Habit id while the record is not, so a record replaced by Import can
    * leave Reminders aimed at Habits that no longer exist. Reconciling against
    * the current Habits here catches that wherever the Import happened.
@@ -52,14 +52,14 @@ export function useReminders(): Reminders {
     });
   }, [data.habits]);
 
-  // Every Tick, Archive and settings change lands here, because each one can
+  // Every Log, Hide and settings change lands here, because each one can
   // silence a Reminder or bring one back. A rollover arrives the same way: the
   // store reseals the record, which is a new `data`.
   useEffect(() => {
     void syncReminders(data, settings);
   }, [data, settings]);
 
-  // A backgrounded app gets no rollover and no Tick, so the plan it left behind
+  // A backgrounded app gets no rollover and no Log, so the plan it left behind
   // can be a Day stale by the time the user is back.
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {

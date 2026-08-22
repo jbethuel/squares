@@ -32,7 +32,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   icon: "./assets/images/icon.png",
 
-  // No web target. ADR 0006 chose two interfaces over one compiled to both, and
+  // No web target. ADR 0007 chose two interfaces over one compiled to both, and
   // apps/web is the web one; a second, worse web build here would be the exact
   // react-native-web outcome that ADR rejected.
   platforms: ["android", "ios"],
@@ -43,19 +43,19 @@ const config: ExpoConfig = {
      * identifies an installed app by it, so a rename is not a rename: the OS
      * treats the new build as a different app, leaves the old one holding the
      * record, and the only way to be rid of it is an uninstall — which is the
-     * storage-clearing event ADR 0006 warns arrives with no warning in front of it.
+     * storage-clearing event ADR 0007 warns arrives with no warning in front of it.
      */
     package: "dev.jbethuel.squares",
 
     /**
      * Android's Auto Backup is on unless a manifest says otherwise, and it
      * copies app storage to the user's Google Drive. That storage is
-     * `expo-sqlite/kv-store`, which is the year. ADR 0002 says the record does
+     * `expo-sqlite/kv-store`, which is the year. ADR 0004 says the record does
      * not leave the device and the README says it in as many words, so the
      * platform default makes both of them false.
      *
      * Off, so an uninstall really does erase the record — which is precisely the
-     * event Export exists to answer, and why ADR 0009 raises Export from a
+     * event Export exists to answer, and why ADR 0007 raises Export from a
      * convenience to the only lifeline there is.
      */
     allowBackup: false,
@@ -69,11 +69,11 @@ const config: ExpoConfig = {
     // Off, and deliberately so. react-native-screens does not implement
     // predictive back in its stable major, and enabling this with Expo Router's
     // default stack currently makes the gesture leave the app instead of
-    // popping a Screen. See ADR 0006 and docs/research/.
+    // popping a Screen. See ADR 0007 and docs/research/.
     predictiveBackGestureEnabled: false,
   },
 
-  // iOS is not in v1 — ADR 0008 ships one sideloaded Android APK and nothing
+  // iOS is not in v1 — v1 ships one sideloaded Android APK and nothing
   // else. The identifier is claimed here regardless: it costs nothing while it
   // is still free to choose, and AGENTS.md says nothing in this app may assume
   // iOS is not coming.
@@ -85,7 +85,7 @@ const config: ExpoConfig = {
       // The accent Android tints a Reminder's small icon with. The full-shade
       // ramp level, so a Reminder is the same green as a complete Day.
       // No `enableBackgroundRemoteNotifications`, and no push config of any
-      // kind: ADR 0007 says nothing about a Reminder touches the network.
+      // kind: ADR 0008 says nothing about a Reminder touches the network.
       "expo-notifications",
       { color: hex(DARK_LEVELS[4]!), defaultChannel: "reminders" },
     ],

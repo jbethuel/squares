@@ -3,13 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { HabitRow } from "./HabitRow";
 import { longLabel } from "@squares/domain/date";
-import { setChained } from "@squares/domain/mutations";
+import { setStreaks } from "@squares/domain/mutations";
 import { elapsedDays } from "@squares/domain/selectors";
 import { account, idOf, TODAY, YESTERDAY } from "@/test/harness";
 import type { AppData } from "@squares/domain/types";
 
 function renderRow(data: AppData, name: string, overrides: { offset?: number; onOpen?: () => void } = {}) {
-  const onTick = vi.fn();
+  const onLog = vi.fn();
   const habit = data.habits.find((h) => h.name === name)!;
   render(
     <HabitRow
@@ -18,47 +18,47 @@ function renderRow(data: AppData, name: string, overrides: { offset?: number; on
       today={TODAY}
       elapsed={elapsedDays(data, TODAY)}
       offset={overrides.offset ?? 0}
-      onTick={onTick}
+      onLog={onLog}
       onOpen={overrides.onOpen}
     />,
   );
-  return { onTick, habit };
+  return { onLog, habit };
 }
 
-const tickTarget = () => screen.getByRole("button", { name: /workout/i });
+const logTarget = () => screen.getByRole("button", { name: /workout/i });
 
-describe("the tick target", () => {
+describe("the Log target", () => {
   it("is the row itself, and says what it is and what Day it is for", () => {
     renderRow(account({ habits: ["workout"] }), "workout");
-    expect(tickTarget()).toHaveAccessibleName(`workout, not ticked for ${longLabel(TODAY)}`);
-    expect(tickTarget()).toHaveAttribute("aria-pressed", "false");
+    expect(logTarget()).toHaveAccessibleName(`workout, not logged for ${longLabel(TODAY)}`);
+    expect(logTarget()).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("reports itself pressed once the Day is Ticked", () => {
-    renderRow(account({ habits: ["workout"], ticks: { workout: [0] } }), "workout");
-    expect(tickTarget()).toHaveAttribute("aria-pressed", "true");
-    expect(tickTarget()).toHaveAccessibleName(`workout, ticked for ${longLabel(TODAY)}`);
+  it("reports itself pressed once the Day is Logged", () => {
+    renderRow(account({ habits: ["workout"], logs: { workout: [0] } }), "workout");
+    expect(logTarget()).toHaveAttribute("aria-pressed", "true");
+    expect(logTarget()).toHaveAccessibleName(`workout, logged for ${longLabel(TODAY)}`);
   });
 
-  it("commits a Tick for today", async () => {
+  it("commits a Log for today", async () => {
     const user = userEvent.setup();
-    const { onTick, habit } = renderRow(account({ habits: ["workout"] }), "workout");
-    await user.click(tickTarget());
-    expect(onTick).toHaveBeenCalledWith(habit.id, TODAY, true);
+    const { onLog, habit } = renderRow(account({ habits: ["workout"] }), "workout");
+    await user.click(logTarget());
+    expect(onLog).toHaveBeenCalledWith(habit.id, TODAY, true);
   });
 
-  it("commits an untick when the Day is already Ticked", async () => {
+  it("commits an unlog when the Day is already Logged", async () => {
     const user = userEvent.setup();
-    const { onTick, habit } = renderRow(account({ habits: ["workout"], ticks: { workout: [0] } }), "workout");
-    await user.click(tickTarget());
-    expect(onTick).toHaveBeenCalledWith(habit.id, TODAY, false);
+    const { onLog, habit } = renderRow(account({ habits: ["workout"], logs: { workout: [0] } }), "workout");
+    await user.click(logTarget());
+    expect(onLog).toHaveBeenCalledWith(habit.id, TODAY, false);
   });
 
   it("commits against yesterday in the yesterday section", async () => {
     const user = userEvent.setup();
-    const { onTick, habit } = renderRow(account({ habits: ["workout"] }), "workout", { offset: 1 });
-    await user.click(tickTarget());
-    expect(onTick).toHaveBeenCalledWith(habit.id, YESTERDAY, true);
+    const { onLog, habit } = renderRow(account({ habits: ["workout"] }), "workout", { offset: 1 });
+    await user.click(logTarget());
+    expect(onLog).toHaveBeenCalledWith(habit.id, YESTERDAY, true);
   });
 });
 
@@ -66,15 +66,15 @@ describe("the haptic", () => {
   it("fires once on the tap that adds", async () => {
     const user = userEvent.setup();
     renderRow(account({ habits: ["workout"] }), "workout");
-    await user.click(tickTarget());
+    await user.click(logTarget());
     expect(navigator.vibrate).toHaveBeenCalledTimes(1);
     expect(navigator.vibrate).toHaveBeenCalledWith(8);
   });
 
-  it("does not fire on an untick, because correcting a mistake is administrative", async () => {
+  it("does not fire on an unlog, because correcting a mistake is administrative", async () => {
     const user = userEvent.setup();
-    renderRow(account({ habits: ["workout"], ticks: { workout: [0] } }), "workout");
-    await user.click(tickTarget());
+    renderRow(account({ habits: ["workout"], logs: { workout: [0] } }), "workout");
+    await user.click(logTarget());
     expect(navigator.vibrate).not.toHaveBeenCalled();
   });
 
@@ -83,10 +83,10 @@ describe("the haptic", () => {
     vi.mocked(navigator.vibrate).mockImplementation(() => {
       throw new Error("not allowed outside a user gesture");
     });
-    const { onTick } = renderRow(account({ habits: ["workout"] }), "workout");
-    await user.click(tickTarget());
-    // Vibration is a nicety; the Tick is the product.
-    expect(onTick).toHaveBeenCalled();
+    const { onLog } = renderRow(account({ habits: ["workout"] }), "workout");
+    await user.click(logTarget());
+    // Vibration is a nicety; the Log is the product.
+    expect(onLog).toHaveBeenCalled();
   });
 });
 
@@ -96,27 +96,27 @@ describe("the press and the spring", () => {
     renderRow(account({ habits: ["workout"] }), "workout");
     const row = document.querySelector(".row")!;
 
-    await user.pointer({ keys: "[MouseLeft>]", target: tickTarget() });
+    await user.pointer({ keys: "[MouseLeft>]", target: logTarget() });
     expect(row).toHaveAttribute("data-pressed", "true");
-    await user.pointer({ keys: "[/MouseLeft]", target: tickTarget() });
+    await user.pointer({ keys: "[/MouseLeft]", target: logTarget() });
     expect(row).not.toHaveAttribute("data-pressed");
   });
 
   it("releases the press when the thumb slides off without committing", async () => {
     const user = userEvent.setup();
-    const { onTick } = renderRow(account({ habits: ["workout"] }), "workout");
+    const { onLog } = renderRow(account({ habits: ["workout"] }), "workout");
     const row = document.querySelector(".row")!;
 
-    await user.pointer({ keys: "[MouseLeft>]", target: tickTarget() });
-    await user.unhover(tickTarget());
+    await user.pointer({ keys: "[MouseLeft>]", target: logTarget() });
+    await user.unhover(logTarget());
     expect(row).not.toHaveAttribute("data-pressed");
-    expect(onTick).not.toHaveBeenCalled();
+    expect(onLog).not.toHaveBeenCalled();
   });
 
   it("pulses today's Square on commit and lets it go", async () => {
     const user = userEvent.setup();
     renderRow(account({ habits: ["workout"] }), "workout");
-    await user.click(tickTarget());
+    await user.click(logTarget());
 
     const today = () => document.querySelectorAll(".tail-sq")[7]!;
     expect(today()).toHaveAttribute("data-pulse", "true");
@@ -126,51 +126,51 @@ describe("the press and the spring", () => {
 });
 
 describe("what the row says about itself", () => {
-  it("counts Ticks for an unchained Habit, and nothing that can go to zero", () => {
-    renderRow(account({ habits: ["workout"], ticks: { workout: [0, 3, 9] } }), "workout");
-    expect(screen.getByText("3 ticks · unchained")).toBeInTheDocument();
+  it("counts Logs for a Habit with no Streak, and nothing that can go to zero", () => {
+    renderRow(account({ habits: ["workout"], logs: { workout: [0, 3, 9] } }), "workout");
+    expect(screen.getByText("3 logs")).toBeInTheDocument();
+    expect(screen.queryByText(/streak/)).not.toBeInTheDocument();
   });
 
-  it("counts the Chain once the Habit is opted in", () => {
-    const data = account({ habits: ["workout"], ticks: { workout: [0, 1, 2] } });
-    renderRow(setChained(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("chain 3 days")).toBeInTheDocument();
+  it("says a log, not logs, at one", () => {
+    renderRow(account({ habits: ["workout"], logs: { workout: [0] } }), "workout");
+    expect(screen.getByText("1 log")).toBeInTheDocument();
+  });
+
+  it("counts the Streak once the Habit is opted in", () => {
+    const data = account({ habits: ["workout"], logs: { workout: [0, 1, 2] } });
+    renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
+    expect(screen.getByText("streak 3 days")).toBeInTheDocument();
   });
 
   it("says a day, not days, at one", () => {
-    const data = account({ habits: ["workout"], ticks: { workout: [0] } });
-    renderRow(setChained(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("chain 1 day")).toBeInTheDocument();
+    const data = account({ habits: ["workout"], logs: { workout: [0] } });
+    renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
+    expect(screen.getByText("streak 1 day")).toBeInTheDocument();
   });
 
-  it("says a Chain is broken rather than showing a zero", () => {
-    const data = account({ habits: ["workout"], ticks: { workout: [5, 6] } });
-    renderRow(setChained(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("chain broken")).toBeInTheDocument();
+  it("says a Streak is broken rather than showing a zero", () => {
+    const data = account({ habits: ["workout"], logs: { workout: [5, 6] } });
+    renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
+    expect(screen.getByText("streak broken")).toBeInTheDocument();
   });
 
-  it("does not call a Chain broken on day one, when there was never one to break", () => {
+  it("does not call a Streak broken on day one, when there was never one to break", () => {
     const data = account({ age: 1, habits: ["workout"] });
-    renderRow(setChained(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("no chain yet")).toBeInTheDocument();
-  });
-
-  it("says only 'yesterday' in the yesterday section", () => {
-    renderRow(account({ habits: ["workout"], ticks: { workout: [0, 1, 2] } }), "workout", { offset: 1 });
-    expect(screen.getByText("yesterday")).toBeInTheDocument();
-    expect(screen.queryByText(/chain/)).not.toBeInTheDocument();
+    renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
+    expect(screen.getByText("no streak yet")).toBeInTheDocument();
   });
 });
 
 describe("opening a Habit", () => {
-  it("is a separate, deliberately small target that does not Tick", async () => {
+  it("is a separate, deliberately small target that does not Log", async () => {
     const user = userEvent.setup();
     const onOpen = vi.fn();
-    const { onTick, habit } = renderRow(account({ habits: ["workout"] }), "workout", { onOpen });
+    const { onLog, habit } = renderRow(account({ habits: ["workout"] }), "workout", { onOpen });
 
     await user.click(screen.getByRole("button", { name: "Open workout" }));
     expect(onOpen).toHaveBeenCalledWith(habit.id);
-    expect(onTick).not.toHaveBeenCalled();
+    expect(onLog).not.toHaveBeenCalled();
   });
 
   it("is not offered in the yesterday section, which is not a browsing surface", () => {

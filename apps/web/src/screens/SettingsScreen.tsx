@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { handOff } from "@/platform/handoff";
-import { sealDays, setTheme } from "@squares/domain/mutations";
-import { archivedHabits } from "@squares/domain/selectors";
+import { setTheme } from "@squares/domain/mutations";
+import { hiddenHabits } from "@squares/domain/selectors";
 import { exportFilename, parseAppData, serialise } from "@squares/domain/storage";
 import { useStore } from "@squares/domain/store";
 import type { AppData, ThemePreference } from "@squares/domain/types";
@@ -35,7 +35,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
   const [pending, setPending] = useState<AppData | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  const archived = archivedHabits(data, today);
+  const hidden = hiddenHabits(data, today);
 
   const exportJson = async () => {
     const file = new File([serialise(data)], exportFilename(today), {
@@ -59,7 +59,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       // An import replaces the year on this device, and there is no undo, so a
       // year that already has something in it has to be confirmed first.
       if (data.habits.length === 0) {
-        replace(sealDays(parsed, today));
+        replace(parsed);
         setStatus("imported");
         return;
       }
@@ -76,10 +76,10 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       </h1>
 
       {/*
-        Nothing per-Habit lives here any more. A Habit's Chain and its Share Card
-        name are set on that Habit's own Screen, which is the only place that
-        knows anything about one Habit — two places to change one flag is how
-        they drift.
+        Nothing per-Habit lives here any more. A Habit's Streak and its Share
+        Card name are set on that Habit's own Screen, which is the only place
+        that knows anything about one Habit — two places to change one flag is
+        how they drift.
       */}
       {/* Real headings, not styled paragraphs: settings is a Screen of blocks,
           and a heading is how you jump between them without reading each one. */}
@@ -129,7 +129,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
         <div className="card card-accent" style={{ marginTop: 10 }}>
           <p className="note" style={{ margin: "0 0 12px" }}>
             replace this device&apos;s year with {pending.habits.length} habits and{" "}
-            {Object.keys(pending.days).length} days? this cannot be undone.
+            {Object.keys(pending.days).length} logged days? this cannot be undone.
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             <button
@@ -137,7 +137,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
               className="btn btn-primary"
               style={{ flex: 1, padding: 12 }}
               onClick={() => {
-                replace(sealDays(pending, today));
+                replace(pending);
                 setPending(null);
                 setStatus("imported");
               }}
@@ -223,15 +223,15 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       <Rule />
 
       {/*
-        Archived Habits are the one per-Habit thing still listed here, and it is
+        Hidden Habits are the one per-Habit thing still listed here, and it is
         not a setting — it is the only route back to a Screen Home no longer
-        shows. Without it, Archiving would be a switch that cannot be moved back.
+        shows. Without it, Hide would be a switch that cannot be moved back.
       */}
       <h2 className="title-sub" style={{ margin: "0 0 9px" }}>
-        archived
+        hidden
       </h2>
       <div className="stack" style={{ gap: 7 }}>
-        {archived.map((habit) => (
+        {hidden.map((habit) => (
           <button
             key={habit.id}
             type="button"
@@ -241,7 +241,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
             {habit.name} ›
           </button>
         ))}
-        {archived.length === 0 ? <p className="note-faint">none.</p> : null}
+        {hidden.length === 0 ? <p className="note-faint">none.</p> : null}
       </div>
 
       <Rule />

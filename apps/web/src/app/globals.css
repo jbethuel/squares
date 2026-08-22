@@ -56,10 +56,10 @@ html {
  * Every step is a whole pixel and every size in the app is one of them, so
  * "make the app bigger" is an edit here rather than thirty-three edits below.
  *
- * The floor is 11px, up from 9.5px. What stops it going higher is the grace
- * strip: `yesterday · 2 open · closes at midnight` is 38 characters that may
- * not wrap, and at ~0.6em per character in Hack it reaches the 310px of
- * content `.app` allows somewhere around 13px.
+ * The floor is 11px, up from 9.5px. What stops it going higher is the longest
+ * caption that may not wrap — `logs · last 365 days` — which at ~0.6em per
+ * character in Hack reaches the 310px of content `.app` allows somewhere
+ * around 15px.
  *
  * Note what is not here: the 16px on text controls below. That is not a type
  * decision, it is the iOS zoom threshold, and `typography.test.ts` fails any
@@ -271,7 +271,7 @@ select {
   background: none;
   padding: 0;
   font: inherit;
-  color: var(--chain-fg);
+  color: var(--streak-fg);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -457,7 +457,7 @@ select {
 
 /*
  * The Lens picker. It sits above the grid it redraws, so it is marked by weight
- * and a surface rather than by the accent — the accent is for a Tick and for
+ * and a surface rather than by the accent — the accent is for a Log and for
  * the one chip Home carries, and three of them here would out-shout the year.
  */
 .lens {
@@ -494,7 +494,7 @@ select {
     background-color 90ms linear,
     border-color 160ms ease;
 }
-.row-tick {
+.row-log {
   display: flex;
   flex: 1;
   min-width: 0;
@@ -507,15 +507,12 @@ select {
   text-align: left;
   cursor: pointer;
 }
-.row[data-ticked="true"] {
+.row[data-logged="true"] {
   background: var(--surface-on);
   border-color: var(--row-on-line);
 }
 .row[data-pressed="true"] {
   background: var(--surface-on);
-}
-.row-yesterday {
-  opacity: 0.82;
 }
 .row-name {
   font-size: var(--fs-md);
@@ -532,8 +529,8 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.row-sub[data-chained="true"] {
-  color: var(--chain-fg);
+.row-sub[data-streaks="true"] {
+  color: var(--streak-fg);
 }
 /*
  * The chevron is small; its hit box is not. The row is already 56px tall, so
@@ -588,21 +585,16 @@ select {
     background-color 90ms linear,
     transform 260ms cubic-bezier(0.2, 1.3, 0.35, 1);
 }
-.tail-sq[data-state="ticked"] {
+.tail-sq[data-state="logged"] {
   background: var(--lv3);
 }
 .tail-sq[data-state="unborn"] {
   background: transparent;
   border: 1px dashed var(--ghost);
 }
-/* Today's Square carries the ring: it is the tick target. */
+/* Today's Square carries the ring: it is the Log target. */
 .tail-sq[data-today="true"] {
   box-shadow: 0 0 0 1.5px var(--tail-ring);
-}
-/* Yesterday, still open and still empty: hollow, not filled. */
-.tail-sq[data-open="true"] {
-  background: transparent;
-  border: 1px solid var(--ring);
 }
 .tail-sq[data-pressed="true"] {
   transform: scale(0.9);
@@ -623,8 +615,8 @@ select {
 }
 
 /*
- * A Chain reads as one continuous object rather than a number: consecutive
- * Squares are bridged, and a Tick that extends one visibly grows a limb.
+ * A Streak reads as one continuous object rather than a number: consecutive
+ * Squares are bridged, and a Log that extends one visibly grows a limb.
  */
 .bridge {
   position: absolute;
@@ -732,21 +724,6 @@ select {
   border-color: color-mix(in oklch, var(--accent) 35%, transparent);
   background: var(--surface-input);
 }
-.grace {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  padding: 11px 13px;
-  border-radius: 10px;
-  border: 1px dashed var(--line-strong);
-  background: none;
-  color: var(--muted);
-  font-size: var(--fs-xs);
-  text-align: left;
-  cursor: pointer;
-}
 .stat-value {
   font-weight: 700;
   font-size: var(--fs-xl);
@@ -758,7 +735,7 @@ select {
   font-size: var(--fs-display);
   letter-spacing: -1.5px;
 }
-.stat-hero[data-chained="true"] {
+.stat-hero[data-streaks="true"] {
   color: var(--lv4);
 }
 .stat-label {

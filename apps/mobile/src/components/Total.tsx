@@ -7,13 +7,13 @@ import { FS, MONO, useTheme } from "@/platform/theme";
 const ROLL_DELAY_MS = 180;
 
 /**
- * The number of Ticks across all Habits in the last year. It only ever rises,
+ * The number of Logs across all Habits in the last year. It only ever rises,
  * and nothing can break it — which is the whole reason it, and not a streak,
  * is the hero number on Home.
  *
  * Only the digits that changed animate. A Total going 99 → 100 rolls all three;
  * going 41 → 42 rolls the one that moved, and the 4 stays put, because rolling
- * the whole number for a single Tick reads as the figure being replaced rather
+ * the whole number for a single Log reads as the figure being replaced rather
  * than incremented.
  */
 export function Total({ value }: { value: number }) {

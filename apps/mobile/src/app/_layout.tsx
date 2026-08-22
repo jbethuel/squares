@@ -9,7 +9,7 @@ import { MONO, useTheme } from "@/platform/theme";
 /**
  * A native stack, and no bar the app draws itself.
  *
- * ADR 0004 put a back bar at the bottom of every Screen because a standalone
+ * ADR 0006 put a back bar at the bottom of every Screen because a standalone
  * web app on iOS has nothing behind its corner control. A native app has a
  * header, exposed to VoiceOver and TalkBack by the platform, so the principle —
  * every Screen shows a visible way out — is kept and only its implementation
@@ -42,7 +42,7 @@ function Shell() {
         screenOptions={{
           headerStyle: { backgroundColor: t.bg },
           headerTintColor: t.fg,
-          // ADR 0004's word for the way out, kept. Without this the label is
+          // ADR 0006's word for the way out, kept. Without this the label is
           // the route name, so leaving Settings offered "‹ index".
           headerBackTitle: "back",
           headerTitleStyle: { fontFamily: MONO, fontSize: 15 },

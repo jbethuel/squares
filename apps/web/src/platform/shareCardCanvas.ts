@@ -19,7 +19,7 @@ import {
 /**
  * The Share Card, drawn to a Canvas2D.
  *
- * This is the one rule-adjacent thing the phone app cannot share (ADR 0006):
+ * This is the one rule-adjacent thing the phone app cannot share (ADR 0007):
  * React Native has no canvas, so the drawing forks and `shareCardModel` does
  * not. Everything here is in card units and multiplied on the way out, so the
  * preview on screen and the exported PNG are the same drawing at two sizes.
@@ -118,9 +118,9 @@ export function drawShareCard(
   ctx.fillStyle = css(CARD.muted);
   ctx.font = `400 ${u(CAPTION_SIZE)}px ${FONT}`;
   // The caption names what the number counts. It has to: the number is a Tally
-  // of the Frame drawn, not the Total, so "6" over seven Squares means six ticks
+  // of the Frame drawn, not the Total, so "6" over seven Squares means six logs
   // this week — and the card is handed to someone with no other context.
-  ctx.fillText(`ticks · ${lensNoun(model.lens)}`, u(PAD), u(captionY));
+  ctx.fillText(`logs · ${lensNoun(model.lens)}`, u(PAD), u(captionY));
 
   if (model.names.length > 0) {
     // One lowercase line, never separate rows — a per-Habit breakdown is a

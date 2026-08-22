@@ -49,7 +49,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # ADR 0002: `apps/web/out/` is the whole artefact — static files, no server.
+      # ADR 0004: `apps/web/out/` is the whole artefact — static files, no server.
       - run: pnpm build
 
       # A tag build sits on a detached HEAD, so wrangler has no branch to infer.

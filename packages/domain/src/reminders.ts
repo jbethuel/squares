@@ -1,10 +1,10 @@
 import { addDays, fromKey, toKey, type DateKey } from "./date";
-import { isTicked, wasActive } from "./selectors";
+import { isLogged, wasActive } from "./selectors";
 import type { AppData, Habit } from "./types";
 
 /**
  * The rules a Reminder follows. The scheduling itself is the phone's job and
- * lives in `apps/mobile/src/platform` — ADR 0007 says the web build has no
+ * lives in `apps/mobile/src/platform` — ADR 0008 says the web build has no
  * Reminder and cannot have one.
  *
  * This is here anyway rather than in the app, because what a Reminder *says* is
@@ -23,7 +23,7 @@ export interface TimeOfDay {
 /**
  * Which Reminders are set on *this device*.
  *
- * ADR 0007: a Reminder belongs to the device and not to the record, so this is
+ * ADR 0008: a Reminder belongs to the device and not to the record, so this is
  * deliberately not part of `AppData`. It is stored under its own key, it is not
  * in an Export, and a record carried to another phone arrives with none set.
  *
@@ -45,7 +45,7 @@ export function noReminders(): ReminderSettings {
 /**
  * How far ahead Reminders are scheduled.
  *
- * The record only changes while the app is open, so every Tick can replan — but
+ * The record only changes while the app is open, so every Log can replan — but
  * a phone left alone for a week must still be prompted, which is the whole point
  * of the feature. Seven Days is the horizon that survives not opening the app.
  */
@@ -112,7 +112,7 @@ export function setHabitReminder(
 /**
  * Drop Reminders pointing at Habits that no longer exist.
  *
- * ADR 0007: Reminder times are keyed by Habit id on the device while the record
+ * ADR 0008: Reminder times are keyed by Habit id on the device while the record
  * is not, so a record replaced by Import can leave Reminders aimed at nothing.
  * Run this after any Import.
  */
@@ -129,15 +129,15 @@ export function reconcileReminders(
 /**
  * Active Habits on that Day whose Square is still empty.
  *
- * This one predicate is the whole of both silence rules. An Archived Habit is
- * not Active, so it drops out; a Ticked Habit drops out; a Day whose Active
- * Habits were all Ticked yields nothing at all. A Day still to come has no Day
- * Record, so every Habit Active on it is outstanding — which is what it is,
- * at the moment the plan is made.
+ * This one predicate is the whole of both silence rules. A Hidden Habit is not
+ * Active, so it drops out; a Logged Habit drops out; a Day whose Active Habits
+ * were all Logged yields nothing at all. A Day still to come has no Day Record,
+ * so every Habit Active on it is outstanding — which is what it is, at the
+ * moment the plan is made.
  */
 export function outstandingOn(data: AppData, date: DateKey): Habit[] {
   return data.habits.filter(
-    (habit) => wasActive(data, habit.id, date) && !isTicked(data, habit.id, date),
+    (habit) => wasActive(data, habit.id, date) && !isLogged(data, habit.id, date),
   );
 }
 
@@ -159,7 +159,7 @@ function dailyBody(count: number): string {
 }
 
 /**
- * ADR 0007: a Reminder names its Habit only if that Habit is a Named Habit.
+ * ADR 0008: a Reminder names its Habit only if that Habit is a Named Habit.
  * Otherwise it says what the anonymous Share Card says — a count and nothing
  * else. The default is unnamed, and a Reminder arrives unbidden in front of
  * whoever is in the room.
@@ -177,7 +177,7 @@ function when(reminder: PlannedReminder): string {
  *
  * A repeating daily trigger cannot be silenced for one Day, and both Reminders
  * are defined by being silent on the Days the work is already done. So the plan
- * is dated one-shots over a horizon, recomputed after every Tick and every time
+ * is dated one-shots over a horizon, recomputed after every Log and every time
  * the app comes forward, and reconciled against what the device actually holds.
  *
  * `now` rather than a DateKey because "has that time already passed today" is
@@ -244,7 +244,7 @@ export function reminderAt(reminder: PlannedReminder): Date {
  * The device's own slot, deliberately not `squares.v1`.
  *
  * Reminders are read and written beside the record, never inside it. A separate
- * key is what makes ADR 0007's rule structural rather than a promise: `serialise`
+ * key is what makes ADR 0008's rule structural rather than a promise: `serialise`
  * cannot carry a Reminder into an Export because it never sees one.
  */
 export const REMINDERS_KEY = "squares.reminders.v1";

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** ADR 0002: the app has to open and work with no network at all. */
+/** ADR 0004: the app has to open and work with no network at all. */
 export function ServiceWorker() {
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;

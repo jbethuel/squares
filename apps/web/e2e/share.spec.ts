@@ -14,7 +14,7 @@ async function cardPixels(page: import("@playwright/test").Page): Promise<string
 
 test.describe("the Share Card is anonymous by default", () => {
   test("says it carries no names, and draws none", async ({ app }) => {
-    const page = await app({ age: 60, habits: ["took my meds", "no drinking"], ticks: { "took my meds": [0, 1] } });
+    const page = await app({ age: 60, habits: ["took my meds", "no drinking"], logs: { "took my meds": [0, 1] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
@@ -25,7 +25,7 @@ test.describe("the Share Card is anonymous by default", () => {
   });
 
   test("draws a name only once that Habit is opted in by hand", async ({ app }) => {
-    const page = await app({ age: 60, habits: ["workout", "no drinking"], ticks: { workout: [0, 1] } });
+    const page = await app({ age: 60, habits: ["workout", "no drinking"], logs: { workout: [0, 1] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
@@ -83,7 +83,7 @@ test.describe("the Share Card is anonymous by default", () => {
   });
 
   test("saves a PNG whose filename carries no date", async ({ app }) => {
-    const page = await app({ age: 60, habits: ["workout"], ticks: { workout: [0, 1, 2] } });
+    const page = await app({ age: 60, habits: ["workout"], logs: { workout: [0, 1, 2] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
@@ -124,42 +124,47 @@ test.describe("the Share Card's own Lens", () => {
       return pixels;
     }, column);
 
-  test("draws a whole week, today ringed, on whatever day it is made", async ({ app, page }) => {
-    // Ticked only well in the past, so today is empty and the ring is the only
+  test("draws a whole week, and rings today wherever the Frame runs past it", async ({
+    app,
+    page,
+  }) => {
+    // Logged only well in the past, so today is empty and the ring is the only
     // thing separating a Day missed from a Day that has not happened.
-    await app({ age: 200, habits: ["workout"], ticks: { workout: [30, 31] } });
+    await app({ age: 200, habits: ["workout"], logs: { workout: [30, 31] } });
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
     await page.getByRole("button", { name: "week", exact: true }).click();
 
-    await expect(page.getByRole("img", { name: /0 ticks across the week/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /0 logs across the week/ })).toBeVisible();
 
-    // Today's Square carries a stroke its neighbours do not. A Week card used
-    // to be however many Days had happened, which does not read as a week.
-    //
-    // The Week runs Sunday to Saturday, so today's column is its weekday. This
-    // used to read column 0 and therefore only passed on a Sunday — on every
-    // other day it compared two plain Squares and found them alike. The column
-    // comes from the app's own rule rather than a second copy of it, the same
-    // reason `fixtures.ts` builds its account with `sealDays`.
+    // The Week runs Sunday to Saturday, so today's column is its weekday, and
+    // the column is taken from the app's own rule rather than a second copy.
     const column = weekdayOf(today());
     const ringed = await columnTop(page, column);
-    const plain = await columnTop(page, (column + 1) % 7);
-    expect(new Set(ringed).size).toBeGreaterThan(new Set(plain).size);
-    expect(ringed).not.toEqual(plain);
+    const plain = await columnTop(page, (column + 6) % 7);
+
+    // The ring exists to tell a missed Day from one that has not happened, so
+    // it is drawn only where the Frame actually runs past today. On a Saturday
+    // the week ends at today and there is nothing ahead of it to disambiguate.
+    if (column === 6) {
+      expect(ringed).toEqual(plain);
+    } else {
+      expect(new Set(ringed).size).toBeGreaterThan(new Set(plain).size);
+      expect(ringed).not.toEqual(plain);
+    }
   });
 
   test("counts only what it drew, so the number matches the picture", async ({ app, page }) => {
-    // Ticks spread across the year: the year sees them all, the week sees today.
-    await app({ age: 200, habits: ["workout"], ticks: { workout: [0, 40, 80, 120] } });
+    // Logs spread across the year: the year sees them all, the week sees today.
+    await app({ age: 200, habits: ["workout"], logs: { workout: [0, 40, 80, 120] } });
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByRole("img", { name: /4 ticks across the year/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /4 logs across the year/ })).toBeVisible();
     const year = await cardPixels(page);
 
     await page.getByRole("button", { name: "week", exact: true }).click();
-    await expect(page.getByRole("img", { name: /1 ticks across the week/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /1 logs across the week/ })).toBeVisible();
 
     // The drawing changed too, not just the sentence.
     expect(await cardPixels(page)).not.toBe(year);

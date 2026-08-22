@@ -5,7 +5,7 @@ import type { Page } from "@playwright/test";
  * The way out, across the phones this actually runs on.
  *
  * Two things are guarded here that nothing else guards. First, vertical fit:
- * the "no scrolling" assertions in `tick.spec.ts` and `lens.spec.ts` compare
+ * the "no scrolling" assertions in `log.spec.ts` and `lens.spec.ts` compare
  * scrollWidth to clientWidth and so only ever caught *horizontal* overflow —
  * the fixed bar costs height, and height was unguarded. Second, Android. iOS
  * standalone has no back button behind the bar at all, but Android keeps its
@@ -13,14 +13,13 @@ import type { Page } from "@playwright/test";
  */
 /*
  * `fitsHome` is whether Home still sits on one screen at its fullest — three
- * Habits and a settled year. It stopped being true everywhere when the Year
- * took a Square worth looking at: seven rows of 11px is 95px where seven rows
- * of 4.96px was 42px, and the floor phone runs about 30px over. The two phones
- * people actually carry still fit.
+ * Habits and a settled year. It is true everywhere again now that ADR 0002
+ * took the yesterday strip off Home: the floor phone used to run about 30px
+ * over, and that strip was worth more than 30px.
  */
 const PHONES = [
   // The floor. If the bar fits here it fits everywhere.
-  { name: "android, small", width: 360, height: 640, fitsHome: false },
+  { name: "android, small", width: 360, height: 640, fitsHome: true },
   { name: "android, pixel", width: 412, height: 915, fitsHome: true },
   { name: "iphone", width: 390, height: 844, fitsHome: true },
 ];
@@ -54,8 +53,8 @@ for (const phone of PHONES) {
     test("carries no bar, and keeps to one screen where it fits", async ({ app, page }) => {
       await app({ age: 365, habits: ["workout", "read", "meds"] });
 
-      // Home carries no bar — it is the one Screen there is no leaving. That
-      // holds on every phone; the one-screen part now holds on all but the floor.
+      // Home carries no bar — it is the one Screen there is no leaving — and
+      // it sits on one screen on every phone here.
       await expect(page.getByRole("button", { name: "‹ back" })).toHaveCount(0);
       expect(await scrollsVertically(page)).toBe(!phone.fitsHome);
     });

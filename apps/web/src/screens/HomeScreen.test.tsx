@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { HomeScreen } from "./HomeScreen";
 import { MAX_SQUARE } from "@squares/domain/grid";
-import { setChained } from "@squares/domain/mutations";
+import { setStreaks } from "@squares/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, storedData, TODAY, YESTERDAY } from "@/test/harness";
 import type { AppData } from "@squares/domain/types";
 
@@ -30,7 +30,7 @@ describe("Home on day one", () => {
 
   it("drops the span on day one rather than showing a zero one", () => {
     open(account({ age: 1, habits: ["workout"] }));
-    expect(screen.getByText("ticks")).toBeInTheDocument();
+    expect(screen.getByText("logs")).toBeInTheDocument();
   });
 
   it("draws the whole year from day one, rather than a grid that grows into one", () => {
@@ -44,8 +44,8 @@ describe("Home on day one", () => {
   });
 });
 
-describe("the tick, end to end", () => {
-  it("records the Tick, raises the Total and marks the row", async () => {
+describe("the Log, end to end", () => {
+  it("records the Log, raises the Total and marks the row", async () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout"] }));
     expect(total()).toBe("0");
@@ -53,17 +53,18 @@ describe("the tick, end to end", () => {
     await user.click(row("workout"));
 
     expect(row("workout")).toHaveAttribute("aria-pressed", "true");
-    expect(storedData().days[TODAY]?.ticked).toHaveLength(1);
+    expect(storedData().days[TODAY]?.logged).toHaveLength(1);
     await vi.waitFor(() => expect(total()).toBe("1"));
   });
 
   it("takes it back, and the Total with it", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0] } }));
     await vi.waitFor(() => expect(total()).toBe("1"));
 
     await user.click(row("workout"));
-    expect(storedData().days[TODAY]?.ticked).toEqual([]);
+    // A Day with no Logs keeps no record at all.
+    expect(storedData().days[TODAY]).toBeUndefined();
     await vi.waitFor(() => expect(total()).toBe("0"));
   });
 
@@ -78,14 +79,14 @@ describe("the tick, end to end", () => {
     await vi.waitFor(() => expect(document.querySelectorAll(".sq-echo")).toHaveLength(0), { timeout: 2000 });
   });
 
-  it("does not echo an untick — there is nothing to celebrate", async () => {
+  it("does not echo an unlog — there is nothing to celebrate", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0] } }));
     await user.click(row("workout"));
     expect(document.querySelectorAll(".sq-echo")).toHaveLength(0);
   });
 
-  it("shades the Overview by Intensity as Habits are Ticked", async () => {
+  it("shades the Overview by Intensity as Habits are Logged", async () => {
     const user = userEvent.setup();
     open(account({ habits: ["a", "b"] }));
     const todaySquare = () => document.querySelector<HTMLElement>(".sq-today, .sq-echo")!;
@@ -98,66 +99,44 @@ describe("the tick, end to end", () => {
   });
 });
 
-describe("the Grace Window on Home", () => {
-  it("says how many Habits yesterday is still open for, and when it closes", () => {
+describe("only today can be Logged (ADR 0002)", () => {
+  it("offers no yesterday section at all", () => {
     open(account({ habits: ["workout", "read"] }));
-    expect(
-      screen.getByRole("button", { name: /yesterday · 2 open · closes at midnight/ }),
-    ).toBeInTheDocument();
-  });
-
-  it("stays collapsed until it is asked for, so Home is not a calendar editor", async () => {
-    const user = userEvent.setup();
-    open(account({ habits: ["workout"] }));
-    const strip = screen.getByRole("button", { name: /yesterday/ });
-    expect(strip).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("yesterday")).not.toBeInTheDocument();
-
-    await user.click(strip);
-    expect(strip).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("yesterday")).toBeInTheDocument();
-  });
-
-  it("Ticks yesterday, and the strip closes itself once nothing is left open", async () => {
-    const user = userEvent.setup();
-    open(account({ habits: ["workout"] }));
-
-    await user.click(screen.getByRole("button", { name: /yesterday · 1 open/ }));
-    const section = document.querySelector(".row-yesterday")!;
-    await user.click(within(section as HTMLElement).getByRole("button", { name: /^workout,/ }));
-
-    expect(storedData().days[YESTERDAY]?.ticked).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: / open ·/ })).not.toBeInTheDocument();
-  });
-
-  it("is not offered on day one, when there is no yesterday to forget", () => {
-    open(account({ age: 1, habits: ["workout"] }));
     expect(screen.queryByRole("button", { name: /yesterday/ })).not.toBeInTheDocument();
+    expect(document.querySelector(".row-yesterday")).toBeNull();
   });
 
-  it("is not offered once yesterday is complete", () => {
-    open(account({ habits: ["workout"], ticks: { workout: [1] } }));
-    expect(screen.queryByRole("button", { name: / open ·/ })).not.toBeInTheDocument();
-  });
-
-  it("offers no way at all to reach a closed Day", async () => {
+  it("makes every Habit row a target for today and nothing else", async () => {
     const user = userEvent.setup();
-    // Two Days ago was missed and is closed permanently.
-    open(account({ habits: ["workout"], ticks: { workout: [1] } }));
+    open(account({ habits: ["workout"] }));
     await user.click(row("workout"));
 
-    // Everything tappable on Home is today or yesterday. There is no third.
+    expect(storedData().days[TODAY]?.logged).toHaveLength(1);
+    expect(storedData().days[YESTERDAY]).toBeUndefined();
+  });
+
+  it("offers no way at all to reach a Day that is not today", async () => {
+    const user = userEvent.setup();
+    // Yesterday was missed, and there is nothing to be done about it.
+    open(account({ habits: ["workout"], logs: { workout: [1] } }));
+    await user.click(row("workout"));
+
     const labels = screen
       .getAllByRole("button")
       .map((b) => b.getAttribute("aria-label") ?? b.textContent ?? "");
-    expect(labels.some((label) => label.includes("1 August 2026"))).toBe(false);
+    const forToday = labels.filter((label) => label.includes("August 3, 2026"));
+    const forOtherDays = labels.filter(
+      (label) => /August \d+, 2026/.test(label) && !label.includes("August 3, 2026"),
+    );
+    expect(forToday.length).toBeGreaterThan(0);
+    expect(forOtherDays).toEqual([]);
   });
 });
 
 describe("what Home says about the year", () => {
   it("counts the days on file above the grid", () => {
     open(account({ age: 12, habits: ["workout"] }));
-    expect(screen.getByText("ticks · last 12 days")).toBeInTheDocument();
+    expect(screen.getByText("logs · last 12 days")).toBeInTheDocument();
   });
 
   it("names the months across the top of the year", () => {
@@ -195,7 +174,7 @@ describe("what Home says about the year", () => {
 
   it("carries one chip and nothing else that can go to zero", async () => {
     const user = userEvent.setup();
-    const props = open(account({ habits: ["workout"], ticks: { workout: [0, 1, 2] } }));
+    const props = open(account({ habits: ["workout"], logs: { workout: [0, 1, 2] } }));
 
     await user.click(screen.getByRole("button", { name: "settings" }));
     expect(props.onSettings).toHaveBeenCalled();
@@ -203,12 +182,12 @@ describe("what Home says about the year", () => {
     expect(screen.queryByRole("button", { name: /share/i })).not.toBeInTheDocument();
   });
 
-  it("shows a Chain only for a Habit that opted into one", () => {
-    const data = account({ habits: ["workout", "read"], ticks: { workout: [0, 1], read: [0, 1] } });
-    open(setChained(data, idOf(data, "workout"), true));
+  it("shows a Streak only for a Habit that opted into one", () => {
+    const data = account({ habits: ["workout", "read"], logs: { workout: [0, 1], read: [0, 1] } });
+    open(setStreaks(data, idOf(data, "workout"), true));
 
-    expect(screen.getByText("chain 2 days")).toBeInTheDocument();
-    expect(screen.getByText("2 ticks · unchained")).toBeInTheDocument();
+    expect(screen.getByText("streak 2 days")).toBeInTheDocument();
+    expect(screen.getByText("2 logs")).toBeInTheDocument();
   });
 });
 
@@ -243,16 +222,16 @@ describe("the Lens over the Overview", () => {
 
   it("never moves the Total, whatever it draws", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0, 10, 20] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0, 10, 20] } }));
     await vi.waitFor(() => expect(total()).toBe("3"));
 
     await user.click(lens("week"));
 
-    // Two of those three Ticks are outside the week now on screen. The Total is
+    // Two of those three Logs are outside the week now on screen. The Total is
     // the year's under every Lens: a number that can fall is not on Home.
     expect(drawn()).toHaveLength(7);
     expect(total()).toBe("3");
-    expect(screen.getByText("ticks · last 30 days")).toBeInTheDocument();
+    expect(screen.getByText("logs · last 30 days")).toBeInTheDocument();
   });
 
   it("says what it is drawing, above the grid or under it", async () => {
@@ -289,17 +268,15 @@ describe("the Lens over the Overview", () => {
     expect(squares.indexOf(today as Element)).toBe(1);
   });
 
-  it("keeps yesterday tickable while a shorter Lens is on", async () => {
+  it("keeps today loggable while a shorter Lens is on", async () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout"] }));
     await user.click(lens("week"));
 
-    // The Lens is a way of looking, not a way of editing: the Grace Window is
+    // The Lens is a way of looking, not a way of editing: which Day is open is
     // untouched by it.
-    await user.click(screen.getByRole("button", { name: /yesterday · 1 open/ }));
-    const section = document.querySelector(".row-yesterday")!;
-    await user.click(within(section as HTMLElement).getByRole("button", { name: /^workout,/ }));
-    expect(storedData().days[YESTERDAY]?.ticked).toHaveLength(1);
+    await user.click(row("workout"));
+    expect(storedData().days[TODAY]?.logged).toHaveLength(1);
   });
 
   it("is offered from day one, because a frame never depends on the account's age", () => {
@@ -325,8 +302,8 @@ describe("getting to the rest of the app", () => {
     expect(props.onNewHabit).toHaveBeenCalled();
   });
 
-  it("does not list an archived Habit", () => {
-    open(account({ habits: ["workout", "read"], archived: ["read"] }));
+  it("does not list an hidden Habit", () => {
+    open(account({ habits: ["workout", "read"], hidden: ["read"] }));
     expect(screen.getByRole("button", { name: /^workout,/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^read,/ })).not.toBeInTheDocument();
   });

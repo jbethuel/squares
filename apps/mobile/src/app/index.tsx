@@ -18,15 +18,14 @@ import {
   lensScrolls,
   type Lens,
 } from "@squares/domain/lens";
-import { toggleTick } from "@squares/domain/mutations";
+import { toggleLog } from "@squares/domain/mutations";
 import {
   dateAt,
   elapsedDays,
   intensityAt,
-  liveHabits,
-  stillOpenYesterday,
-  totalTicks,
-  totalTicksIn,
+  visibleHabits,
+  totalLogs,
+  totalLogsIn,
 } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
 import * as haptics from "@/platform/haptics";
@@ -40,19 +39,17 @@ export default function Home() {
   const router = useRouter();
   const { data, today, update } = useStore();
   const [echo, setEcho] = useState(false);
-  const [graceOpen, setGraceOpen] = useState(false);
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
   const echoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(echoTimer.current), []);
 
   const elapsed = elapsedDays(data, today);
-  const habits = liveHabits(data, today);
-  const openYesterday = stillOpenYesterday(data, today);
+  const habits = visibleHabits(data, today);
 
-  const handleTick = useCallback(
+  const handleLog = useCallback(
     (habitId: string, date: DateKey, turnedOn: boolean) => {
-      update((current) => toggleTick(current, habitId, date, today));
+      update((current) => toggleLog(current, habitId, date, today));
       // The echo: in the same frame, today's Square in the Overview steps up
       // one Intensity level and flashes a ring in the top shade. Not staggered
       // — the same event happening in two places.
@@ -84,11 +81,11 @@ export default function Home() {
           Home — the Lens redraws the grid, it does not rescore it.
         */}
         <View>
-          <Total value={totalTicks(data, today)} />
+          <Total value={totalLogs(data, today)} />
           {/* No span on day one: "last 1 days" is wrong and "last 1 day" is
               sad. On the first morning the word alone is the whole caption. */}
           <Caption style={{ marginTop: 5 }}>
-            {elapsed === 1 ? "ticks" : `ticks · last ${elapsed} days`}
+            {elapsed === 1 ? "logs" : `logs · last ${elapsed} days`}
           </Caption>
         </View>
         {/* One chip is all the chrome Home gets. The Share Card lives in
@@ -107,10 +104,10 @@ export default function Home() {
         scrolls={lensScrolls(lens)}
         today={today}
         months={lensMonths(lens)}
-        levelFor={(offset) => intensityAt(data, dateAt(today, offset))}
-        // Ticks are counted over the part of the frame that has happened: the
+        levelFor={(offset) => intensityAt(data, dateAt(today, offset), today)}
+        // Logs are counted over the part of the frame that has happened: the
         // rest of it has nothing in it yet by definition.
-        label={`Overview heatmap: ${totalTicksIn(data, today, frame.back)} ticks across ${lensNoun(lens)}`}
+        label={`Overview heatmap: ${totalLogsIn(data, today, frame.back)} logs across ${lensNoun(lens)}`}
         markToday
         echo={echo}
       />
@@ -131,45 +128,6 @@ export default function Home() {
 
       <Divider style={{ marginTop: 22, marginBottom: 16 }} />
 
-      {openYesterday.length > 0 ? (
-        <Animated.View layout={settle()} exiting={FadeOut.duration(MS.reveal)}>
-          {/*
-            Yesterday is still open, and says so without becoming a
-            general-purpose calendar editor: one dashed strip, collapsed, that
-            closes at midnight and then never comes back.
-          */}
-          <GraceStrip
-            count={openYesterday.length}
-            open={graceOpen}
-            onToggle={() => setGraceOpen((open) => !open)}
-          />
-          {graceOpen ? (
-            // The rows slide out from under the strip rather than appearing
-            // beneath it, and the list below is pushed down by `settle` rather
-            // than jumping — this is the one place on Home where the page
-            // changes height on a tap.
-            <Animated.View
-              layout={settle()}
-              entering={FadeIn.duration(MS.reveal)}
-              exiting={FadeOut.duration(MS.reveal)}
-              style={{ gap: 7, marginBottom: 16 }}
-            >
-              {openYesterday.map((habit) => (
-                <HabitRow
-                  key={habit.id}
-                  habit={habit}
-                  data={data}
-                  today={today}
-                  elapsed={elapsed}
-                  offset={1}
-                  onTick={handleTick}
-                />
-              ))}
-            </Animated.View>
-          ) : null}
-        </Animated.View>
-      ) : null}
-
       <Animated.View layout={settle()} style={{ gap: 8 }}>
         {habits.map((habit) => (
           <HabitRow
@@ -179,7 +137,7 @@ export default function Home() {
             today={today}
             elapsed={elapsed}
             offset={0}
-            onTick={handleTick}
+            onLog={handleLog}
             onOpen={(id) => router.push(`/habit/${id}`)}
           />
         ))}
@@ -208,51 +166,6 @@ export default function Home() {
         </Animated.Text>
       ) : null}
     </Screen>
-  );
-}
-
-/** The dashed strip that opens yesterday. Its `+` turns as the rows appear. */
-function GraceStrip({
-  count,
-  open,
-  onToggle,
-}: {
-  count: number;
-  open: boolean;
-  onToggle: () => void;
-}) {
-  const t = useTheme();
-  const press = usePressScale(0.985);
-  return (
-    <Animated.View style={[press.style, { marginBottom: open ? 10 : 16 }]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        onPressIn={press.onPressIn}
-        onPressOut={press.onPressOut}
-        onPress={() => {
-          haptics.selected();
-          onToggle();
-        }}
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-          paddingVertical: 11,
-          paddingHorizontal: 13,
-          borderRadius: 10,
-          borderWidth: 1,
-          borderStyle: "dashed",
-          borderColor: t.lineStrong,
-        }}
-      >
-        <Text style={{ fontFamily: MONO, fontSize: FS.xs, color: t.muted }}>
-          yesterday · {count} open · closes at midnight
-        </Text>
-        <Text style={{ fontFamily: MONO, fontSize: FS.xs, color: t.muted }}>{open ? "−" : "+"}</Text>
-      </Pressable>
-    </Animated.View>
   );
 }
 

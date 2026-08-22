@@ -16,15 +16,14 @@ import {
   lensScrolls,
   type Lens,
 } from "@squares/domain/lens";
-import { toggleTick } from "@squares/domain/mutations";
+import { toggleLog } from "@squares/domain/mutations";
 import {
   dateAt,
   elapsedDays,
   intensityAt,
-  liveHabits,
-  stillOpenYesterday,
-  totalTicks,
-  totalTicksIn,
+  visibleHabits,
+  totalLogs,
+  totalLogsIn,
 } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
 
@@ -39,19 +38,17 @@ interface HomeScreenProps {
 export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenProps) {
   const { data, today, update } = useStore();
   const [echo, setEcho] = useState(false);
-  const [graceOpen, setGraceOpen] = useState(false);
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
   const echoTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => () => window.clearTimeout(echoTimer.current), []);
 
   const elapsed = elapsedDays(data, today);
-  const habits = liveHabits(data, today);
-  const openYesterday = stillOpenYesterday(data, today);
+  const habits = visibleHabits(data, today);
 
-  const handleTick = useCallback(
+  const handleLog = useCallback(
     (habitId: string, date: DateKey, turnedOn: boolean) => {
-      update((current) => toggleTick(current, habitId, date, today));
+      update((current) => toggleLog(current, habitId, date, today));
       // The echo: in the same frame, today's Square in the Overview steps up
       // one Intensity level and flashes a ring in the top shade. Not staggered
       // — the same event happening in two places.
@@ -76,11 +73,11 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
           Home — the Lens redraws the grid, it does not rescore it.
         */}
         <div>
-          <Total value={totalTicks(data, today)} />
+          <Total value={totalLogs(data, today)} />
           <div className="caption">
             {/* No span on day one: "last 1 days" is wrong and "last 1 day" is
                 sad. On the first morning the word alone is the whole caption. */}
-            {elapsed === 1 ? "ticks" : `ticks · last ${elapsed} days`}
+            {elapsed === 1 ? "logs" : `logs · last ${elapsed} days`}
           </div>
         </div>
         {/* One chip is all the chrome Home gets. The Share Card lives in
@@ -101,11 +98,11 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         scrolls={lensScrolls(lens)}
         today={today}
         months={lensMonths(lens)}
-        levelFor={(offset) => intensityAt(data, dateAt(today, offset))}
+        levelFor={(offset) => intensityAt(data, dateAt(today, offset), today)}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
-        // Ticks are counted over the part of the frame that has happened: the
+        // Logs are counted over the part of the frame that has happened: the
         // rest of it has nothing in it yet by definition.
-        ariaLabel={`Overview heatmap: ${totalTicksIn(data, today, frame.back)} ticks across ${lensNoun(lens)}`}
+        ariaLabel={`Overview heatmap: ${totalLogsIn(data, today, frame.back)} logs across ${lensNoun(lens)}`}
         markToday
         echo={echo}
       />
@@ -127,43 +124,6 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
 
       <hr className="divider" style={{ margin: "22px 0 16px" }} />
 
-      {openYesterday.length > 0 ? (
-        <>
-          {/*
-            Yesterday is still open, and says so without becoming a
-            general-purpose calendar editor: one dashed strip, collapsed, that
-            closes at midnight and then never comes back.
-          */}
-          <button
-            type="button"
-            className="grace"
-            aria-expanded={graceOpen}
-            onClick={() => setGraceOpen((open) => !open)}
-            style={{ marginBottom: graceOpen ? 10 : 16 }}
-          >
-            <span>
-              yesterday · {openYesterday.length} open · closes at midnight
-            </span>
-            <span style={{ color: "var(--muted)" }}>{graceOpen ? "−" : "+"}</span>
-          </button>
-          {graceOpen ? (
-            <div className="stack" style={{ gap: 7, marginBottom: 16 }}>
-              {openYesterday.map((habit) => (
-                <HabitRow
-                  key={habit.id}
-                  habit={habit}
-                  data={data}
-                  today={today}
-                  elapsed={elapsed}
-                  offset={1}
-                  onTick={handleTick}
-                />
-              ))}
-            </div>
-          ) : null}
-        </>
-      ) : null}
-
       <div className="stack" style={{ gap: 8 }}>
         {habits.map((habit) => (
           <HabitRow
@@ -173,7 +133,7 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
             today={today}
             elapsed={elapsed}
             offset={0}
-            onTick={handleTick}
+            onLog={handleLog}
             onOpen={onOpenHabit}
           />
         ))}

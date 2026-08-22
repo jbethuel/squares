@@ -33,7 +33,7 @@ export const MS = {
   edge: 160,
   /** A switch sliding. */
   toggle: 160,
-  /** Taking a Tick back: linear, no overshoot. Administrative. */
+  /** Taking a Log back: linear, no overshoot. Administrative. */
   undo: 120,
   /** A block appearing or leaving. */
   reveal: 180,
@@ -42,7 +42,7 @@ export const MS = {
 export const TIMING: WithTimingConfig = { duration: MS.edge };
 
 /**
- * The spring the Tick lands on.
+ * The spring the Log lands on.
  *
  * The web releases today's Square from 1.14 with a bezier that passes above 1
  * over 260ms. A spring is that shape stated as physics, which is what React

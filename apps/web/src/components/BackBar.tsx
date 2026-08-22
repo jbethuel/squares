@@ -11,7 +11,7 @@
  * width also clears the 44px touch minimum without being asked to.
  *
  * It carries back and nothing else. Pulling each Screen's main action in here
- * was rejected in ADR 0004: settings has no single main action, a Habit's own
+ * was rejected in ADR 0006: settings has no single main action, a Habit's own
  * Screen has two of equal weight, and `save` belongs under the field it judges.
  */
 export function BackBar({ onBack }: { onBack: () => void }) {

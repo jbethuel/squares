@@ -12,7 +12,7 @@ import { Tail } from "./Tail";
 import * as haptics from "@/platform/haptics";
 import { MS, settle } from "@/platform/motion";
 import { longLabel, type DateKey } from "@squares/domain/date";
-import { chainOf, dateAt, isTicked, tickCountOf } from "@squares/domain/selectors";
+import { streakOf, dateAt, isLogged, logCountOf } from "@squares/domain/selectors";
 import type { AppData, Habit } from "@squares/domain/types";
 import { FS, MONO, useTheme } from "@/platform/theme";
 
@@ -24,9 +24,9 @@ interface HabitRowProps {
   data: AppData;
   today: DateKey;
   elapsed: number;
-  /** 0 for today's row, 1 for the yesterday section. */
+  /** Always 0: ADR 0002 leaves no Day but today to Log. */
   offset: number;
-  onTick: (habitId: string, date: DateKey, turnedOn: boolean) => void;
+  onLog: (habitId: string, date: DateKey, turnedOn: boolean) => void;
   onOpen?: (habitId: string) => void;
 }
 
@@ -36,52 +36,50 @@ export function HabitRow({
   today,
   elapsed,
   offset,
-  onTick,
+  onLog,
   onOpen,
 }: HabitRowProps) {
   const t = useTheme();
   const [pressed, setPressed] = useState(false);
-  const [pulse, setPulse] = useState<"tick" | "untick" | null>(null);
+  const [pulse, setPulse] = useState<"log" | "unlog" | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const date = dateAt(today, offset);
-  const ticked = isTicked(data, habit.id, date);
+  const logged = isLogged(data, habit.id, date);
 
   const commit = useCallback(() => {
-    const turningOn = !ticked;
-    onTick(habit.id, date, turningOn);
-    setPulse(turningOn ? "tick" : "untick");
+    const turningOn = !logged;
+    onLog(habit.id, date, turningOn);
+    setPulse(turningOn ? "log" : "unlog");
     // One haptic on commit, and only on the tap that adds. Correcting a mistake
     // should feel administrative — which is why the other branch is a named
     // no-op rather than nothing at all. See `platform/haptics.ts`.
-    if (turningOn) haptics.tick();
-    else haptics.untick();
+    if (turningOn) haptics.log();
+    else haptics.unlog();
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setPulse(null), PULSE_MS);
-  }, [ticked, onTick, habit.id, date]);
+  }, [logged, onLog, habit.id, date]);
 
-  const chain = chainOf(data, habit.id, today);
-  const subtitle =
-    offset > 0
-      ? "yesterday"
-      : !habit.chained
-        ? `${tickCountOf(data, habit.id, today)} ticks · unchained`
-        : chain > 0
-          ? `chain ${chain} day${chain === 1 ? "" : "s"}`
-          : elapsed === 1
-            ? "no chain yet"
-            : "chain broken";
+  const streak = streakOf(data, habit.id, today);
+  const count = logCountOf(data, habit.id, today);
+  const subtitle = !habit.streaks
+    ? `${count} log${count === 1 ? "" : "s"}`
+    : streak > 0
+      ? `streak ${streak} day${streak === 1 ? "" : "s"}`
+      : elapsed === 1
+        ? "no streak yet"
+        : "streak broken";
 
   /*
-    The row answering a Tick. The web eases the background over 90ms and the
+    The row answering a Log. The web eases the background over 90ms and the
     border over 160ms — the fill lands with the tap and the edge follows it —
     so the two are interpolated separately here rather than swapped together.
   */
-  const lit = ticked || pressed;
+  const lit = logged || pressed;
   const fill = useDerivedValue(() => withTiming(lit ? 1 : 0, { duration: MS.press }), [lit]);
-  const edge = useDerivedValue(() => withTiming(ticked ? 1 : 0, { duration: MS.edge }), [ticked]);
+  const edge = useDerivedValue(() => withTiming(logged ? 1 : 0, { duration: MS.edge }), [logged]);
 
   const surface = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(fill.value, [0, 1], [t.surface, t.surfaceOn]),
@@ -94,7 +92,7 @@ export function HabitRow({
     // inside it — sharing them makes the row flash to full opacity every time
     // the list resettles, which Reanimated warns about by name.
     <Animated.View
-      // A Habit archived from its own Screen leaves this list; a new one joins
+      // A Habit hidden from its own Screen leaves this list; a new one joins
       // it. Both should push the rows below them rather than teleport.
       layout={settle()}
       entering={FadeIn.duration(MS.reveal)}
@@ -114,14 +112,14 @@ export function HabitRow({
       ]}
     >
       {/*
-        The tick target is the row, 56px tall, with no dialog and no second
+        The Log target is the row, 56px tall, with no dialog and no second
         screen. Nothing else on Home is tappable at this size, so the thumb
         cannot miss. The chevron is a separate, deliberately small target.
       */}
       <Pressable
         accessibilityRole="checkbox"
-        accessibilityState={{ checked: ticked }}
-        accessibilityLabel={`${habit.name}, ${ticked ? "ticked" : "not ticked"} for ${longLabel(date)}`}
+        accessibilityState={{ checked: logged }}
+        accessibilityLabel={`${habit.name}, ${logged ? "logged" : "not logged"} for ${longLabel(date)}`}
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}
         onPress={commit}
@@ -135,8 +133,8 @@ export function HabitRow({
           paddingHorizontal: 14,
         }}
       >
-        {/* The subtitle changes length as a Chain grows — "chain 9 days" to
-            "chain 10 days" — so the block resettles instead of reflowing. */}
+        {/* The subtitle changes length as a Streak grows — "streak 9 days" to
+            "streak 10 days" — so the block resettles instead of reflowing. */}
         <Animated.View layout={settle()} style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1} style={{ fontFamily: MONO, fontSize: FS.md, color: t.fg }}>
             {habit.name}
@@ -147,7 +145,7 @@ export function HabitRow({
               marginTop: 3,
               fontFamily: MONO,
               fontSize: FS.xs,
-              color: ticked && habit.chained ? t.chainFg : t.muted,
+              color: logged && habit.streaks ? t.streakFg : t.muted,
             }}
           >
             {subtitle}
@@ -156,8 +154,8 @@ export function HabitRow({
         <Tail
           base={offset}
           elapsed={elapsed}
-          isTicked={(o) => isTicked(data, habit.id, dateAt(today, o))}
-          chained={habit.chained}
+          isLogged={(o) => isLogged(data, habit.id, dateAt(today, o))}
+          streaks={habit.streaks}
           pressed={pressed}
           pulse={pulse}
         />

@@ -1,11 +1,10 @@
 import Storage from "expo-sqlite/kv-store";
 import { todayKey, type DateKey } from "@squares/domain/date";
-import { sealDays } from "@squares/domain/mutations";
 import { parseAppData, STORAGE_KEY } from "@squares/domain/storage";
 import { emptyData, type AppData } from "@squares/domain/types";
 
 /**
- * The phone's half of ADR 0002's storage layer.
+ * The phone's half of ADR 0004's storage layer.
  *
  * `expo-sqlite/kv-store` rather than AsyncStorage, because `StorageAdapter` is
  * synchronous and this is the one Expo store with a synchronous API. That is not
@@ -15,7 +14,7 @@ import { emptyData, type AppData } from "@squares/domain/types";
  * Validating and migrating the blob is shared — an Export written on the web has
  * to import here, and the reverse — so only the reading and writing lives in
  * this file. Uninstalling the app clears this store, which is exactly the event
- * ADR 0002 promised Export would answer.
+ * ADR 0004 promised Export would answer.
  */
 export function loadData(today: DateKey = todayKey()): AppData {
   let parsed: AppData | null = null;
@@ -25,14 +24,14 @@ export function loadData(today: DateKey = todayKey()): AppData {
   } catch {
     parsed = null;
   }
-  return sealDays(parsed ?? emptyData(today), today);
+  return parsed ?? emptyData(today);
 }
 
 export function saveData(data: AppData): void {
   try {
     Storage.setItemSync(STORAGE_KEY, JSON.stringify(data));
   } catch {
-    // A full or blocked store must not take the app down mid-Tick. The Tick is
+    // A full or blocked store must not take the app down mid-Log. The Log is
     // still in memory; the next write will retry.
   }
 }

@@ -174,11 +174,11 @@ export function drawShareCard(canvas: SkCanvas, model: ShareCardModel, scale: nu
 
   const captionY = totalY + TOTAL_SIZE + 5;
   // The caption names what the number counts. It has to: the number is a Tally
-  // of the Frame drawn, not the Total, so "6" over seven Squares means six ticks
+  // of the Frame drawn, not the Total, so "6" over seven Squares means six logs
   // this week — and the card is handed to someone with no other context.
   text(
     canvas,
-    `ticks · ${lensNoun(model.lens)}`,
+    `logs · ${lensNoun(model.lens)}`,
     u(PAD),
     u(captionY),
     Skia.Font(regular, u(CAPTION_SIZE)),

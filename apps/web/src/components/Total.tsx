@@ -6,7 +6,7 @@ import { useDelayedValue, usePrevious } from "@/hooks/useDelayedValue";
 const ROLL_DELAY_MS = 180;
 
 /**
- * The number of Ticks across all Habits in the last year. It only ever rises,
+ * The number of Logs across all Habits in the last year. It only ever rises,
  * and nothing can break it — which is the whole reason it, and not a streak,
  * is the hero number on Home.
  */
