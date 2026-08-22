@@ -7,7 +7,6 @@
     "dev": "pnpm --filter @squares/web dev",
     "build": "pnpm --filter @squares/web build",
     "preview": "pnpm --filter @squares/web preview",
-    "icons": "pnpm --filter @squares/web icons",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:watch": "pnpm --filter @squares/web test:watch",
@@ -17,5 +16,8 @@
     "tokens": "pnpm --filter @squares/web tokens",
     "mobile": "pnpm --filter @squares/mobile start",
     "mobile:ios": "pnpm --filter @squares/mobile ios"
+  },
+  "devDependencies": {
+    "@squares/domain": "workspace:*"
   }
 }
