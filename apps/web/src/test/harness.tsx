@@ -1,7 +1,6 @@
 import { render, type RenderResult } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { addDays, type DateKey } from "@squares/domain/date";
-import { sealDays } from "@squares/domain/mutations";
 import { STORAGE_KEY } from "@squares/domain/storage";
 import { StoreProvider } from "@squares/domain/store";
 import { webStorage } from "@/platform/storage";
@@ -11,17 +10,17 @@ import { emptyData, type AppData } from "@squares/domain/types";
 /** A Monday, so the weekday row of a Square is predictable. */
 export const TODAY: DateKey = "2026-08-03";
 export const YESTERDAY = addDays(TODAY, -1);
-/** Outside the Grace Window, permanently. */
+/** Closed, like every Day but today. */
 export const CLOSED = addDays(TODAY, -2);
 
 interface AccountSpec {
   /** Days on file, day one counting as 1. */
   age?: number;
   habits?: string[];
-  /** Habit name -> the Day offsets it was Ticked on. 0 is today. */
-  ticks?: Record<string, number[]>;
-  /** Habits whose Span was closed at today, so they read as Archived. */
-  archived?: string[];
+  /** Habit name -> the Day offsets it was Logged on. 0 is today. */
+  logs?: Record<string, number[]>;
+  /** Habits whose Span was closed at today, so they read as Hidden. */
+  hidden?: string[];
 }
 
 export function idOf(data: AppData, name: string): string {
@@ -30,46 +29,40 @@ export function idOf(data: AppData, name: string): string {
   return habit.id;
 }
 
-/** Tick straight into the record, bypassing the Grace Window, to build history. */
+/** Write Logs straight into the record, past ADR 0002, to build history. */
 export function seed(data: AppData, habitId: string, offsets: number[]): AppData {
   const days = { ...data.days };
   for (const offset of offsets) {
     const date = addDays(TODAY, -offset);
-    const record = days[date];
-    if (!record) throw new Error(`no record for ${date}`);
-    if (!record.ticked.includes(habitId)) {
-      days[date] = { ...record, ticked: [...record.ticked, habitId] };
-    }
+    const logged = days[date]?.logged ?? [];
+    if (!logged.includes(habitId)) days[date] = { date, logged: [...logged, habitId] };
   }
   return { ...data, days };
 }
 
 /**
- * An account installed `age` Days ago, with every Habit created that Day, then
- * sealed up to today. Habits are built directly rather than through addHabit so
- * that the seal happens exactly once, at today.
+ * An account installed `age` Days ago, with every Habit taken up that Day.
+ * Habits are built directly rather than through addHabit so that their ids are
+ * predictable.
  */
 export function account({
   age = 30,
   habits = [],
-  ticks = {},
-  archived = [],
+  logs = {},
+  hidden = [],
 }: AccountSpec = {}): AppData {
   const installedOn = addDays(TODAY, -(age - 1));
-  let data = sealDays(
-    {
-      ...emptyData(installedOn),
-      habits: habits.map((name, index) => ({
-        id: `h${index + 1}`,
-        name,
-        spans: [{ from: installedOn, to: archived.includes(name) ? TODAY : null }],
-        chained: false,
-        sharedName: false,
-      })),
-    },
-    TODAY,
-  );
-  for (const [name, offsets] of Object.entries(ticks)) {
+  let data: AppData = {
+    ...emptyData(installedOn),
+    habits: habits.map((name, index) => ({
+      id: `h${index + 1}`,
+      name,
+      spans: [{ from: installedOn, to: hidden.includes(name) ? TODAY : null }],
+      streaks: false,
+      sharedName: false,
+    })),
+  };
+  for (const [name, offsets] of Object.entries(logs)) {
     data = seed(data, idOf(data, name), offsets);
   }
   return data;

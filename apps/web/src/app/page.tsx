@@ -32,7 +32,7 @@ function App() {
   const screen = stack[stack.length - 1] ?? { name: "home" };
 
   // Depth is kept in the history entry rather than inferred, so that a jump of
-  // more than one level — archiving from a detail screen, say — lands in the
+  // more than one level — hiding from a detail screen, say — lands in the
   // right place with a single popstate.
   useEffect(() => {
     const onPopState = (event: PopStateEvent) => {
@@ -69,8 +69,8 @@ function App() {
 
   const body = () => {
     switch (screen.name) {
-      // Everything about one Habit is on this Screen: its name, its Chain, its
-      // Share Card opt-in, and whether it is Archived.
+      // Everything about one Habit is on this Screen: its name, its Streak, its
+      // Share Card opt-in, and whether it is Hidden.
       case "detail":
         return <DetailScreen habitId={screen.habitId} />;
       case "new":
@@ -79,7 +79,7 @@ function App() {
         return (
           <SettingsScreen
             onShare={() => push({ name: "share" })}
-            // The only route to an Archived Habit, which Home no longer lists.
+            // The only route to a Hidden Habit, which Home no longer lists.
             onOpenHabit={(habitId) => push({ name: "detail", habitId })}
           />
         );

@@ -1,6 +1,5 @@
 import { test as base, expect, type Locator, type Page } from "@playwright/test";
 import { addDays, todayKey, type DateKey } from "@squares/domain/date";
-import { sealDays } from "@squares/domain/mutations";
 import { STORAGE_KEY } from "@squares/domain/storage";
 import { emptyData, type AppData } from "@squares/domain/types";
 
@@ -16,50 +15,46 @@ interface AccountSpec {
   /** Days on file, day one counting as 1. */
   age?: number;
   habits?: string[];
-  /** Habit name -> the Day offsets it was Ticked on. 0 is today. */
-  ticks?: Record<string, number[]>;
-  chained?: string[];
+  /** Habit name -> the Day offsets it was Logged on. 0 is today. */
+  logs?: Record<string, number[]>;
+  streaks?: string[];
   sharedNames?: string[];
-  /** Habits whose Span was closed at today, so they read as Archived. */
-  archived?: string[];
+  /** Habits whose Span was closed at today, so they read as Hidden. */
+  hidden?: string[];
   theme?: AppData["theme"];
 }
 
 export function buildAccount({
   age = 30,
   habits = [],
-  ticks = {},
-  chained = [],
+  logs = {},
+  streaks = [],
   sharedNames = [],
-  archived = [],
+  hidden = [],
   theme = "system",
 }: AccountSpec): AppData {
   const now = today();
   const installedOn = addDays(now, -(age - 1));
 
-  let data = sealDays(
-    {
-      ...emptyData(installedOn),
-      theme,
-      habits: habits.map((name, index) => ({
-        id: `h${index + 1}`,
-        name,
-        spans: [{ from: installedOn, to: archived.includes(name) ? now : null }],
-        chained: chained.includes(name),
-        sharedName: sharedNames.includes(name),
-      })),
-    },
-    now,
-  );
+  let data: AppData = {
+    ...emptyData(installedOn),
+    theme,
+    habits: habits.map((name, index) => ({
+      id: `h${index + 1}`,
+      name,
+      spans: [{ from: installedOn, to: hidden.includes(name) ? now : null }],
+      streaks: streaks.includes(name),
+      sharedName: sharedNames.includes(name),
+    })),
+  };
 
-  for (const [name, offsets] of Object.entries(ticks)) {
+  for (const [name, offsets] of Object.entries(logs)) {
     const id = data.habits.find((h) => h.name === name)!.id;
     const days = { ...data.days };
     for (const offset of offsets) {
       const date = addDays(now, -offset);
-      const record = days[date];
-      if (!record) throw new Error(`no record for ${date} — is the account old enough?`);
-      days[date] = { ...record, ticked: [...record.ticked, id] };
+      const logged = days[date]?.logged ?? [];
+      days[date] = { date, logged: [...logged, id] };
     }
     data = { ...data, days };
   }
@@ -105,7 +100,7 @@ export const test = base.extend<{ app: (spec?: AccountSpec) => Promise<Page> }>(
 
 export { expect };
 
-/** The tick target for a Habit: the row itself. */
+/** The Log target for a Habit: the row itself. */
 export function habitRow(page: Page, name: string): Locator {
   return page.getByRole("button", { name: new RegExp(`^${name},`) });
 }

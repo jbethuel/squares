@@ -35,7 +35,7 @@ describe("the card is anonymous by default", () => {
   });
 
   it("never paints a name that was not opted in", async () => {
-    open(account({ age: 60, habits: ["took my meds", "no drinking"], ticks: { "took my meds": [0, 1] } }));
+    open(account({ age: 60, habits: ["took my meds", "no drinking"], logs: { "took my meds": [0, 1] } }));
     const text = await painted();
     expect(text.some((line) => line.includes("meds"))).toBe(false);
     expect(text.some((line) => line.includes("drinking"))).toBe(false);
@@ -58,8 +58,8 @@ describe("the card is anonymous by default", () => {
   // A name on a Card reads as something the user does, and a retired Habit is
   // not that. The opt-in is reachable again — this is a rule about what the
   // Card may claim, not a workaround for a control that could not be found.
-  it("drops an archived Habit's name, whatever its opt-in says", async () => {
-    const data = account({ age: 60, habits: ["no drinking"], archived: ["no drinking"] });
+  it("drops an hidden Habit's name, whatever its opt-in says", async () => {
+    const data = account({ age: 60, habits: ["no drinking"], hidden: ["no drinking"] });
     open(named(data, "no drinking"));
 
     expect(screen.getByText(/no habit names on this card/)).toBeInTheDocument();
@@ -86,31 +86,31 @@ describe("the card is anonymous by default", () => {
 
 describe("what the card carries", () => {
   it("is a year of shape, one number and what it counts — and no date", async () => {
-    open(account({ age: 60, habits: ["a", "b"], ticks: { a: [0, 1, 2], b: [0] } }));
+    open(account({ age: 60, habits: ["a", "b"], logs: { a: [0, 1, 2], b: [0] } }));
     const text = await painted();
 
     expect(text).toContain("4");
     // The caption names what the number counts, because the number is a Tally
     // of the Frame drawn rather than the Total, and the card is handed to
     // someone with no other context.
-    expect(text).toContain("ticks · the year");
+    expect(text).toContain("logs · the year");
     expect(text).toContain("squares");
     // Nothing that says which day it was made, or who made it.
     expect(text.some((line) => /2026|august|aug/i.test(line))).toBe(false);
   });
 
   it("describes itself to assistive tech, names included", () => {
-    const data = named(account({ age: 60, habits: ["workout"], ticks: { workout: [0, 2] } }), "workout");
+    const data = named(account({ age: 60, habits: ["workout"], logs: { workout: [0, 2] } }), "workout");
     open(data);
     expect(
-      screen.getByRole("img", { name: "Share card: 2 ticks across the year, naming workout" }),
+      screen.getByRole("img", { name: "Share card: 2 logs across the year, naming workout" }),
     ).toBeInTheDocument();
   });
 
   it("says plainly when it names nothing", () => {
-    open(account({ age: 60, habits: ["workout"], ticks: { workout: [0] } }));
+    open(account({ age: 60, habits: ["workout"], logs: { workout: [0] } }));
     expect(
-      screen.getByRole("img", { name: "Share card: 1 ticks across the year, no habit names" }),
+      screen.getByRole("img", { name: "Share card: 1 logs across the year, no habit names" }),
     ).toBeInTheDocument();
   });
 });
@@ -121,26 +121,26 @@ describe("the card's own Lens", () => {
   // showing would be a card you cannot predict.
   it("opens on the year, and redraws the card when it changes", async () => {
     const user = userEvent.setup();
-    open(account({ age: 60, habits: ["a"], ticks: { a: [0, 1, 2, 20, 40] } }));
+    open(account({ age: 60, habits: ["a"], logs: { a: [0, 1, 2, 20, 40] } }));
 
     expect(screen.getByRole("button", { name: "year" })).toHaveAttribute("aria-pressed", "true");
-    expect(await painted()).toContain("ticks · the year");
+    expect(await painted()).toContain("logs · the year");
 
     await user.click(screen.getByRole("button", { name: "week" }));
 
     // Today is a Monday in the harness, so the week holds today and yesterday:
-    // two of those five Ticks, and the Tally says two rather than five.
-    await vi.waitFor(async () => expect(await painted()).toContain("ticks · the week"));
+    // two of those five Logs, and the Tally says two rather than five.
+    await vi.waitFor(async () => expect(await painted()).toContain("logs · the week"));
     expect(await painted()).toContain("2");
   });
 
   it("tells assistive tech which Lens the card was drawn at", async () => {
     const user = userEvent.setup();
-    open(account({ age: 60, habits: ["a"], ticks: { a: [0, 1] } }));
+    open(account({ age: 60, habits: ["a"], logs: { a: [0, 1] } }));
 
     await user.click(screen.getByRole("button", { name: "month" }));
     expect(
-      screen.getByRole("img", { name: /Share card: 2 ticks across the month/ }),
+      screen.getByRole("img", { name: /Share card: 2 logs across the month/ }),
     ).toBeInTheDocument();
   });
 });

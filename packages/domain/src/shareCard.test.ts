@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, type DateKey } from "./date";
-import { addHabit, setArchived, sealDays, setSharedName } from "./mutations";
+import { addHabit, setHidden, setSharedName } from "./mutations";
 import { shareCardModel } from "./shareCard";
 import { parseAppData } from "./storage";
 import { emptyData, type AppData } from "./types";
@@ -9,9 +9,9 @@ const TODAY: DateKey = "2026-08-03";
 
 function account(age: number, names: string[]): AppData {
   const installedOn = addDays(TODAY, -(age - 1));
-  let data = sealDays(emptyData(installedOn), TODAY);
+  let data = emptyData(installedOn);
   for (const name of names) data = addHabit(data, name, installedOn);
-  return sealDays(data, TODAY);
+  return data;
 }
 
 const idOf = (data: AppData, name: string) => data.habits.find((h) => h.name === name)!.id;
@@ -39,10 +39,10 @@ describe("the Share Card is anonymous by default", () => {
     expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
   });
 
-  it("drops an archived Habit's name, whatever its opt-in says", () => {
+  it("drops an hidden Habit's name, whatever its opt-in says", () => {
     let data = account(60, ["no drinking"]);
     data = setSharedName(data, idOf(data, "no drinking"), true);
-    data = setArchived(data, idOf(data, "no drinking"), true, TODAY);
+    data = setHidden(data, idOf(data, "no drinking"), true, TODAY);
     expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
   });
 
@@ -70,17 +70,17 @@ describe("the Share Card is anonymous by default", () => {
 });
 
 describe("the Share Card model", () => {
-  /** Two Habits, both Ticked today, one of two yesterday. */
-  function ticked(age: number): AppData {
+  /** Two Habits, both Logged today, one of two yesterday. */
+  function logged(age: number): AppData {
     const data = account(age, ["a", "b"]);
     const days = { ...data.days };
-    days[TODAY] = { ...days[TODAY]!, ticked: [idOf(data, "a"), idOf(data, "b")] };
-    days[addDays(TODAY, -1)] = { ...days[addDays(TODAY, -1)]!, ticked: [idOf(data, "a")] };
+    days[TODAY] = { date: TODAY, logged: [idOf(data, "a"), idOf(data, "b")] };
+    days[addDays(TODAY, -1)] = { date: addDays(TODAY, -1), logged: [idOf(data, "a")] };
     return { ...data, days };
   }
 
   it("draws the same Intensity as the Overview", () => {
-    const model = shareCardModel(ticked(30), TODAY, "year");
+    const model = shareCardModel(logged(30), TODAY, "year");
     expect(model.levels[0]).toBe(4); // both Habits today
     expect(model.levels[1]).toBe(2); // one of two yesterday
     expect(model.levels[2]).toBe(0);
@@ -89,9 +89,9 @@ describe("the Share Card model", () => {
   // The Tally counts the Frame drawn, so it is not the Total and it can fall.
   // A number that can fall may not be called a Total — see CONTEXT.md.
   it("tallies only the Days it drew", () => {
-    const data = ticked(30);
+    const data = logged(30);
     expect(shareCardModel(data, TODAY, "year").tally).toBe(3);
-    // Today is a Monday, so the week reaches back two Days: both Ticks today
+    // Today is a Monday, so the week reaches back two Days: both Logs today
     // and the single one yesterday.
     expect(shareCardModel(data, TODAY, "week").tally).toBe(3);
     // The same three, drawn over a whole week rather than a whole year.

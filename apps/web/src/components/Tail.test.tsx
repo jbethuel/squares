@@ -10,18 +10,18 @@ function squares(): HTMLElement[] {
 function renderTail(options: {
   base?: number;
   elapsed?: number;
-  ticked?: number[];
-  chained?: boolean;
+  logged?: number[];
+  streaks?: boolean;
   pressed?: boolean;
-  pulse?: "tick" | "untick" | null;
+  pulse?: "log" | "unlog" | null;
 }) {
-  const { base = 0, elapsed = 30, ticked = [], chained = false, pressed = false, pulse = null } = options;
+  const { base = 0, elapsed = 30, logged = [], streaks = false, pressed = false, pulse = null } = options;
   return render(
     <Tail
       base={base}
       elapsed={elapsed}
-      isTicked={(offset) => ticked.includes(offset)}
-      chained={chained}
+      isLogged={(offset) => logged.includes(offset)}
+      streaks={streaks}
       pressed={pressed}
       pulse={pulse}
     />,
@@ -50,39 +50,36 @@ describe("the Tail", () => {
     expect(states).toEqual(["unborn", "unborn", "unborn", "unborn", "unborn", "empty", "empty", "empty"]);
   });
 
-  it("marks the Days that were Ticked", () => {
-    renderTail({ ticked: [0, 1, 4] });
+  it("marks the Days that were Logged", () => {
+    renderTail({ logged: [0, 1, 4] });
     const states = squares().map((sq) => sq.dataset.state);
-    expect(states).toEqual(["empty", "empty", "empty", "ticked", "empty", "empty", "ticked", "ticked"]);
+    expect(states).toEqual(["empty", "empty", "empty", "logged", "empty", "empty", "logged", "logged"]);
   });
 
-  it("hollows yesterday's Square while it is still open and empty", () => {
-    renderTail({ ticked: [0] });
-    const all = squares();
-    // Second from the right is yesterday: inside the Grace Window and missed.
-    expect(all[TAIL_DAYS - 2]).toHaveAttribute("data-open", "true");
-    // The Day before that is closed; a hollow Square there would be an offer
-    // the app cannot honour.
-    expect(all[TAIL_DAYS - 3]).not.toHaveAttribute("data-open");
+  it("hollows no Square for a missed Day, because nothing can be done about it", () => {
+    // ADR 0002: there is no window back into yesterday, so a missed Day is
+    // drawn exactly like any other empty Day.
+    renderTail({ logged: [0] });
+    for (const square of squares()) expect(square).not.toHaveAttribute("data-open");
   });
 
-  it("never hollows today's Square, which is the tick target", () => {
-    renderTail({ ticked: [] });
+  it("never hollows today's Square, which is the Log target", () => {
+    renderTail({ logged: [] });
     expect(squares()[TAIL_DAYS - 1]).not.toHaveAttribute("data-open");
   });
 
-  it("bridges consecutive Days only for a Chained Habit", () => {
-    const { unmount } = renderTail({ ticked: [0, 1, 2], chained: true });
-    // Two bridges span three consecutive Days: a Chain reads as one object.
+  it("bridges consecutive Days only for a Streak Habit", () => {
+    const { unmount } = renderTail({ logged: [0, 1, 2], streaks: true });
+    // Two bridges span three consecutive Days: a Streak reads as one object.
     expect(document.querySelectorAll(".bridge")).toHaveLength(2);
     unmount();
 
-    renderTail({ ticked: [0, 1, 2], chained: false });
+    renderTail({ logged: [0, 1, 2], streaks: false });
     expect(document.querySelectorAll(".bridge")).toHaveLength(0);
   });
 
   it("does not bridge across a missed Day", () => {
-    renderTail({ ticked: [0, 2, 3], chained: true });
+    renderTail({ logged: [0, 2, 3], streaks: true });
     expect(document.querySelectorAll(".bridge")).toHaveLength(1);
   });
 
@@ -91,23 +88,23 @@ describe("the Tail", () => {
     expect(squares().filter((sq) => sq.hasAttribute("data-pressed"))).toHaveLength(1);
     unmount();
 
-    renderTail({ pulse: "tick" });
+    renderTail({ pulse: "log" });
     const pulsed = squares().filter((sq) => sq.hasAttribute("data-pulse"));
     expect(pulsed).toHaveLength(1);
     expect(pulsed[0]).toHaveAttribute("data-today", "true");
   });
 
-  it("marks an untick differently from a tick, so the two do not share an animation", () => {
-    renderTail({ pulse: "untick" });
-    expect(squares()[TAIL_DAYS - 1]).toHaveAttribute("data-untick", "true");
+  it("marks an unlog differently from a log, so the two do not share an animation", () => {
+    renderTail({ pulse: "unlog" });
+    expect(squares()[TAIL_DAYS - 1]).toHaveAttribute("data-unlog", "true");
     expect(squares()[TAIL_DAYS - 1]).not.toHaveAttribute("data-pulse");
   });
 
   it("shifts a Day back in the yesterday section", () => {
-    // base 1: the rightmost Square is yesterday, and it is the tick target.
-    renderTail({ base: 1, ticked: [1] });
+    // base 1: the rightmost Square is yesterday, and it is the Log target.
+    renderTail({ base: 1, logged: [1] });
     const all = squares();
     expect(all[TAIL_DAYS - 1]).toHaveAttribute("data-today", "true");
-    expect(all[TAIL_DAYS - 1]?.dataset.state).toBe("ticked");
+    expect(all[TAIL_DAYS - 1]?.dataset.state).toBe("logged");
   });
 });

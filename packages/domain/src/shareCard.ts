@@ -1,7 +1,7 @@
 import { weekdayOf, type DateKey } from "./date";
 import { gridGeometry, gridHeight, type Frame } from "./grid";
 import { lensFrame, lensRows, type Lens } from "./lens";
-import { dateAt, intensityAt, isArchived, totalTicksIn } from "./selectors";
+import { dateAt, intensityAt, isHidden, totalLogsIn } from "./selectors";
 import type { AppData, Intensity } from "./types";
 
 /**
@@ -26,7 +26,7 @@ export interface ShareCardModel {
    */
   levels: Intensity[];
   /**
-   * The Tally: Ticks inside the Frame drawn. This is *not* the Total — under
+   * The Tally: Logs inside the Frame drawn. This is *not* the Total — under
    * the Week or the Month it counts a handful of Days and can be zero. A number
    * that can fall may not be called a Total; see CONTEXT.md.
    */
@@ -39,7 +39,7 @@ export function shareCardModel(data: AppData, today: DateKey, lens: Lens): Share
   const frame = lensFrame(lens, today);
   const levels: Intensity[] = [];
   for (let offset = 0; offset < frame.back; offset++) {
-    levels.push(intensityAt(data, dateAt(today, offset)));
+    levels.push(intensityAt(data, dateAt(today, offset), today));
   }
   return {
     lens,
@@ -47,13 +47,11 @@ export function shareCardModel(data: AppData, today: DateKey, lens: Lens): Share
     rows: lensRows(lens),
     weekday: weekdayOf(today),
     levels,
-    tally: totalTicksIn(data, today, frame.back),
-    // Archived Habits are excluded even when opted in. A name on a Card reads
-    // as something the user does, and a retired Habit is not that. The opt-in
-    // is reachable again now that Archived Habits have a Screen — this is a
-    // rule about what the Card may claim, not a workaround for a dead control.
+    tally: totalLogsIn(data, today, frame.back),
+    // ADR 0001: a Hidden Habit is not in the Overview this card is drawn from,
+    // so it reaches no card whatever its opt-in says.
     names: data.habits
-      .filter((habit) => habit.sharedName && !isArchived(habit, today))
+      .filter((habit) => habit.sharedName && !isHidden(habit, today))
       .map((habit) => habit.name.trim().toLowerCase()),
   };
 }

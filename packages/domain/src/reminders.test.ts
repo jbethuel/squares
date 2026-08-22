@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, toKey, type DateKey } from "./date";
-import { addHabit, sealDays, setArchived, setSharedName, toggleTick } from "./mutations";
+import { addHabit, setHidden, setSharedName, toggleLog } from "./mutations";
 import {
   HORIZON_DAYS,
   PENDING_LIMIT,
@@ -26,9 +26,9 @@ const MORNING = new Date(2026, 7, 3, 9, 0);
 const EVENING: TimeOfDay = { hour: 20, minute: 0 };
 
 function account(names: string[], today: DateKey = TODAY): AppData {
-  let data = sealDays(emptyData(addDays(today, -9)), today);
+  let data = emptyData(addDays(today, -9));
   for (const name of names) data = addHabit(data, name, addDays(today, -9));
-  return sealDays(data, today);
+  return data;
 }
 
 function idOf(data: AppData, name: string): string {
@@ -76,30 +76,30 @@ describe("the Daily Reminder", () => {
     expect(planReminders(data, daily(), MORNING)[0]!.body).toBe("3 Habits left");
   });
 
-  it("stays silent on a Day whose Active Habits were all Ticked", () => {
+  it("stays silent on a Day whose Active Habits were all Logged", () => {
     let data = account(["yoga", "meds"]);
-    data = toggleTick(data, idOf(data, "yoga"), TODAY, TODAY);
-    data = toggleTick(data, idOf(data, "meds"), TODAY, TODAY);
+    data = toggleLog(data, idOf(data, "yoga"), TODAY, TODAY);
+    data = toggleLog(data, idOf(data, "meds"), TODAY, TODAY);
     const plan = planReminders(data, daily(), MORNING);
     expect(plan.some((r) => r.date === TODAY)).toBe(false);
-    // Tomorrow is untouched: nothing is Ticked there yet.
+    // Tomorrow is untouched: nothing is Logged there yet.
     expect(plan.some((r) => r.date === addDays(TODAY, 1))).toBe(true);
   });
 
   it("still prompts while one Habit is left", () => {
     let data = account(["yoga", "meds"]);
-    data = toggleTick(data, idOf(data, "yoga"), TODAY, TODAY);
+    data = toggleLog(data, idOf(data, "yoga"), TODAY, TODAY);
     const todays = planReminders(data, daily(), MORNING).find((r) => r.date === TODAY);
     expect(todays?.body).toBe("1 Habit left");
   });
 
-  it("comes back if the Tick that silenced it is undone", () => {
+  it("comes back if the Log that silenced it is undone", () => {
     const data = account(["yoga"]);
     const id = idOf(data, "yoga");
-    const ticked = toggleTick(data, id, TODAY, TODAY);
-    expect(planReminders(ticked, daily(), MORNING).some((r) => r.date === TODAY)).toBe(false);
-    const unticked = toggleTick(ticked, id, TODAY, TODAY);
-    expect(planReminders(unticked, daily(), MORNING).some((r) => r.date === TODAY)).toBe(true);
+    const logged = toggleLog(data, id, TODAY, TODAY);
+    expect(planReminders(logged, daily(), MORNING).some((r) => r.date === TODAY)).toBe(false);
+    const unlogged = toggleLog(logged, id, TODAY, TODAY);
+    expect(planReminders(unlogged, daily(), MORNING).some((r) => r.date === TODAY)).toBe(true);
   });
 
   it("never names a Habit, however the Habit is opted in", () => {
@@ -125,30 +125,30 @@ describe("a Reminded Habit", () => {
     expect(planReminders(data, settings, MORNING)).toHaveLength(HORIZON_DAYS - 1);
   });
 
-  it("goes silent once that Habit is Ticked, and leaves the others alone", () => {
+  it("goes silent once that Habit is Logged, and leaves the others alone", () => {
     let data = account(["yoga", "meds"]);
     let settings = withHabitReminder(data, "yoga");
     settings = setHabitReminder(settings, idOf(data, "meds"), EVENING);
-    data = toggleTick(data, idOf(data, "yoga"), TODAY, TODAY);
+    data = toggleLog(data, idOf(data, "yoga"), TODAY, TODAY);
 
     const todays = planReminders(data, settings, MORNING).filter((r) => r.date === TODAY);
     expect(todays).toHaveLength(1);
     expect(todays[0]!.key).toContain(idOf(data, "meds"));
   });
 
-  it("stops entirely while the Habit is Archived", () => {
+  it("stops entirely while the Habit is Hidden", () => {
     let data = account(["yoga"]);
     const settings = withHabitReminder(data, "yoga");
-    data = setArchived(data, idOf(data, "yoga"), true, TODAY);
+    data = setHidden(data, idOf(data, "yoga"), true, TODAY);
     expect(planReminders(data, settings, MORNING)).toEqual([]);
   });
 
-  it("starts again when the Habit comes out of the Archive", () => {
+  it("starts again when the Habit comes back", () => {
     let data = account(["yoga"]);
     const settings = withHabitReminder(data, "yoga");
     const id = idOf(data, "yoga");
-    data = setArchived(data, id, true, TODAY);
-    data = setArchived(data, id, false, TODAY);
+    data = setHidden(data, id, true, TODAY);
+    data = setHidden(data, id, false, TODAY);
     expect(planReminders(data, settings, MORNING).length).toBeGreaterThan(0);
   });
 
@@ -237,7 +237,7 @@ describe("the plan the device is handed", () => {
 describe("outstanding Habits", () => {
   it("are the Active ones whose Square is still empty", () => {
     let data = account(["yoga", "meds"]);
-    data = toggleTick(data, idOf(data, "yoga"), TODAY, TODAY);
+    data = toggleLog(data, idOf(data, "yoga"), TODAY, TODAY);
     expect(outstandingOn(data, TODAY).map((h) => h.name)).toEqual(["meds"]);
   });
 

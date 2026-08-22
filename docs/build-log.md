@@ -55,31 +55,40 @@ session is complete.
 
 All the documents now use ASD-STE100 Simplified Technical English.
 
-### Still open
+### The code
 
-The code has not changed. This entry is the specification for that change.
+The code now implements the model above. What changed, beyond the renames:
 
-These renames are mechanical:
+- `GRACE_DAYS` and `isOpen` became `isToday`. `toggleLog` refuses any Day but
+  today, and it refuses a Hidden Habit.
+- `sealDays` is gone. A Day Record holds only the Logs, so an empty one carries
+  nothing; `toggleLog` writes a record when the first Log lands and deletes it
+  when the last one leaves. The store no longer materialises history at
+  rollover, and neither does load.
+- `DayRecord.active` is gone. `countedOn` derives the Habits a Square counts
+  from the Spans, filtered to the Habits that are not Hidden now. `intensityAt`
+  takes `today` for that reason.
+- `totalLogs` counts only the visible Habits, so it falls at a Hide.
+- Storage is `version: 3`. A v1 or v2 file is migrated on import: `active` is
+  discarded, `ticked` becomes `logged`, `chained` becomes `streaks`, and a Day
+  with no Logs is dropped. An imported year can therefore come back shaded
+  slightly differently from the one it was exported as. That was accepted over
+  a reconciler that runs once per user and can never be tested against real
+  drift.
+- Home lost the yesterday strip, and the Tail lost the hollow "still open"
+  Square. A missed Day is now drawn like any other empty Day.
+- A Hidden Habit's Screen shows its Heatmap, its Log count and its Longest
+  Streak, and no current Streak — that would read 0 forever.
+- The Daily Reminder still needs its one-time ask during the first Habit's
+  creation. **That is the one part of the model the code does not yet do.**
 
-- `toggleTick`, `ticked`
-- `chainOf`, `longestChainOf`, `chained`
-- `isArchived`, `archivedHabits`, `liveHabits`, `setArchived`
+The suites moved with it: `rules.test.ts` is organised around the three rules as
+they now stand, `grace.spec.ts` became `today.spec.ts`, and `tick.spec.ts`
+became `log.spec.ts`. 171 domain tests, 176 web unit tests, 68 end-to-end.
 
-These changes are not mechanical:
-
-- `GRACE_DAYS` and `isOpen` become one test for today.
-- The app drops `DayRecord.active` and calculates the set of Habits from the
-  Spans. The storage goes to `version: 3`. The app migrates a v1 or v2 file at
-  import: it discards `active` and calculates the set again.
-- An imported year can thus look different from the year that the user last saw.
-  We accepted this. The alternative is a reconciler that runs one time for each
-  user, and no test can find an error in it.
-- Intensity, Total and the Share Card must all exclude the Hidden Habits.
-- A Hidden Habit needs a Screen that the user can read: its Heatmap, its number
-  of Logs, its Longest Streak, and the control to show it again. The Screen
-  shows no Streak, because the value is always 0.
-- The Daily Reminder needs its one question during the creation of the first
-  Habit.
+One test was wrong before this work and is now fixed: the Share Card's week-ring
+check asserted a ring "on whatever day it is made", but the ring is drawn only
+where the Frame runs past today, so it failed every Saturday.
 
 ### Carried forward
 

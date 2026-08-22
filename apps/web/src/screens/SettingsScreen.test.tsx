@@ -22,7 +22,7 @@ async function importFile(user: ReturnType<typeof userEvent.setup>, file: File) 
 }
 
 describe("settings holds nothing about one Habit", () => {
-  // A Habit's Chain and its Share Card name are set on that Habit's own Screen.
+  // A Habit's Streak and its Share Card name are set on that Habit's own Screen.
   // Two places to change one flag is how they drift.
   it("offers no per-Habit switches at all", () => {
     open(account({ habits: ["workout", "read"] }));
@@ -44,7 +44,7 @@ describe("settings holds nothing about one Habit", () => {
 describe("export", () => {
   it("saves the year as a file named for the Day", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0] } }));
 
     await user.click(screen.getByRole("button", { name: "export .json" }));
 
@@ -56,7 +56,7 @@ describe("export", () => {
   it("goes through the OS sheet where the device has one", async () => {
     stubSharing();
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0] } }));
 
     await user.click(screen.getByRole("button", { name: "export .json" }));
 
@@ -72,7 +72,7 @@ describe("export", () => {
   it("does not say exported when the sheet is dismissed", async () => {
     stubSharing("dismissed");
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0] } }));
 
     await user.click(screen.getByRole("button", { name: "export .json" }));
 
@@ -86,7 +86,7 @@ describe("export", () => {
   it("carries the whole year, not a summary of it", async () => {
     const user = userEvent.setup();
     stubSharing();
-    open(account({ habits: ["workout", "read"], ticks: { workout: [0, 1] } }));
+    open(account({ habits: ["workout", "read"], logs: { workout: [0, 1] } }));
 
     await user.click(screen.getByRole("button", { name: "export .json" }));
 
@@ -97,7 +97,7 @@ describe("export", () => {
 });
 
 describe("import replaces the year on this device", () => {
-  const incoming = account({ age: 40, habits: ["read", "meditate"], ticks: { read: [0, 1, 2] } });
+  const incoming = account({ age: 40, habits: ["read", "meditate"], logs: { read: [0, 1, 2] } });
 
   it("goes straight in when there is nothing to lose", async () => {
     const user = userEvent.setup();
@@ -111,11 +111,13 @@ describe("import replaces the year on this device", () => {
 
   it("asks first when there is a year already, and says what it would cost", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0, 1] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0, 1] } }));
 
     await importFile(user, jsonFile(serialise(incoming)));
 
-    expect(screen.getByText(/replace this device's year with 2 habits and 40 days\?/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/replace this device's year with 2 habits and 3 logged days\?/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/this cannot be undone/)).toBeInTheDocument();
     // Nothing has happened yet.
     expect(storedData().habits.map((h) => h.name)).toEqual(["workout"]);
@@ -123,7 +125,7 @@ describe("import replaces the year on this device", () => {
 
   it("keeps this device's year when the answer is no", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0, 1] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0, 1] } }));
 
     await importFile(user, jsonFile(serialise(incoming)));
     await user.click(screen.getByRole("button", { name: "keep mine" }));
@@ -134,7 +136,7 @@ describe("import replaces the year on this device", () => {
 
   it("replaces it when the answer is yes", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0, 1] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0, 1] } }));
 
     await importFile(user, jsonFile(serialise(incoming)));
     await user.click(screen.getByRole("button", { name: "replace" }));
@@ -195,7 +197,7 @@ describe("import replaces the year on this device", () => {
     );
 
     expect(storedData().habits[0]?.sharedName).toBe(false);
-    expect(storedData().habits[0]?.chained).toBe(false);
+    expect(storedData().habits[0]?.streaks).toBe(false);
   });
 });
 
@@ -213,24 +215,24 @@ describe("theme", () => {
   });
 });
 
-describe("the archived list is the way back", () => {
-  it("says none until something is archived", () => {
+describe("the hidden list is the way back", () => {
+  it("says none until something is hidden", () => {
     open(account({ habits: ["workout"] }));
     expect(screen.getByText("none.")).toBeInTheDocument();
   });
 
   it("names what has been retired, because nothing is ever deleted", () => {
-    open(account({ habits: ["workout", "read"], archived: ["read"] }));
+    open(account({ habits: ["workout", "read"], hidden: ["read"] }));
     expect(screen.getByRole("button", { name: "read ›" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "workout ›" })).not.toBeInTheDocument();
   });
 
-  // Without this route Archiving would be a switch that cannot be moved back:
-  // Home does not list an Archived Habit, so this is the only door to its
+  // Without this route Hiding would be a switch that cannot be moved back:
+  // Home does not list a Hidden Habit, so this is the only door to its
   // Screen — and its Screen is where the switch is.
   it("opens the Habit's own screen, which is where it can come back", async () => {
     const user = userEvent.setup();
-    const data = account({ habits: ["workout", "read"], archived: ["read"] });
+    const data = account({ habits: ["workout", "read"], hidden: ["read"] });
     const props = open(data);
 
     await user.click(screen.getByRole("button", { name: "read ›" }));

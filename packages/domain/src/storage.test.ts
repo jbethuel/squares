@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, type DateKey } from "./date";
-import { addHabit, sealDays } from "./mutations";
+import { addHabit } from "./mutations";
 import { exportFilename, parseAppData, serialise } from "./storage";
 import { emptyData, type AppData } from "./types";
 
@@ -9,9 +9,9 @@ const YESTERDAY = addDays(TODAY, -1);
 
 function account(age: number, names: string[]): AppData {
   const installedOn = addDays(TODAY, -(age - 1));
-  let data = sealDays(emptyData(installedOn), TODAY);
+  let data = emptyData(installedOn);
   for (const name of names) data = addHabit(data, name, installedOn);
-  return sealDays(data, TODAY);
+  return data;
 }
 
 describe("export", () => {
@@ -46,7 +46,7 @@ describe("a v1 file is migrated, never refused", () => {
     expect(v1([legacy({})])?.habits[0]?.spans).toEqual([{ from: addDays(TODAY, -20), to: null }]);
   });
 
-  it("turns an archived v1 Habit into one closed Span", () => {
+  it("turns an hidden v1 Habit into one closed Span", () => {
     expect(v1([legacy({ archivedOn: YESTERDAY })])?.habits[0]?.spans).toEqual([
       { from: addDays(TODAY, -20), to: YESTERDAY },
     ]);
@@ -54,13 +54,13 @@ describe("a v1 file is migrated, never refused", () => {
 
   it("keeps everything else the file said", () => {
     const parsed = v1([legacy({ chained: true, sharedName: true })]);
-    expect(parsed?.version).toBe(2);
+    expect(parsed?.version).toBe(3);
     expect(parsed?.theme).toBe("dark");
-    expect(parsed?.habits[0]).toMatchObject({ chained: true, sharedName: true, name: "workout" });
+    expect(parsed?.habits[0]).toMatchObject({ streaks: true, sharedName: true, name: "workout" });
   });
 
   it("still refuses a version it has never written", () => {
-    expect(parseAppData({ version: 3, installedOn: TODAY, habits: [], days: {} })).toBeNull();
+    expect(parseAppData({ version: 4, installedOn: TODAY, habits: [], days: {} })).toBeNull();
   });
 });
 
@@ -83,7 +83,7 @@ describe("import discards anything that does not typecheck", () => {
     expect(file({ habits: ["workout", null, 7] })?.habits).toEqual([]);
   });
 
-  it("drops a Habit whose Archive date is not a Day", () => {
+  it("drops a Habit whose hidden-on date is not a Day", () => {
     expect(file({ habits: [habit({ archivedOn: "someday" })] })?.habits).toEqual([]);
     // Absent is legitimate, and means the Habit is live.
     expect(file({ habits: [habit({ archivedOn: undefined })] })?.habits[0]?.spans).toEqual([
@@ -108,32 +108,39 @@ describe("import discards anything that does not typecheck", () => {
     expect(file({ habits: { h1: "workout" } })?.habits).toEqual([]);
   });
 
-  it("drops a Tick on a Day the file says the Habit was not Active", () => {
+  it("keeps a Log even where the file's discarded Active set disagreed", () => {
+    // ADR 0001: `active` is not migrated. The Log is the only thing on the Day
+    // that still means something, and the denominator comes from Spans now.
     const parsed = file({
       habits: [habit({})],
-      days: { [TODAY]: { date: TODAY, active: [], ticked: ["h1"] } },
+      days: { [TODAY]: { date: TODAY, active: [], logged: ["h1"] } },
     });
-    // The Day has no Active Habits at all, so it is not a Day Record.
-    expect(parsed?.days[TODAY]).toBeUndefined();
+    expect(parsed?.days[TODAY]).toEqual({ date: TODAY, logged: ["h1"] });
   });
 
-  it("keeps the stored Active set as the denominator, whatever the Habits say", () => {
-    // `active` is stored, never re-derived. A file listing two Active
-    // Habits on a Day keeps two, even though only one is Ticked.
+  it("discards the stored Active set and keeps only the Logs", () => {
     const parsed = file({
       habits: [habit({}), habit({ id: "h2", name: "read" })],
-      days: { [TODAY]: { date: TODAY, active: ["h1", "h2"], ticked: ["h1"] } },
+      days: { [TODAY]: { date: TODAY, active: ["h1", "h2"], logged: ["h1"] } },
     });
-    expect(parsed?.days[TODAY]).toEqual({ date: TODAY, active: ["h1", "h2"], ticked: ["h1"] });
+    expect(parsed?.days[TODAY]).toEqual({ date: TODAY, logged: ["h1"] });
+  });
+
+  it("drops a Day that carries no Logs", () => {
+    const parsed = file({
+      habits: [habit({})],
+      days: { [TODAY]: { date: TODAY, active: ["h1"], logged: [] } },
+    });
+    expect(parsed?.days[TODAY]).toBeUndefined();
   });
 
   it("ignores keys that are not Days and entries that are not records", () => {
     const parsed = file({
       habits: [habit({})],
       days: {
-        "not-a-day": { date: "not-a-day", active: ["h1"], ticked: [] },
+        "not-a-day": { date: "not-a-day", active: ["h1"], logged: ["h1"] },
         [TODAY]: "yesterday I did everything",
-        [YESTERDAY]: { date: YESTERDAY, active: ["h1"], ticked: ["h1"] },
+        [YESTERDAY]: { date: YESTERDAY, active: ["h1"], logged: ["h1"] },
       },
     });
     expect(Object.keys(parsed!.days)).toEqual([YESTERDAY]);

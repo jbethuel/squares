@@ -1,6 +1,6 @@
 /**
  * A Day is a local calendar date, midnight to midnight, resolved at the moment
- * of the Tick and never recomputed. It is stored as `YYYY-MM-DD` so that string
+ * of the Log and never recomputed. It is stored as `YYYY-MM-DD` so that string
  * comparison is chronological comparison, and so that a record written in one
  * timezone still names the Day the user was actually living in.
  */

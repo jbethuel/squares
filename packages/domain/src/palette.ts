@@ -35,7 +35,7 @@ export const DARK_LEVELS: readonly Oklch[] = [
 ];
 
 /**
- * The Light port. Lightness runs the other way — a Tick darkens a pale Square
+ * The Light port. Lightness runs the other way — a Log darkens a pale Square
  * rather than lightening a dark one — so the ramp is monotonically *decreasing*
  * here while carrying the same data in the same channel.
  */
@@ -74,7 +74,7 @@ export interface Surface {
   bg: Oklch;
   /** A row, a card, a settings item: the one step up from the page. */
   surface: Oklch;
-  /** A Ticked row. */
+  /** A Logged row. */
   surfaceOn: Oklch;
   /** A text field. */
   surfaceInput: Oklch;
@@ -99,9 +99,9 @@ export interface Surface {
 
   accent: Oklch;
   onAccent: Oklch;
-  /** A Chain's number, and a Named Habit on a Share Card. */
-  chainFg: Oklch;
-  /** The edge of a Ticked row. */
+  /** A Streak's number, and a Named Habit on a Share Card. */
+  streakFg: Oklch;
+  /** The edge of a Logged row. */
   rowOnLine: Oklch;
   knobOff: Oklch;
   trackOff: Oklch;
@@ -135,7 +135,7 @@ export const DARK_SURFACE: Surface = {
 
   accent: { l: 0.7, c: 0.095, h: 128 },
   onAccent: { l: 0.16, c: 0.014, h: 128 },
-  chainFg: { l: 0.8, c: 0.11, h: 124 },
+  streakFg: { l: 0.8, c: 0.11, h: 124 },
   rowOnLine: { l: 0.7, c: 0.125, h: 138, a: 0.3 },
   knobOff: { l: 0.62, c: 0.018, h: 125 },
   trackOff: { l: 0.3, c: 0.02, h: 128 },
@@ -167,7 +167,7 @@ export const LIGHT_SURFACE: Surface = {
 
   accent: { l: 0.47, c: 0.1, h: 120 },
   onAccent: { l: 1, c: 0, h: 0 },
-  chainFg: { l: 0.47, c: 0.1, h: 120 },
+  streakFg: { l: 0.47, c: 0.1, h: 120 },
   rowOnLine: { l: 0.605, c: 0.105, h: 138, a: 0.3 },
   knobOff: { l: 1, c: 0, h: 0 },
   trackOff: { l: 0.85, c: 0.008, h: 128 },
@@ -204,7 +204,7 @@ export function toRgb({ l, c, h }: Oklch): [number, number, number] {
  * Reanimated's colour parser — which runs on the UI thread and has its own,
  * smaller implementation — takes only this one, and rejects `rgb(r g b / a)`
  * outright. Since the app animates between the alpha tokens (a row's edge going
- * from `--line` to `--row-on-line` as it is Ticked), the narrowest parser in the
+ * from `--line` to `--row-on-line` as it is Logged), the narrowest parser in the
  * set decides the format.
  *
  * The stylesheet is unaffected: `tokens.css` is rendered from the raw numbers by

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { StoreProvider, useStore } from "@squares/domain/store";
 import { webStorage } from "./storage";
 import { ApplyTheme, resolveTheme } from "./theme";
-import { addHabit, toggleTick } from "@squares/domain/mutations";
+import { addHabit, toggleLog } from "@squares/domain/mutations";
 import { STORAGE_KEY } from "@squares/domain/storage";
 import { account, onDevice, storedData, TODAY, withStore, YESTERDAY } from "@/test/harness";
 import { matchedMedia } from "@/test/dom";
@@ -18,15 +18,15 @@ function Probe() {
     <div>
       <span data-testid="today">{today}</span>
       <span data-testid="habits">{data.habits.map((h) => h.name).join(",")}</span>
-      <span data-testid="ticks">{Object.values(data.days).flatMap((d) => d.ticked).length}</span>
+      <span data-testid="logs">{Object.values(data.days).flatMap((d) => d.logged).length}</span>
       <button type="button" onClick={() => update((current) => addHabit(current, "read", today))}>
         add
       </button>
       <button
         type="button"
-        onClick={() => update((current) => toggleTick(current, current.habits[0]!.id, today, today))}
+        onClick={() => update((current) => toggleLog(current, current.habits[0]!.id, today, today))}
       >
-        tick
+        log
       </button>
     </div>
   );
@@ -73,18 +73,19 @@ describe("the store is the one source of the year", () => {
     onDevice(account({ habits: ["workout"] }));
     render(withStore(<Probe />));
 
-    await user.click(screen.getByRole("button", { name: "tick" }));
-    expect(screen.getByTestId("ticks")).toHaveTextContent("1");
-    expect(storedData().days[TODAY]?.ticked).toHaveLength(1);
+    await user.click(screen.getByRole("button", { name: "log" }));
+    expect(screen.getByTestId("logs")).toHaveTextContent("1");
+    expect(storedData().days[TODAY]?.logged).toHaveLength(1);
   });
 
-  it("seals the Days that elapsed while the app was closed, on open", () => {
-    // A two-Day-old account whose Day Records were never written.
+  it("writes no Day Record for a Day that was never Logged", () => {
+    // ADR 0001: a Day Record holds only the Logs, so an empty one would carry
+    // nothing. Opening the app after a gap materialises no history.
     const stale = account({ age: 2, habits: ["workout"] });
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...stale, days: {} }));
     render(withStore(<Probe />));
-    expect(storedData().days[YESTERDAY]).toBeDefined();
-    expect(storedData().days[TODAY]).toBeDefined();
+    expect(storedData().days[YESTERDAY]).toBeUndefined();
+    expect(storedData().days[TODAY]).toBeUndefined();
   });
 
   it("keeps a Habit added in this session across a reload", async () => {

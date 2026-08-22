@@ -1,5 +1,5 @@
 import { addDays, fromKey, toKey, type DateKey } from "./date";
-import { isTicked, wasActive } from "./selectors";
+import { isLogged, wasActive } from "./selectors";
 import type { AppData, Habit } from "./types";
 
 /**
@@ -45,7 +45,7 @@ export function noReminders(): ReminderSettings {
 /**
  * How far ahead Reminders are scheduled.
  *
- * The record only changes while the app is open, so every Tick can replan — but
+ * The record only changes while the app is open, so every Log can replan — but
  * a phone left alone for a week must still be prompted, which is the whole point
  * of the feature. Seven Days is the horizon that survives not opening the app.
  */
@@ -129,15 +129,15 @@ export function reconcileReminders(
 /**
  * Active Habits on that Day whose Square is still empty.
  *
- * This one predicate is the whole of both silence rules. An Archived Habit is
- * not Active, so it drops out; a Ticked Habit drops out; a Day whose Active
- * Habits were all Ticked yields nothing at all. A Day still to come has no Day
- * Record, so every Habit Active on it is outstanding — which is what it is,
- * at the moment the plan is made.
+ * This one predicate is the whole of both silence rules. A Hidden Habit is not
+ * Active, so it drops out; a Logged Habit drops out; a Day whose Active Habits
+ * were all Logged yields nothing at all. A Day still to come has no Day Record,
+ * so every Habit Active on it is outstanding — which is what it is, at the
+ * moment the plan is made.
  */
 export function outstandingOn(data: AppData, date: DateKey): Habit[] {
   return data.habits.filter(
-    (habit) => wasActive(data, habit.id, date) && !isTicked(data, habit.id, date),
+    (habit) => wasActive(data, habit.id, date) && !isLogged(data, habit.id, date),
   );
 }
 
@@ -177,7 +177,7 @@ function when(reminder: PlannedReminder): string {
  *
  * A repeating daily trigger cannot be silenced for one Day, and both Reminders
  * are defined by being silent on the Days the work is already done. So the plan
- * is dated one-shots over a horizon, recomputed after every Tick and every time
+ * is dated one-shots over a horizon, recomputed after every Log and every time
  * the app comes forward, and reconciled against what the device actually holds.
  *
  * `now` rather than a DateKey because "has that time already passed today" is

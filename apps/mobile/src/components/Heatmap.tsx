@@ -44,7 +44,7 @@ interface HeatmapProps {
   label: string;
   /** Ring today's Square. */
   markToday?: boolean;
-  /** Flash today's Square in the top shade: the echo of a Tick. */
+  /** Flash today's Square in the top shade: the echo of a Log. */
   echo?: boolean;
 }
 
@@ -158,7 +158,7 @@ export function Heatmap({
         told. A Lens change rebuilds the geometry from the ground up — different
         Square size, different column count — so there is nothing to tween
         between; the honest transition is the new grid arriving. Ticking does
-        not change any of these, so a Tick never remounts the year.
+        not change any of these, so a Log never remounts the year.
       */
       key={`${rows}-${scrolls}-${back}-${ahead}`}
       entering={FadeIn.duration(MS.reveal)}
@@ -261,7 +261,7 @@ export function Heatmap({
 /**
  * Today's Square: the other half of the echo.
  *
- * A Tick lands in two places at once — the Tail in the row, and this. The web
+ * A Log lands in two places at once — the Tail in the row, and this. The web
  * eases the fill over 300ms and the ring over 320ms, and flashes the ring in
  * the top shade for the length of the echo. Both rings are drawn as overlays
  * rather than as a border: a border in React Native is inset, which would make

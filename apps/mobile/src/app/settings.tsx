@@ -15,8 +15,8 @@ import {
   Chip,
 } from "@/components/ui";
 import { exportRecord, importRecord } from "@/platform/handoff";
-import { sealDays, setTheme } from "@squares/domain/mutations";
-import { archivedHabits } from "@squares/domain/selectors";
+import { setTheme } from "@squares/domain/mutations";
+import { hiddenHabits } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
 import type { AppData, ThemePreference } from "@squares/domain/types";
 import * as haptics from "@/platform/haptics";
@@ -44,7 +44,7 @@ export default function Settings() {
   const [pending, setPending] = useState<AppData | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  const archived = archivedHabits(data, today);
+  const hidden = hiddenHabits(data, today);
 
   const doExport = async () => {
     /*
@@ -74,7 +74,7 @@ export default function Settings() {
     // An import replaces the year on this device, and there is no undo, so a
     // year that already has something in it has to be confirmed first.
     if (data.habits.length === 0) {
-      replace(sealDays(result.data, today));
+      replace(result.data);
       setStatus("imported");
       return;
     }
@@ -84,7 +84,7 @@ export default function Settings() {
   return (
     <Screen>
       {/*
-        Nothing per-Habit lives here. A Habit's Chain and its Share Card name are
+        Nothing per-Habit lives here. A Habit's Streak and its Share Card name are
         set on that Habit's own Screen, which is the only place that knows
         anything about one Habit — two places to change one flag is how they
         drift.
@@ -117,14 +117,14 @@ export default function Settings() {
         <Card accent style={{ marginTop: 10 }}>
           <Note style={{ marginBottom: 12 }}>
             replace this device&apos;s year with {pending.habits.length} habits and{" "}
-            {Object.keys(pending.days).length} days? this cannot be undone.
+            {Object.keys(pending.days).length} logged days? this cannot be undone.
           </Note>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <PrimaryButton
               label="replace"
               style={{ flex: 1 }}
               onPress={() => {
-                replace(sealDays(pending, today));
+                replace(pending);
                 setPending(null);
                 setStatus("imported");
               }}
@@ -190,22 +190,22 @@ export default function Settings() {
       <Rule />
 
       {/*
-        Archived Habits are the one per-Habit thing listed here, and it is not a
+        Hidden Habits are the one per-Habit thing listed here, and it is not a
         setting — it is the only route back to a Screen Home no longer shows.
-        Without it, Archiving would be a switch that cannot be moved back.
+        Without it, Hide would be a switch that cannot be moved back.
       */}
-      <SubTitle style={{ marginBottom: 9 }}>archived</SubTitle>
-      {/* A Habit taken back out of the Archive leaves this list while the
+      <SubTitle style={{ marginBottom: 9 }}>hidden</SubTitle>
+      {/* A Habit taken back out of the Hide leaves this list while the
           Screen is open, so the rows below it close the gap. */}
       <Animated.View layout={settle()} style={{ gap: 7 }}>
-        {archived.map((habit) => (
+        {hidden.map((habit) => (
           <ListButton
             key={habit.id}
             label={`${habit.name} ›`}
             onPress={() => router.push(`/habit/${habit.id}`)}
           />
         ))}
-        {archived.length === 0 ? <NoteFaint>none.</NoteFaint> : null}
+        {hidden.length === 0 ? <NoteFaint>none.</NoteFaint> : null}
       </Animated.View>
 
       <Rule />

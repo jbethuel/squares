@@ -14,15 +14,15 @@ import {
   lensScrolls,
   type Lens,
 } from "@squares/domain/lens";
-import { renameHabit, setArchived, setChained, setSharedName } from "@squares/domain/mutations";
+import { renameHabit, setHidden, setStreaks, setSharedName } from "@squares/domain/mutations";
 import {
-  chainOf,
+  streakOf,
   dateAt,
-  isArchived,
-  isTicked,
-  longestChainOf,
-  tickCountIn,
-  tickCountOf,
+  isHidden,
+  isLogged,
+  longestStreakOf,
+  logCountIn,
+  logCountOf,
 } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
 
@@ -39,9 +39,9 @@ export function DetailScreen({ habitId }: { habitId: string }) {
 
   if (!habit) return null;
 
-  const archived = isArchived(habit, today);
+  const hidden = isHidden(habit, today);
   const frame = lensFrame(lens, today);
-  const ticks = tickCountOf(data, habitId, today);
+  const logs = logCountOf(data, habitId, today);
 
   // Blank reverts rather than rejects: there is no error to show and no button
   // to disable, because there is no save.
@@ -71,32 +71,33 @@ export function DetailScreen({ habitId }: { habitId: string }) {
       </h1>
 
       {/*
-        An unchained Habit has one number, not three. It used to show the Tick
-        count as the hero and again in the third slot, with an em dash where the
-        longest Chain would go — the same figure under two labels, next to a
-        stat that reads as something that failed to load.
+        A Habit with no Streak has one number, not three — the Log count as the
+        hero, and nothing under a label that reads as something that failed to
+        load.
 
-        An Archived Habit is shown no current Chain even when Chained: a Chain
-        counts back from today, and a Habit that cannot be Ticked today would
-        read 0 forever. What it did, and its longest run, are still true.
+        A Hidden Habit is shown no current Streak even when it is a Streak
+        Habit: a Streak counts back from today, and a Habit that cannot be
+        Logged today would read 0 forever. Its Longest Streak cannot fall, so
+        that one is shown, and it is what the Screen is for — deciding whether
+        to bring the Habit back.
       */}
       <div style={{ display: "flex", alignItems: "flex-end", gap: 26, margin: "22px 0 24px" }}>
         <div>
-          <div className="stat-value stat-hero" data-chained={habit.chained && !archived}>
-            {habit.chained && !archived ? chainOf(data, habitId, today) : ticks}
+          <div className="stat-value stat-hero" data-streaks={habit.streaks && !hidden}>
+            {habit.streaks && !hidden ? streakOf(data, habitId, today) : logs}
           </div>
-          <div className="stat-label">{habit.chained && !archived ? "chain" : "ticks"}</div>
+          <div className="stat-label">{habit.streaks && !hidden ? "streak" : "logs"}</div>
         </div>
-        {habit.chained ? (
+        {habit.streaks ? (
           <>
             <div>
-              <div className="stat-value">{longestChainOf(data, habitId, today)}</div>
+              <div className="stat-value">{longestStreakOf(data, habitId, today)}</div>
               <div className="stat-label">longest</div>
             </div>
-            {archived ? null : (
+            {hidden ? null : (
               <div>
-                <div className="stat-value">{ticks}</div>
-                <div className="stat-label">ticks</div>
+                <div className="stat-value">{logs}</div>
+                <div className="stat-label">logs</div>
               </div>
             )}
           </>
@@ -109,7 +110,7 @@ export function DetailScreen({ habitId }: { habitId: string }) {
         has to share, and a two-line caption above a grid reads as a fault.
       */}
       <p className="label" style={{ margin: "0 0 9px" }}>
-        every day of {lensNoun(lens)} · ticked or not
+        every day of {lensNoun(lens)} · logged or not
       </p>
       <div style={{ marginBottom: 8 }}>
         <LensPicker value={lens} onChange={setLens} label={`how much of ${habit.name} to draw`} />
@@ -129,24 +130,24 @@ export function DetailScreen({ habitId }: { habitId: string }) {
         scrolls={lensScrolls(lens)}
         today={today}
         months={lensMonths(lens)}
-        levelFor={(offset) => (isTicked(data, habitId, dateAt(today, offset)) ? 3 : 0)}
+        levelFor={(offset) => (isLogged(data, habitId, dateAt(today, offset)) ? 3 : 0)}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
-        ariaLabel={`${habit.name}: ${tickCountIn(data, habitId, today, frame.back)} ticks across ${lensNoun(lens)}`}
+        ariaLabel={`${habit.name}: ${logCountIn(data, habitId, today, frame.back)} logs across ${lensNoun(lens)}`}
         markToday
       />
 
       {/*
-        While a Habit is Archived neither the Card nor the Chain applies to it,
+        While a Habit is Hidden neither the Card nor the Streak applies to it,
         so the controls for them are not on the Screen — a switch that sits on
         and provably does nothing is worse than no switch. Both come back
         holding their remembered state when the Habit does.
       */}
-      {archived ? null : (
+      {hidden ? null : (
         <div className="stack" style={{ gap: 7, marginTop: 22 }}>
           <ToggleRow
-            label="count a chain"
-            on={habit.chained}
-            onToggle={() => update((current) => setChained(current, habitId, !habit.chained))}
+            label="count a streak"
+            on={habit.streaks}
+            onToggle={() => update((current) => setStreaks(current, habitId, !habit.streaks))}
           />
           {/* The label says what it puts where. "share" alone would not say
               that the thing being shared is the name. */}
@@ -158,21 +159,22 @@ export function DetailScreen({ habitId }: { habitId: string }) {
         </div>
       )}
 
-      {/* No note under the switches. What a Chain is, the stats say the moment it
-          is on: a count that stands next to a longest, and falls back to one
+      {/* No note under the switches. What a Streak is, the stats say the moment
+          it is on: a count that stands next to a longest, and falls back to one
           the day it breaks. */}
 
       {/*
-        Archive sits below a rule and last, because it is the only switch here
-        that changes what Home shows. It asks nothing first: it is reversible
-        now, and a switch that can be moved back does not need a confirmation.
+        Hide sits below a rule and last, because it is the only switch here that
+        changes what Home shows — and by ADR 0001 it changes the Overview and
+        the Total with it. It asks nothing first: it destroys nothing and it is
+        reversible, and a switch that can be moved back needs no confirmation.
       */}
       <hr className="divider" style={{ margin: "20px 0" }} />
       <ToggleRow
-        label="archive"
-        hint={archived ? "off home. past ticks stay." : "stops counting today"}
-        on={archived}
-        onToggle={() => update((current) => setArchived(current, habitId, !archived, today))}
+        label="hide"
+        hint={hidden ? "off home. logs kept." : "off home, and out of the year"}
+        on={hidden}
+        onToggle={() => update((current) => setHidden(current, habitId, !hidden, today))}
       />
     </>
   );

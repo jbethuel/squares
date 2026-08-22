@@ -80,7 +80,7 @@ describe("moving through the app", () => {
 
   it("goes into a Habit and back out again", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout"], ticks: { workout: [0, 1] } }));
+    open(account({ habits: ["workout"], logs: { workout: [0, 1] } }));
 
     await click(user, "Open workout");
     expect(screen.getByRole("heading", { name: "workout" })).toBeInTheDocument();
@@ -209,18 +209,18 @@ describe("the browser's own back button", () => {
   });
 });
 
-describe("archiving from inside a Habit", () => {
+describe("hiding from inside a Habit", () => {
   it("leaves the user on the Screen, because the switch can be moved back", async () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout", "read"] }));
 
     await click(user, "Open workout");
-    await user.click(screen.getByRole("switch", { name: /^archive/ }));
+    await user.click(screen.getByRole("switch", { name: /^hide/ }));
 
     // Nothing navigates: the Habit is still the subject of the Screen, and the
-    // switch that put it in the Archive is the one that takes it back out.
+    // switch that put it in the Hide is the one that takes it back out.
     expect(onHome()).toBe(false);
-    expect(screen.getByRole("switch", { name: /^archive/ })).toHaveAttribute(
+    expect(screen.getByRole("switch", { name: /^hide/ })).toHaveAttribute(
       "aria-checked",
       "true",
     );
@@ -231,18 +231,18 @@ describe("archiving from inside a Habit", () => {
     expect(screen.getByRole("button", { name: /^read,/ })).toBeInTheDocument();
   });
 
-  it("reaches an Archived Habit again through settings, and takes it back", async () => {
+  it("reaches a Hidden Habit again through settings, and takes it back", async () => {
     const user = userEvent.setup();
-    open(account({ habits: ["workout", "read"], archived: ["workout"] }));
+    open(account({ habits: ["workout", "read"], hidden: ["workout"] }));
 
     expect(screen.queryByRole("button", { name: /^workout,/ })).not.toBeInTheDocument();
 
     await click(user, "settings");
     await click(user, "workout ›");
-    await user.click(screen.getByRole("switch", { name: /^archive/ }));
+    await user.click(screen.getByRole("switch", { name: /^hide/ }));
 
     // Back out through settings to Home, where the Habit is live again. The
-    // account was Archived at today, so taking it back today is the same-Day
+    // account was Hidden at today, so taking it back today is the same-Day
     // undo — one open Span, not a Span and a zero-length gap. Where the gap is
     // real, `mutations.test.ts` is what holds it.
     await pressBack(2);

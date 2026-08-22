@@ -7,7 +7,7 @@ import { Card, Note, NoteFaint, PrimaryButton, Screen } from "@/components/ui";
 import { exportCard } from "@/platform/handoff";
 import { renderShareCard } from "@/platform/shareCardSkia";
 import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
-import { liveHabits } from "@squares/domain/selectors";
+import { visibleHabits } from "@squares/domain/selectors";
 import { shareCardModel } from "@squares/domain/shareCard";
 import { useStore } from "@squares/domain/store";
 import * as haptics from "@/platform/haptics";
@@ -28,9 +28,9 @@ export default function Share() {
   // Drawn once. What is on screen is the PNG that gets saved, not a second
   // rendering of it that could disagree.
   const card = useMemo(() => renderShareCard(model), [model]);
-  // The Habits behind the names on the card. Archived Habits are never named,
+  // The Habits behind the names on the card. Hidden Habits are never named,
   // so every one of these still has a live Screen to open.
-  const named = liveHabits(data, today).filter((habit) => habit.sharedName);
+  const named = visibleHabits(data, today).filter((habit) => habit.sharedName);
 
   const save = async () => {
     if (!card) return;
@@ -59,7 +59,7 @@ export default function Share() {
           layout={settle()}
           entering={FadeIn.duration(MS.reveal)}
           accessibilityRole="image"
-          accessibilityLabel={`Share card: ${model.tally} ticks across ${lensNoun(model.lens)}${
+          accessibilityLabel={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}${
             model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ", no habit names"
           }`}
           source={{ uri: `data:image/png;base64,${card.base64}` }}
@@ -102,7 +102,7 @@ export default function Share() {
                     style={{
                       fontFamily: MONO,
                       fontSize: FS.xs,
-                      color: t.chainFg,
+                      color: t.streakFg,
                       textDecorationLine: "underline",
                     }}
                   >

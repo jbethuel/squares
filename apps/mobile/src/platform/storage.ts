@@ -1,6 +1,5 @@
 import Storage from "expo-sqlite/kv-store";
 import { todayKey, type DateKey } from "@squares/domain/date";
-import { sealDays } from "@squares/domain/mutations";
 import { parseAppData, STORAGE_KEY } from "@squares/domain/storage";
 import { emptyData, type AppData } from "@squares/domain/types";
 
@@ -25,14 +24,14 @@ export function loadData(today: DateKey = todayKey()): AppData {
   } catch {
     parsed = null;
   }
-  return sealDays(parsed ?? emptyData(today), today);
+  return parsed ?? emptyData(today);
 }
 
 export function saveData(data: AppData): void {
   try {
     Storage.setItemSync(STORAGE_KEY, JSON.stringify(data));
   } catch {
-    // A full or blocked store must not take the app down mid-Tick. The Tick is
+    // A full or blocked store must not take the app down mid-Log. The Log is
     // still in memory; the next write will retry.
   }
 }

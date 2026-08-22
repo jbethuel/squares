@@ -7,8 +7,8 @@ import { useStore } from "@squares/domain/store";
 /**
  * Naming a new Habit, and nothing else.
  *
- * Everything about a Habit that already exists — its name, its Chain, its Share
- * Card opt-in, whether it is Archived — lives on that Habit's own Screen. This
+ * Everything about a Habit that already exists — its name, its Streak, its Share
+ * Card opt-in, whether it is Hidden — lives on that Habit's own Screen. This
  * Screen has one field because creating a Habit needs one field.
  */
 export function NewHabitScreen({ onDone }: { onDone: () => void }) {
@@ -55,7 +55,7 @@ export function NewHabitScreen({ onDone }: { onDone: () => void }) {
           onChange={(event) => setDraft(event.target.value)}
           style={{ marginTop: 8 }}
         />
-        {/* Nothing here about the Share Card or Chains. Both default to off, and
+        {/* Nothing here about the Share Card or Streaks. Both default to off, and
             both belong to a Habit that exists — this Screen creates one. */}
         <button
           type="submit"

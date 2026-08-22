@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addDays, type DateKey } from "@squares/domain/date";
-import { addHabit, sealDays, toggleTick } from "@squares/domain/mutations";
+import { addHabit, toggleLog } from "@squares/domain/mutations";
 import { STORAGE_KEY } from "@squares/domain/storage";
 import { emptyData, type AppData } from "@squares/domain/types";
 import { loadData, saveData } from "./storage";
@@ -47,9 +47,9 @@ afterEach(() => {
 
 function account(age: number, names: string[]): AppData {
   const installedOn = addDays(TODAY, -(age - 1));
-  let data = sealDays(emptyData(installedOn), TODAY);
+  let data = emptyData(installedOn);
   for (const name of names) data = addHabit(data, name, installedOn);
-  return sealDays(data, TODAY);
+  return data;
 }
 
 describe("loading what is on the device", () => {
@@ -77,24 +77,23 @@ describe("loading what is on the device", () => {
   });
 
   it("seals the Days that elapsed while the app was closed", () => {
-    // Saved a week ago, opened today: every Day in between gets a record, and
-    // each one is closed with nothing Ticked.
+    // Saved a week ago, opened today: the Days in between were never Logged,
+    // so they carry no record at all.
     const stale = account(1, ["workout"]);
     saveData(stale);
     const reopened = loadData(addDays(TODAY, 7));
-    expect(Object.keys(reopened.days)).toHaveLength(8);
-    expect(Object.values(reopened.days).every((d) => d.active.length === 1)).toBe(true);
-    expect(Object.values(reopened.days).every((d) => d.ticked.length === 0)).toBe(true);
+    expect(reopened.days).toEqual({});
+    expect(reopened.habits).toHaveLength(1);
   });
 
-  it("does not rewrite a Tick that was recorded before the app was closed", () => {
+  it("does not rewrite a Log that was recorded before the app was closed", () => {
     let data = account(10, ["workout"]);
     const workout = data.habits[0]!.id;
-    data = toggleTick(data, workout, YESTERDAY, TODAY);
+    data = toggleLog(data, workout, YESTERDAY, YESTERDAY);
     saveData(data);
-    // Two Days later, yesterday's Tick is outside the Grace Window and frozen.
+    // Two Days later, yesterday's Log is sealed and untouchable.
     const reopened = loadData(addDays(TODAY, 2));
-    expect(reopened.days[YESTERDAY]?.ticked).toEqual([workout]);
+    expect(reopened.days[YESTERDAY]?.logged).toEqual([workout]);
   });
 
   it("falls back to an empty year where there is no localStorage at all", () => {
@@ -108,7 +107,7 @@ describe("saving", () => {
   it("does not take the app down when the store is full", () => {
     const data = account(5, ["workout"]);
     storage.breakWrites();
-    // The Tick is still in memory; the next write will retry. A thrown quota
+    // The Log is still in memory; the next write will retry. A thrown quota
     // error here would lose the tap the user just made.
     expect(() => saveData(data)).not.toThrow();
   });

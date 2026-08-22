@@ -42,7 +42,7 @@ interface HeatmapProps {
   ariaLabel: string;
   /** Ring today's Square. Off for the static grids (detail, share). */
   markToday?: boolean;
-  /** Flash today's Square in the top shade: the echo of a Tick. */
+  /** Flash today's Square in the top shade: the echo of a Log. */
   echo?: boolean;
 }
 

@@ -16,7 +16,7 @@ describe("the Total", () => {
   it("rolls in behind the Square that caused it, rather than with it", async () => {
     const { rerender } = render(<Total value={9} />);
     rerender(<Total value={10} />);
-    // The Tick reads as cause and the number as consequence.
+    // The Log reads as cause and the number as consequence.
     expect(shown()).toBe("9");
     await vi.waitFor(() => expect(shown()).toBe("10"), { timeout: 1000 });
   });
@@ -45,7 +45,7 @@ describe("the Total", () => {
     expect(rolling()).toEqual(["0"]);
   });
 
-  it("counts up from zero on an account that has never Ticked", () => {
+  it("counts up from zero on an account that has never Logged", () => {
     render(<Total value={0} />);
     expect(shown()).toBe("0");
   });

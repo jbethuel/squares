@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 /**
  * Hold a value back by `delay` ms. The Total rolls 180ms behind the Square that
- * caused it — the Tick reads as cause and the number as consequence, rather
+ * caused it — the Log reads as cause and the number as consequence, rather
  * than as two things twitching at once.
  */
 export function useDelayedValue<T>(value: T, delay: number): T {

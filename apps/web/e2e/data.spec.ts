@@ -3,7 +3,7 @@ import { buildAccount, expect, habitRow, readDevice, test, total } from "./fixtu
 
 test.describe("the year lives on this device", () => {
   test("exports a file named for the Day, which parses back to the year", async ({ app }) => {
-    const page = await app({ age: 30, habits: ["workout", "read"], ticks: { workout: [0, 1] } });
+    const page = await app({ age: 30, habits: ["workout", "read"], logs: { workout: [0, 1] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     const download = page.waitForEvent("download");
@@ -13,14 +13,14 @@ test.describe("the year lives on this device", () => {
     expect(file.suggestedFilename()).toMatch(/^squares-\d{4}-\d{2}-\d{2}\.json$/);
 
     const contents = JSON.parse(await readFile((await file.path())!, "utf8"));
-    expect(contents.version).toBe(2);
+    expect(contents.version).toBe(3);
     expect(contents.habits.map((h: { name: string }) => h.name)).toEqual(["workout", "read"]);
     await expect(page.getByRole("status")).toHaveText("exported");
   });
 
   test("imports straight into a device with nothing to lose", async ({ app }) => {
     const page = await app({ habits: [] });
-    const incoming = buildAccount({ age: 40, habits: ["read", "meditate"], ticks: { read: [0, 1, 2] } });
+    const incoming = buildAccount({ age: 40, habits: ["read", "meditate"], logs: { read: [0, 1, 2] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.locator('input[type="file"]').setInputFiles({
@@ -38,8 +38,8 @@ test.describe("the year lives on this device", () => {
   });
 
   test("asks before replacing a year that already has something in it", async ({ app }) => {
-    const page = await app({ age: 30, habits: ["workout"], ticks: { workout: [0, 1] } });
-    const incoming = buildAccount({ age: 40, habits: ["read", "meditate"] });
+    const page = await app({ age: 30, habits: ["workout"], logs: { workout: [0, 1] } });
+    const incoming = buildAccount({ age: 40, habits: ["read", "meditate"], logs: { read: [0, 1, 2] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.locator('input[type="file"]').setInputFiles({
@@ -48,7 +48,9 @@ test.describe("the year lives on this device", () => {
       buffer: Buffer.from(JSON.stringify(incoming)),
     });
 
-    await expect(page.getByText(/replace this device's year with 2 habits and 40 days\?/)).toBeVisible();
+    await expect(
+      page.getByText(/replace this device's year with 2 habits and 3 logged days\?/),
+    ).toBeVisible();
     await expect(page.getByText(/this cannot be undone/)).toBeVisible();
     // Nothing has happened yet.
     expect((await readDevice(page)).habits.map((h) => h.name)).toEqual(["workout"]);
@@ -62,8 +64,8 @@ test.describe("the year lives on this device", () => {
   });
 
   test("replaces the year when that is the answer", async ({ app }) => {
-    const page = await app({ age: 30, habits: ["workout"], ticks: { workout: [0, 1] } });
-    const incoming = buildAccount({ age: 40, habits: ["read"], ticks: { read: [0] } });
+    const page = await app({ age: 30, habits: ["workout"], logs: { workout: [0, 1] } });
+    const incoming = buildAccount({ age: 40, habits: ["read"], logs: { read: [0] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.locator('input[type="file"]').setInputFiles({
@@ -130,7 +132,7 @@ test.describe("the year lives on this device", () => {
     await expect(page.getByRole("status")).toHaveText("imported");
     const data = await readDevice(page);
     expect(data.habits[0]?.sharedName).toBe(false);
-    expect(data.habits[0]?.chained).toBe(false);
+    expect(data.habits[0]?.streaks).toBe(false);
   });
 
   test("makes no network requests of its own", async ({ page, app }) => {
@@ -142,7 +144,7 @@ test.describe("the year lives on this device", () => {
       }
     });
 
-    const target = await app({ age: 60, habits: ["workout"], ticks: { workout: [0, 1] } });
+    const target = await app({ age: 60, habits: ["workout"], logs: { workout: [0, 1] } });
     await target.getByRole("button", { name: "settings" }).click();
     await target.getByRole("button", { name: "make a share card ›" }).click();
     await expect(target.locator("canvas.share-preview")).toBeVisible();
@@ -195,7 +197,7 @@ test.describe("theme", () => {
       });
       page.on("pageerror", (error) => errors.push(error.message));
 
-      await app({ habits: ["workout"], ticks: { workout: [0] } });
+      await app({ habits: ["workout"], logs: { workout: [0] } });
       // Asserted so the test cannot pass by simply failing to boot.
       await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
       await expect(page.getByRole("button", { name: /^workout,/ })).toBeVisible();

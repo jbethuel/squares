@@ -9,8 +9,8 @@ import { FS, MONO, useTheme } from "@/platform/theme";
 /**
  * Naming a new Habit, and nothing else.
  *
- * Everything about a Habit that already exists — its name, its Chain, its Share
- * Card opt-in, whether it is Archived — lives on that Habit's own Screen. This
+ * Everything about a Habit that already exists — its name, its Streak, its Share
+ * Card opt-in, whether it is Hidden — lives on that Habit's own Screen. This
  * Screen has one field because creating a Habit needs one field.
  */
 export default function NewHabit() {
@@ -61,7 +61,7 @@ export default function NewHabit() {
           color: t.fg,
         }}
       />
-      {/* Nothing here about the Share Card or Chains. Both default to off, and
+      {/* Nothing here about the Share Card or Streaks. Both default to off, and
           both belong to a Habit that exists — this Screen creates one. */}
       <View style={{ marginTop: 24 }}>
         <PrimaryButton label="save" onPress={save} disabled={draft.trim() === ""} />

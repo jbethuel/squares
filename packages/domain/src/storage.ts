@@ -13,9 +13,9 @@ import {
  * exists in v1 rather than as a power-user feature.
  */
 /**
- * The key stays `squares.v1` through the ADR 0003 bump to `version: 2`. It names
- * the slot, not the schema — renaming it would orphan every record already on a
- * device, which is the one thing this app cannot do.
+ * The key stays `squares.v1` through every schema bump. It names the slot, not
+ * the schema — renaming it would orphan every record already on a device, which
+ * is the one thing this app cannot do.
  */
 export const STORAGE_KEY = "squares.v1";
 
@@ -68,11 +68,22 @@ function parseHabit(value: unknown): Habit | null {
     id,
     name: name.trim(),
     spans,
-    chained: raw.chained === true,
+    // `chained` is what v1 and v2 called it.
+    streaks: raw.streaks === true || raw.chained === true,
     sharedName: raw.sharedName === true,
   };
 }
 
+/**
+ * ADR 0001: a v1 or v2 Day carried a stored `active` set beside its Logs. That
+ * set is discarded, not migrated — the Active Habits of a Day are derived from
+ * Spans now, and a stored copy nothing is allowed to trust is a bug with a
+ * schema. An imported year can therefore come back shaded slightly differently
+ * from the one it was exported as.
+ *
+ * `logged` is what v1 and v2 called `logged`. A Day with no Logs keeps no
+ * record.
+ */
 function parseDays(value: unknown, habitIds: Set<string>): Record<DateKey, DayRecord> {
   const raw = asRecord(value);
   if (!raw) return {};
@@ -81,10 +92,10 @@ function parseDays(value: unknown, habitIds: Set<string>): Record<DateKey, DayRe
     if (!isDateKey(date)) continue;
     const record = asRecord(entry);
     if (!record) continue;
-    const active = asStringArray(record.active).filter((id) => habitIds.has(id));
-    const ticked = asStringArray(record.ticked).filter((id) => active.includes(id));
-    if (active.length === 0) continue;
-    days[date] = { date, active, ticked };
+    const source = record.logged !== undefined ? record.logged : record.logged;
+    const logged = asStringArray(source).filter((id) => habitIds.has(id));
+    if (logged.length === 0) continue;
+    days[date] = { date, logged };
   }
   return days;
 }
@@ -97,9 +108,9 @@ function parseDays(value: unknown, habitIds: Set<string>): Record<DateKey, DayRe
 export function parseAppData(value: unknown): AppData | null {
   const raw = asRecord(value);
   if (!raw) return null;
-  // v1 files are read and migrated; only a version we have never written is
-  // refused. See ADR 0003.
-  if (raw.version !== 1 && raw.version !== 2) return null;
+  // v1 and v2 files are read and migrated; only a version we have never written
+  // is refused. See ADR 0003.
+  if (raw.version !== 1 && raw.version !== 2 && raw.version !== 3) return null;
   if (!isDateKey(raw.installedOn)) return null;
 
   const habits = Array.isArray(raw.habits)
@@ -111,7 +122,7 @@ export function parseAppData(value: unknown): AppData | null {
     : "system";
 
   return {
-    version: 2,
+    version: 3,
     installedOn: raw.installedOn,
     habits,
     days: parseDays(raw.days, habitIds),
