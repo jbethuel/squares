@@ -47,11 +47,7 @@ Root scripts delegate, so `pnpm dev` and `pnpm test` work from wherever you are 
 ```
 docs/adr/       the decisions, system-wide
 CONTEXT.md      the glossary, system-wide
-scripts/        every image the repo generates, from the one ramp
-  lib/mark.mjs      the Squares mark, and just enough of a PNG writer
-  make-icons.mjs    app icons, both interfaces
-  make-store-assets.mjs  Play Console graphics — see ADR 0008
-store/android/  those graphics, generated
+store/android/  graphics, generated
 
 packages/domain/  the rules — no DOM, tested in node
   date.ts           local calendar Days as YYYY-MM-DD
