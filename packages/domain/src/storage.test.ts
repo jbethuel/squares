@@ -26,7 +26,7 @@ describe("export", () => {
 });
 
 /**
- * ADR 0005. An Export is the only copy of the record that survives this app's
+ * ADR 0003. An Export is the only copy of the record that survives this app's
  * storage being cleared, so a v1 file that cannot be read is a backup that has
  * been destroyed. Refusing one was never an option.
  */
@@ -118,7 +118,7 @@ describe("import discards anything that does not typecheck", () => {
   });
 
   it("keeps the stored Active set as the denominator, whatever the Habits say", () => {
-    // ADR 0001: `active` is stored, never re-derived. A file listing two Active
+    // `active` is stored, never re-derived. A file listing two Active
     // Habits on a Day keeps two, even though only one is Ticked.
     const parsed = file({
       habits: [habit({}), habit({ id: "h2", name: "read" })],

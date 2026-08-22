@@ -39,7 +39,7 @@ export function useReminders(): Reminders {
   const [settings, setSettings] = useState<ReminderSettings>(loadReminders);
 
   /**
-   * ADR 0007: Import drops Reminders it cannot match. Reminder times are keyed
+   * ADR 0008: Import drops Reminders it cannot match. Reminder times are keyed
    * by Habit id while the record is not, so a record replaced by Import can
    * leave Reminders aimed at Habits that no longer exist. Reconciling against
    * the current Habits here catches that wherever the Import happened.

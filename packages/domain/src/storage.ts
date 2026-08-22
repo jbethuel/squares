@@ -8,12 +8,12 @@ import {
 } from "./types";
 
 /**
- * ADR 0002: everything lives on the device. There is no account, no sync and no
+ * ADR 0004: everything lives on the device. There is no account, no sync and no
  * analytics — which also means clearing site data clears the year, so export
  * exists in v1 rather than as a power-user feature.
  */
 /**
- * The key stays `squares.v1` through the ADR 0005 bump to `version: 2`. It names
+ * The key stays `squares.v1` through the ADR 0003 bump to `version: 2`. It names
  * the slot, not the schema — renaming it would orphan every record already on a
  * device, which is the one thing this app cannot do.
  */
@@ -98,7 +98,7 @@ export function parseAppData(value: unknown): AppData | null {
   const raw = asRecord(value);
   if (!raw) return null;
   // v1 files are read and migrated; only a version we have never written is
-  // refused. See ADR 0005.
+  // refused. See ADR 0003.
   if (raw.version !== 1 && raw.version !== 2) return null;
   if (!isDateKey(raw.installedOn)) return null;
 

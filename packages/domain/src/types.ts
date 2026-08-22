@@ -18,7 +18,7 @@ export interface Habit {
   id: string;
   name: string;
   /**
-   * ADR 0005: Archive is a state a Habit can leave, so it cannot be one date.
+   * ADR 0003: Archive is a state a Habit can leave, so it cannot be one date.
    * Taking a Habit out of the Archive opens a new Span rather than extending the
    * old one — the Days it spent Archived stay a permanent gap. Ordered, and
    * never overlapping.
@@ -34,7 +34,7 @@ export interface Habit {
  * The permanent record of one Day: which Habits were Active and which were
  * Ticked.
  *
- * ADR 0001: `active` is *stored*, never re-derived from the current Habit set.
+ * `active` is *stored*, never re-derived from the current Habit set.
  * Intensity is a proportion, and a denominator that can be edited after the
  * fact turns a patchy year green retroactively — which would make the Heatmap
  * stop being a record.
@@ -48,7 +48,7 @@ export interface DayRecord {
 export type ThemePreference = "system" | "light" | "dark";
 
 export interface AppData {
-  /** 2 since ADR 0005. A v1 file is migrated on read, never refused. */
+  /** 2 since ADR 0003. A v1 file is migrated on read, never refused. */
   version: 2;
   /** The Day the year starts counting from. */
   installedOn: DateKey;

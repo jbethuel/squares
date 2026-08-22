@@ -24,7 +24,7 @@ interface Store {
 /**
  * Where the record is kept. Injected rather than imported, because the engine
  * differs by platform — localStorage on the web, an app-private store on the
- * phone — while everything below has to be identical on both (ADR 0006). The
+ * phone — while everything below has to be identical on both (ADR 0007). The
  * rollover-and-`sealDays` effect *is* the Grace Window, and two copies of it
  * could disagree about which Days are still open.
  */
@@ -61,7 +61,7 @@ export function StoreProvider({
 
   // Bare `setInterval`, not `window.setInterval`: there is no window on the
   // phone. A backgrounded app stops getting these, so a native shell has to
-  // re-read the clock on resume as well — see ADR 0006.
+  // re-read the clock on resume as well — see ADR 0007.
   useEffect(() => {
     const id = setInterval(() => {
       setToday((previous) => {

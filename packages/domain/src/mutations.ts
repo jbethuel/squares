@@ -12,7 +12,7 @@ function sameSet(a: readonly string[], b: readonly string[]): boolean {
  * Open Days (today, yesterday) have their Active set refreshed, so a Habit
  * added today counts toward today's Intensity. A closed Day is written once —
  * with whatever was Active and nothing Ticked if it was never opened — and is
- * then never touched again. That is the whole of ADR 0001 in one loop.
+ * then never touched again.
  */
 export function sealDays(data: AppData, today: DateKey): AppData {
   const span = elapsedDays(data, today);
@@ -98,7 +98,7 @@ function openSpan(spans: Span[], today: DateKey): Span[] {
  *
  * Every past Tick stays in the year and in the Total; the Day Records that
  * counted it are untouched, and the Days it spends Archived are never
- * backdated away. There is no delete. See ADR 0005.
+ * backdated away. There is no delete. See ADR 0003.
  */
 export function setArchived(
   data: AppData,

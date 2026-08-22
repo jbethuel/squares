@@ -4,7 +4,7 @@ import { parseAppData, STORAGE_KEY } from "@squares/domain/storage";
 import { emptyData, type AppData } from "@squares/domain/types";
 
 /**
- * The web's half of ADR 0002's storage layer: localStorage, and nothing else.
+ * The web's half of ADR 0004's storage layer: localStorage, and nothing else.
  *
  * Validating and migrating the blob is shared (`@squares/domain/storage`)
  * because an Export written on one platform has to import on the other. Getting

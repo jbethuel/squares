@@ -9,7 +9,7 @@ const TODAY: DateKey = "2026-08-03";
 const YESTERDAY = addDays(TODAY, -1);
 
 /**
- * localStorage is the whole of ADR 0002's storage layer, so the tests own one
+ * localStorage is the whole of ADR 0004's storage layer, so the tests own one
  * rather than borrowing a DOM: a Map that can also be made to fail on demand.
  */
 function fakeStorage() {

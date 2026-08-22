@@ -100,7 +100,7 @@ function App() {
 
   // The bar is derived from the stack rather than remembered per Screen, so
   // "a Screen you can leave" cannot drift out of step with "a Screen with a way
-  // out". Home is never above depth zero and so never has one — see ADR 0004.
+  // out". Home is never above depth zero and so never has one — see ADR 0006.
   return (
     <>
       {body()}

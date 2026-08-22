@@ -19,7 +19,7 @@ import {
 /**
  * The Share Card, drawn to a Canvas2D.
  *
- * This is the one rule-adjacent thing the phone app cannot share (ADR 0006):
+ * This is the one rule-adjacent thing the phone app cannot share (ADR 0007):
  * React Native has no canvas, so the drawing forks and `shareCardModel` does
  * not. Everything here is in card units and multiplied on the way out, so the
  * preview on screen and the exported PNG are the same drawing at two sizes.

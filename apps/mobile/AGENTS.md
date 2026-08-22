@@ -1,23 +1,33 @@
 # apps/mobile
 
-Expo SDK 57, React Native, Expo Router. Android first; iOS is planned and
-nothing here may assume otherwise.
+This app uses Expo SDK 57, React Native and Expo Router. Android is the first
+target. iOS is planned, and no code here can assume that iOS does not exist.
 
-**Expo has changed.** Read the exact versioned docs at
-https://docs.expo.dev/versions/v57.0.0/ before writing any code. Recalled API
-shapes for this SDK are unreliable — `expo-notifications`' trigger types in
-particular were reshaped, and `docs/research/` in the repo root records what was
-verified and when.
+**Expo has changed.** Read the versioned documentation at
+https://docs.expo.dev/versions/v57.0.0/ before you write code. Your memory of
+the API of this SDK is not reliable. The trigger types of `expo-notifications`
+changed. `docs/research/` in the root of the repository records what we verified
+and when.
 
 ## The boundary
 
-The rules live in `packages/domain` and are imported, never reimplemented. If
-you find yourself writing a date calculation, an Intensity, a Chain or a Grace
-Window check in this app, it belongs in the package instead — `apps/web` has to
-agree with it, and two copies will drift (ADR 0006).
+The rules stay in `packages/domain`. This app imports the rules and does not
+write them again.
 
-What belongs here is `src/platform/`: the things only a phone can do. Storage,
-the Share Card's Skia drawing, the file handoff, the Reminder's scheduling.
+Do not write these in this app:
 
-Read `CONTEXT.md` in the repo root before naming anything. Its terms are used
-verbatim in code.
+- a date calculation
+- an Intensity
+- a Streak
+- a test for an open Day
+- a test for a Hidden Habit
+
+Each of these belongs in the package. `apps/web` must agree with this app, and
+two copies will become different. See ADR 0007.
+
+`src/platform/` holds the operations that only a phone can do: the storage, the
+Skia drawing of the Share Card, the file handoff, and the schedule of the
+Reminder.
+
+Read `CONTEXT.md` in the root of the repository before you name anything. The
+code uses its terms without change.

@@ -1,7 +1,7 @@
 /**
  * Handing a file to the device.
  *
- * ADR 0002: the file is the only copy of the year that survives this app's
+ * ADR 0004: the file is the only copy of the year that survives this app's
  * storage being cleared, so handing it over has to work on the device the app
  * is actually installed on. A blob-URL `<a download>` does not: in a
  * home-screen web app on iOS, WebKit never downloads it. It shows a full-screen

@@ -62,7 +62,7 @@ export const CARD = {
  * consumers and, until the phone app grew Screens, one definition in the wrong
  * place: hand-written custom properties in `apps/web/src/app/globals.css`,
  * which React Native cannot read. The web's `tokens.css` is generated from
- * here now, exactly as the ramp already was, so the two interfaces ADR 0006
+ * here now, exactly as the ramp already was, so the two interfaces ADR 0007
  * created cannot drift into two palettes.
  *
  * Keys are the CSS custom property names in camelCase — `surfaceOn` is

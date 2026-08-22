@@ -18,7 +18,7 @@ import type { AppData } from "@squares/domain/types";
  * Reminder is allowed to say — are in `@squares/domain/reminders`; nothing here
  * decides any of that. This file only makes the device hold what the plan says.
  *
- * ADR 0007: local scheduling only. There is no push service, no token and no
+ * ADR 0008: local scheduling only. There is no push service, no token and no
  * subscription endpoint in this file, and there must never be one.
  */
 
@@ -34,7 +34,7 @@ const PREFIX = "squares.reminder:";
 const CHANNEL = "reminders";
 
 /**
- * Reminders live beside the record, in their own slot. ADR 0007: they are not in
+ * Reminders live beside the record, in their own slot. ADR 0008: they are not in
  * an Export and a record carried to another phone arrives with none set — which
  * is only true because they are never written into `squares.v1`.
  */

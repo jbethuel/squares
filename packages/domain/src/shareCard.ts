@@ -61,7 +61,7 @@ export function shareCardModel(data: AppData, today: DateKey, lens: Lens): Share
 /**
  * Card geometry, in card units. The exported PNG is this times `scale`.
  *
- * Exported because the drawing forks by platform (ADR 0006) while these do not:
+ * Exported because the drawing forks by platform (ADR 0007) while these do not:
  * a Share Card whose measurements differ between web and phone is a Share Card
  * nobody can trust.
  */

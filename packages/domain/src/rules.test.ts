@@ -105,7 +105,7 @@ describe("the Grace Window", () => {
   });
 });
 
-describe("Day Records are immutable once closed (ADR 0001)", () => {
+describe("Day Records are immutable once closed", () => {
   it("freezes the Active set of a Day that was never opened", () => {
     const data = account(5, ["workout", "read"]);
     expect(data.days[CLOSED]?.active).toHaveLength(2);
@@ -289,7 +289,7 @@ describe("import", () => {
   it("rejects a file that is not a Squares export", () => {
     expect(parseAppData(null)).toBeNull();
     expect(parseAppData([])).toBeNull();
-    // v1 and v2 are both read — v1 is migrated, per ADR 0005. A version this
+    // v1 and v2 are both read — v1 is migrated, per ADR 0003. A version this
     // app has never written is still refused outright.
     expect(parseAppData({ version: 3, installedOn: TODAY })).toBeNull();
     expect(parseAppData({ version: 1 })).toBeNull();
