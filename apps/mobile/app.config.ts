@@ -22,7 +22,10 @@ const hex = (colour: Oklch) =>
 const config: ExpoConfig = {
   name: "squares",
   slug: "squares",
-  version: "0.1.0",
+  // 1.0.0, not 0.1.0: this is the build that is meant to be lived in, and
+  // `versionCode` — the integer Android actually compares — is EAS's to keep
+  // (eas.json, `autoIncrement`), because a dynamic config cannot be written back to.
+  version: "1.0.0",
   scheme: "squares",
   orientation: "portrait",
   // System means dark unless the device asks for light — see CONTEXT.md, Theme.
@@ -35,6 +38,28 @@ const config: ExpoConfig = {
   platforms: ["android", "ios"],
 
   android: {
+    /**
+     * Permanent, and the one string here that cannot be changed later. Android
+     * identifies an installed app by it, so a rename is not a rename: the OS
+     * treats the new build as a different app, leaves the old one holding the
+     * record, and the only way to be rid of it is an uninstall — which is the
+     * storage-clearing event ADR 0006 warns arrives with no warning in front of it.
+     */
+    package: "dev.jbethuel.squares",
+
+    /**
+     * Android's Auto Backup is on unless a manifest says otherwise, and it
+     * copies app storage to the user's Google Drive. That storage is
+     * `expo-sqlite/kv-store`, which is the year. ADR 0002 says the record does
+     * not leave the device and the README says it in as many words, so the
+     * platform default makes both of them false.
+     *
+     * Off, so an uninstall really does erase the record — which is precisely the
+     * event Export exists to answer, and why ADR 0009 raises Export from a
+     * convenience to the only lifeline there is.
+     */
+    allowBackup: false,
+
     adaptiveIcon: {
       backgroundColor: hex(CARD.bg),
       foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -47,6 +72,12 @@ const config: ExpoConfig = {
     // popping a Screen. See ADR 0006 and docs/research/.
     predictiveBackGestureEnabled: false,
   },
+
+  // iOS is not in v1 — ADR 0008 ships one sideloaded Android APK and nothing
+  // else. The identifier is claimed here regardless: it costs nothing while it
+  // is still free to choose, and AGENTS.md says nothing in this app may assume
+  // iOS is not coming.
+  ios: { bundleIdentifier: "dev.jbethuel.squares" },
 
   plugins: [
     "expo-router",

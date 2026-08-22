@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "preview": "pnpm dlx serve out -l 4173",
-    "icons": "node scripts/make-icons.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

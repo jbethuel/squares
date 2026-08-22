@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      '@squares/domain':
+        specifier: workspace:*
+        version: link:packages/domain
 
   apps/mobile:
     dependencies:

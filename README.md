@@ -33,8 +33,9 @@ pnpm dev              # http://localhost:3000
 | `pnpm test:e2e:static` | End-to-end against the built export — the artefact that ships |
 | `pnpm test:all` | Typecheck, then unit, then end-to-end |
 | `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm icons` | Regenerate `public/*.png` from the Intensity ramp |
+| `pnpm icons` | Regenerate both apps' icons from the Intensity ramp |
 | `pnpm tokens` | Regenerate `tokens.css` from the Intensity ramp |
+| `pnpm store-assets` | Redraw the Play Console graphics — not used by any build |
 
 ## Layout
 
@@ -46,6 +47,11 @@ Root scripts delegate, so `pnpm dev` and `pnpm test` work from wherever you are 
 ```
 docs/adr/       the decisions, system-wide
 CONTEXT.md      the glossary, system-wide
+scripts/        every image the repo generates, from the one ramp
+  lib/mark.mjs      the Squares mark, and just enough of a PNG writer
+  make-icons.mjs    app icons, both interfaces
+  make-store-assets.mjs  Play Console graphics — see ADR 0008
+store/android/  those graphics, generated
 
 packages/domain/  the rules — no DOM, tested in node
   date.ts           local calendar Days as YYYY-MM-DD
@@ -72,7 +78,7 @@ apps/web/         the Next.js app, statically exported
   src/app/          Next shell, globals.css, tokens.css (generated)
   src/test/         jsdom stubs and the fixture harness
   e2e/              playwright specs and the device seed
-  scripts/          make-icons.mjs and generate-tokens.mts
+  scripts/          generate-tokens.mts
 ```
 
 `packages/domain` publishes no barrel — every module is its own entry point, so
