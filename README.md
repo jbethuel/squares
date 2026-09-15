@@ -39,6 +39,20 @@ pnpm dev              # http://localhost:3000
 | `pnpm icons` | Make the icons of both apps again from the Intensity ramp |
 | `pnpm tokens` | Make `tokens.css` again from the Intensity ramp |
 | `pnpm store-assets` | Draw the Play Console graphics again. No build uses these. |
+| `pnpm mobile` | Start the phone app's dev server |
+| `pnpm mobile:ios` | Start it and open the iOS simulator |
+| `pnpm mobile:aab` | Build the App Bundle for Play, on EAS |
+| `pnpm mobile:apk` | Build an APK to sideload, on EAS |
+
+The two EAS scripts run on Expo's servers, not here, and each one takes about
+fifteen minutes. They need `eas login` once.
+
+They make different things, and one cannot stand in for the other. `mobile:aab`
+makes the App Bundle Play requires of a new app; nothing installs one, and Play
+cuts the per-device APKs from it. `mobile:apk` makes an APK and gives back a
+link a phone can open, which is the only way to run the app on a device without
+a JDK, platform-tools and a cable. The bundle is what ships. The APK is how you
+find out whether what ships works.
 
 ## Layout
 

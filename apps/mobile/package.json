@@ -7,7 +7,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:aab": "npx eas-cli build --platform android --profile production",
+    "build:apk": "npx eas-cli build --platform android --profile preview"
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "9.1.0",
