@@ -81,6 +81,7 @@ The code now implements the model above. What changed, beyond the renames:
   Streak, and no current Streak — that would read 0 forever.
 - The Daily Reminder still needs its one-time ask during the first Habit's
   creation. **That is the one part of the model the code does not yet do.**
+  (This was not correct. The Reminder had no interface at all — see 2026-09-15.)
 
 The suites moved with it: `rules.test.ts` is organised around the three rules as
 they now stand, `grace.spec.ts` became `today.spec.ts`, and `tick.spec.ts`
@@ -109,3 +110,77 @@ where the Frame runs past today, so it failed every Saturday.
 - The app keeps the Day Records that are older than one year. The storage is
   small, and an Export then contains the full history. But no function reads
   them.
+
+## 2026-09-15 — the Play Store, and the Reminder gets an interface
+
+### The Android build
+
+The build config still aimed at the sideloaded APK of ADR 0007, and Play is a
+different target. `eas.json` now asks for an App Bundle, which Play has required
+of every new app since August 2021. Its `autoIncrement` moved into `android`,
+where the schema accepts the string form — at the profile level the file did not
+validate, so the first build would have stopped there whatever else was correct.
+The EAS project is made and its id is in `app.config.ts`, which has to be written
+by hand: `eas init` cannot write back to a TypeScript config.
+
+`blockedPermissions` now drops `SYSTEM_ALERT_WINDOW`. React Native declares
+"draw over other apps" in its own manifest for the dev menu, the merger carried
+it into the release build, and Play treats it as a sensitive permission. Nothing
+in this app asks for it.
+
+Thirteen packages moved to the versions SDK 57 expects. That also cleared the
+duplicate `expo-constants` and `expo-file-system` that autolinking could have
+resolved to a different native version than the JS.
+
+### The Reminder had no interface
+
+The rules were written and tested, the scheduling was written, and nothing
+imported either. No Screen mounted the hook, so `expo-notifications` never
+entered the bundle — the app would have shipped asking for the notification
+permission for a feature the user could not reach. The 2026-08-22 entry above
+said only the one-time ask was missing. That was wrong, and wrong in the
+direction that hides the gap.
+
+What the interface is now:
+
+- `ReminderRow` — the switch and the time it is set to. `time: null` is off, so
+  there is no flag in the interface that can disagree with one in the settings.
+  The time opens Android's own clock dialog
+  (`@react-native-community/datetimepicker`).
+- Settings holds the Daily Reminder, under its own heading rather than under
+  data: a Reminder belongs to the device and is not in an Export.
+- A Habit's Screen holds that Habit's Reminder, inside the block that is hidden
+  while the Habit is, with the other two opt-ins. ADR 0008 cancels a Hidden
+  Habit's Reminder, so a switch there would sit on and do nothing.
+- Creating the first Habit asks the one question ADR 0008 allows. Both answers
+  record that it was asked; only one sets a time. A user who agrees and is then
+  refused by the OS is told, instead of being returned to Home believing a
+  Reminder is set.
+
+`ReminderSettings` gained `asked`, which says the question was put and never
+what the answer was, and the package gained `DEFAULT_TIME` — 20:00, evening and
+not late, because by ADR 0002 a prompt has to arrive while there is still Day
+left to Log in.
+
+`useReminders` became a provider. It was a hook holding its own state, so a
+second mount would have been a second copy of the settings, each reconciling the
+device's pending notifications against its own plan and cancelling what the
+other had just scheduled. It sits above the Stack rather than on the Screens
+that set a Reminder, because what silences one is a Log, and Logs happen on
+Home.
+
+176 domain tests, 176 web unit tests. The five new ones cover the ask and the
+default time.
+
+### Carried forward
+
+- Nothing here ran on a device. The bundle is verified to contain the Reminder
+  and the app config resolves, but no native build of this app has ever been
+  made. Skia, Reanimated, the React Compiler and the new architecture have not
+  been compiled together.
+- Play wants a privacy policy URL of every listing. ADR 0004 says the app has
+  none, which was true of a sideloaded APK and is not an option here. The ADR
+  needs an amendment either way.
+- The listing has no screenshots and no copy. `store/android/` holds the icon
+  and the feature graphic only, and the `pnpm icons` and `pnpm store-assets`
+  scripts the README documents do not exist in any package.json.

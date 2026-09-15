@@ -101,6 +101,11 @@ const config: ExpoConfig = {
 
   plugins: [
     "expo-router",
+    // Android's own clock dialog, for the time a Reminder is set to. The OS
+    // control rather than one drawn here: it already knows whether this user
+    // reads 20:00 or 8:00 PM, and it is the one dialog in the app a screen
+    // reader user will have met before.
+    "@react-native-community/datetimepicker",
     [
       // The accent Android tints a Reminder's small icon with. The full-shade
       // ramp level, so a Reminder is the same green as a complete Day.

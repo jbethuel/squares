@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { addDays, toKey, type DateKey } from "./date";
 import { addHabit, setHidden, setSharedName, toggleLog } from "./mutations";
 import {
+  DEFAULT_TIME,
   HORIZON_DAYS,
   PENDING_LIMIT,
+  markAsked,
   noReminders,
   outstandingOn,
   parseReminderSettings,
@@ -275,7 +277,7 @@ describe("a Reminder belongs to the device, not the record", () => {
   });
 
   it("survives a round trip through the device store", () => {
-    let settings = daily();
+    let settings = markAsked(daily());
     settings = setHabitReminder(settings, "h1", { hour: 7, minute: 5 });
     expect(parseReminderSettings(JSON.parse(serialiseReminders(settings)))).toEqual(settings);
   });
@@ -285,6 +287,37 @@ describe("a Reminder belongs to the device, not the record", () => {
     expect(parseReminderSettings("nonsense")).toEqual(noReminders());
     expect(parseReminderSettings({ daily: { hour: 99, minute: 0 } }).daily).toBeNull();
     expect(parseReminderSettings({ habits: { h1: { hour: -1, minute: 0 } } }).habits).toEqual({});
+  });
+});
+
+describe("the one time the app asks", () => {
+  it("has not asked a fresh device", () => {
+    expect(noReminders().asked).toBe(false);
+  });
+
+  it("records the question, not the answer — a no is still asked", () => {
+    const refused = markAsked(noReminders());
+    expect(refused.asked).toBe(true);
+    // ADR 0008 keeps these apart: the app asked, and the user said no.
+    expect(refused.daily).toBeNull();
+    expect(planReminders(account(["yoga"]), refused, MORNING)).toEqual([]);
+  });
+
+  it("does not ask twice", () => {
+    const asked = markAsked(noReminders());
+    expect(markAsked(asked)).toBe(asked);
+  });
+
+  it("treats a blob with no flag in it as not yet asked", () => {
+    expect(parseReminderSettings({ daily: null }).asked).toBe(false);
+    expect(parseReminderSettings({ asked: "yes" }).asked).toBe(false);
+    expect(parseReminderSettings({ asked: true }).asked).toBe(true);
+  });
+
+  it("starts the Daily Reminder in the evening, with Day left to Log in", () => {
+    expect(DEFAULT_TIME.hour).toBeLessThan(23);
+    const plan = planReminders(account(["yoga"]), daily(DEFAULT_TIME), MORNING);
+    expect(plan[0]!.date).toBe(TODAY);
   });
 });
 

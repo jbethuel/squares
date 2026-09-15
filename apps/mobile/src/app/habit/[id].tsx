@@ -4,6 +4,7 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Heatmap } from "@/components/Heatmap";
 import { LensPicker } from "@/components/LensPicker";
+import { ReminderRow } from "@/components/ReminderRow";
 import { ToggleRow } from "@/components/Toggle";
 import { Divider, Label, Screen } from "@/components/ui";
 import { weekdayOf } from "@squares/domain/date";
@@ -28,6 +29,7 @@ import {
 } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
 import { MS, settle } from "@/platform/motion";
+import { useReminders } from "@/platform/useReminders";
 import { FS, MONO, useTheme } from "@/platform/theme";
 
 export default function Detail() {
@@ -38,6 +40,7 @@ export default function Detail() {
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
   const [draft, setDraft] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
+  const reminders = useReminders();
   const habit = data.habits.find((h) => h.id === id);
 
   // The draft is dropped whenever the stored name changes under it, so the
@@ -181,6 +184,25 @@ export default function Detail() {
             onToggle={() =>
               update((current) => setSharedName(current, habit.id, !habit.sharedName))
             }
+          />
+          {/*
+            Inside the not-Hidden block with the other two, and for the same
+            reason: ADR 0008 cancels a Hidden Habit's Reminder, because it would
+            ask for a Log the user is not allowed to make. The time is kept, and
+            comes back with the Habit.
+
+            The hint is the lock-screen rule, stated on the Screen that holds the
+            switch which decides it — the Named Habit toggle is directly above.
+          */}
+          <ReminderRow
+            label="remind me"
+            hint={
+              habit.sharedName
+                ? "names this habit on your lock screen"
+                : "says '1 habit left', not the name"
+            }
+            time={reminders.forHabit(habit.id)}
+            onSet={(time) => reminders.setForHabit(habit.id, time)}
           />
         </Animated.View>
       )}
