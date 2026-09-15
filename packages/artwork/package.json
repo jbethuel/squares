@@ -1,0 +1,25 @@
+{
+  "name": "@squares/artwork",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./png": "./src/png.ts",
+    "./canvas": "./src/canvas.ts",
+    "./artwork": "./src/artwork.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "icons": "node --experimental-strip-types scripts/icons.mts",
+    "store-assets": "node --experimental-strip-types scripts/store-assets.mts"
+  },
+  "dependencies": {
+    "@squares/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.5"
+  }
+}

@@ -36,10 +36,36 @@ export interface ReminderSettings {
   daily: TimeOfDay | null;
   /** Reminded Habits, by Habit id, each at a time of its own. Unreminded by default. */
   habits: Record<string, TimeOfDay>;
+  /**
+   * Whether the user has been asked the one time ADR 0008 allows.
+   *
+   * Asked is not on: the ADR separates them deliberately, so this says only
+   * that the question has been put, never what the answer was. A user who said
+   * no is not asked again, and `daily` alone is what says whether a Reminder
+   * happens.
+   */
+  asked: boolean;
 }
 
 export function noReminders(): ReminderSettings {
-  return { version: 1, daily: null, habits: {} };
+  return { version: 1, daily: null, habits: {}, asked: false };
+}
+
+/**
+ * The time a Daily Reminder starts at when the user turns it on.
+ *
+ * Evening, and not late: by ADR 0002 a missed Day cannot be recovered, so the
+ * prompt has to arrive while there is still Day left to Log in. A constant
+ * rather than a number in the app, for the same reason TITLE is one — it is a
+ * decision about the feature, not about a Screen.
+ */
+export const DEFAULT_TIME: TimeOfDay = { hour: 20, minute: 0 };
+
+/**
+ * Record that the one-time ask has happened. See `asked`.
+ */
+export function markAsked(settings: ReminderSettings): ReminderSettings {
+  return settings.asked ? settings : { ...settings, asked: true };
 }
 
 /**
@@ -275,7 +301,7 @@ export function parseReminderSettings(value: unknown): ReminderSettings {
       if (id && time) habits[id] = time;
     }
   }
-  return { version: 1, daily: parseTime(raw.daily), habits };
+  return { version: 1, daily: parseTime(raw.daily), habits, asked: raw.asked === true };
 }
 
 export function serialiseReminders(settings: ReminderSettings): string {

@@ -1,10 +1,38 @@
 {
   "build": {
-    "production": {
+    // Not a smaller production build — a different artifact, for the one
+    // question production cannot answer before it is on Play: does the app run.
+    //
+    // An APK because Android installs APKs and nothing installs an App Bundle;
+    // "internal" so EAS hands back a link the phone can open, instead of a file
+    // that needs a cable, a JDK and bundletool to become installable.
+    //
+    // No autoIncrement here. The versionCode is the number Play orders releases
+    // by, and a build made to be sideloaded once should not spend one.
+    "preview": {
       "android": {
         "buildType": "apk"
       },
-      "autoIncrement": "versionCode"
+      "distribution": "internal"
+    },
+
+    "production": {
+      "android": {
+        // An App Bundle, not the APK ADR 0007 named. That APK was for the
+        // sideload it planned instead; Play has required a bundle of every new
+        // app since August 2021 and cuts the per-device APK itself. Stated
+        // rather than left to the default, so the reason has somewhere to live.
+        "buildType": "app-bundle",
+
+        // `versionCode` is the integer Android compares, and a dynamic config
+        // cannot be written back to — so EAS keeps it, not app.config.ts.
+        //
+        // Inside `android`, not beside it: the profile-level field takes a
+        // boolean and nothing else, and the string form is per-platform. Placed
+        // one level up it fails schema validation, which reads as a broken
+        // eas.json rather than a misplaced key.
+        "autoIncrement": "versionCode"
+      }
     }
   },
   "cli": {

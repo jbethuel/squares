@@ -14,7 +14,9 @@ import {
   SubTitle,
   Chip,
 } from "@/components/ui";
+import { ReminderRow } from "@/components/ReminderRow";
 import { exportRecord, importRecord } from "@/platform/handoff";
+import { useReminders } from "@/platform/useReminders";
 import { setTheme } from "@squares/domain/mutations";
 import { hiddenHabits } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
@@ -41,6 +43,7 @@ export default function Settings() {
   const t = useTheme();
   const router = useRouter();
   const { data, today, update, replace } = useStore();
+  const reminders = useReminders();
   const [pending, setPending] = useState<AppData | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -155,6 +158,26 @@ export default function Settings() {
         No install block. That was the web asking to be put on the home screen,
         which is what installing this app already did.
       */}
+
+      <Rule />
+
+      {/*
+        ADR 0008: scheduled on this device and raised by it. Nothing about a
+        Reminder touches the network, and nothing about it is in an Export —
+        which is why it is under its own heading here and not under "data".
+      */}
+      <SubTitle style={{ marginBottom: 9 }}>reminder · this device only</SubTitle>
+      <ReminderRow
+        label="daily reminder"
+        hint="one a day, and only if a habit is still open"
+        time={reminders.daily}
+        onSet={reminders.setDaily}
+      />
+      {/* The rule the lock screen follows, said where it can still be acted on:
+          the switch that changes it is on the Habit's own Screen. */}
+      <NoteFaint style={{ marginTop: 10 }}>
+        a reminder never names a habit unless that habit is named on its share card.
+      </NoteFaint>
 
       <Rule />
 

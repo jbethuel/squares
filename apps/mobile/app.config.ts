@@ -60,6 +60,14 @@ const config: ExpoConfig = {
      */
     allowBackup: false,
 
+    /**
+     * "Draw over other apps". React Native declares it in its own manifest for
+     * the dev menu's overlay, and the manifest merger carries it into the
+     * release build, where nothing asks for it. Play treats it as a sensitive
+     * permission and wants to know what it is for; the honest answer is nothing.
+     */
+    blockedPermissions: ["android.permission.SYSTEM_ALERT_WINDOW"],
+
     adaptiveIcon: {
       backgroundColor: hex(CARD.bg),
       foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -79,8 +87,25 @@ const config: ExpoConfig = {
   // iOS is not coming.
   ios: { bundleIdentifier: "dev.jbethuel.squares" },
 
+  /**
+   * The EAS project, `@jbethuel/squares`. Written here by hand because it had
+   * to be: `eas init` writes the id into app.json on its own, but it cannot
+   * write back to a TypeScript config — it prints the id and throws.
+   *
+   * It is not decoration. `eas.json` sets `appVersionSource: "remote"`, which
+   * means EAS holds the `versionCode` this app is identified by on the server,
+   * and this id is what says which project's counter that is. Remove it and the
+   * build stops.
+   */
+  extra: { eas: { projectId: "5e8811cc-e4cf-42f9-a7bf-00ca9d439cc7" } },
+
   plugins: [
     "expo-router",
+    // Android's own clock dialog, for the time a Reminder is set to. The OS
+    // control rather than one drawn here: it already knows whether this user
+    // reads 20:00 or 8:00 PM, and it is the one dialog in the app a screen
+    // reader user will have met before.
+    "@react-native-community/datetimepicker",
     [
       // The accent Android tints a Reminder's small icon with. The full-shade
       // ramp level, so a Reminder is the same green as a complete Day.

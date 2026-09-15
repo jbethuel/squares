@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StoreProvider } from "@squares/domain/store";
 import { deviceStorage } from "@/platform/storage";
+import { RemindersProvider } from "@/platform/useReminders";
 import { MONO, useTheme } from "@/platform/theme";
 
 /**
@@ -21,7 +22,15 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StoreProvider storage={deviceStorage}>
-          <Shell />
+          {/*
+            Inside the store, because a Reminder is planned against the record —
+            and above the Stack rather than on the Screens that set one, because
+            what silences a Reminder is a Log, and Logs happen on Home. See
+            RemindersProvider.
+          */}
+          <RemindersProvider>
+            <Shell />
+          </RemindersProvider>
         </StoreProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

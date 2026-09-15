@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 import { useStore } from "@squares/domain/store";
 import {
+  markAsked,
   reconcileReminders,
   reminderFor,
   setDailyReminder,
@@ -29,9 +30,41 @@ export interface Reminders {
    */
   setDaily: (time: TimeOfDay | null) => Promise<boolean>;
   setForHabit: (habitId: string, time: TimeOfDay | null) => Promise<boolean>;
+  /**
+   * False until the one-time ask of ADR 0008 has been put to this user. It says
+   * only that the question was asked — `daily` is what says what they answered.
+   */
+  asked: boolean;
+  /** Record that the question has been put, whichever way it was answered. */
+  recordAsked: () => void;
+}
+
+const RemindersContext = createContext<Reminders | null>(null);
+
+/**
+ * One instance, above every Screen — the same shape `StoreProvider` has, and
+ * for a stronger reason than sharing state.
+ *
+ * The settings are held in this hook rather than in the record, so a second
+ * mount would be a second copy: settings would disagree between Screens, and
+ * both copies would reconcile the device's pending notifications against their
+ * own idea of the plan, each cancelling what the other had just scheduled.
+ *
+ * It also has to sit above Home. Reconciling is driven by the effects below,
+ * which only run while this is mounted, and Home is where Logs happen — the
+ * event that silences a Reminder the user has already earned their way out of.
+ */
+export function RemindersProvider({ children }: { children: ReactNode }) {
+  return <RemindersContext.Provider value={useRemindersState()}>{children}</RemindersContext.Provider>;
 }
 
 export function useReminders(): Reminders {
+  const reminders = useContext(RemindersContext);
+  if (!reminders) throw new Error("useReminders must be used inside a RemindersProvider");
+  return reminders;
+}
+
+function useRemindersState(): Reminders {
   const { data } = useStore();
   // Read straight through, not in an effect. The device store is synchronous —
   // which is why it was chosen — and loading a Day late would mean the first
@@ -90,5 +123,23 @@ export function useReminders(): Reminders {
 
   const forHabit = useCallback((habitId: string) => reminderFor(settings, habitId), [settings]);
 
-  return { daily: settings.daily, forHabit, setDaily, setForHabit };
+  // Written through on the spot rather than left to the effect above. The ask
+  // happens as the Screen is leaving, and a flag that is only in state would be
+  // gone by the next launch — which would ask a second time.
+  const recordAsked = useCallback(() => {
+    setSettings((previous) => {
+      const next = markAsked(previous);
+      if (next !== previous) saveReminders(next);
+      return next;
+    });
+  }, []);
+
+  return {
+    daily: settings.daily,
+    forHabit,
+    setDaily,
+    setForHabit,
+    asked: settings.asked,
+    recordAsked,
+  };
 }
