@@ -18,8 +18,10 @@ allowBuilds:
   # anyone who reaches for `wrangler dev`.
   workerd: true
 
-minimumReleaseAgeExclude:
-  - expo-constants@57.0.13
-  - expo-notifications@57.0.13
-  - expo-file-system@57.0.5
-  - expo-sharing@57.0.14
+# Each entry here waived pnpm's release-age hold for one SDK 57 patch that was
+# still too new to install. The app has since moved past every one of them — it
+# is on expo-constants 57.0.18, expo-notifications 57.0.18, expo-file-system
+# 57.0.7 and expo-sharing 57.0.19 — so the waivers named versions that are no
+# longer resolved and were holding nothing open. Name a version here again only
+# when the hold actually blocks an install, and delete it once it has aged out;
+# a stale waiver reads like a live constraint.
