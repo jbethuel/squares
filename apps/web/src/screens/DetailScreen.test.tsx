@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DetailScreen } from "./DetailScreen";
 import { setStreaks } from "@squares/domain/mutations";
 import { account, idOf, onDevice, renderWithStore, storedData } from "@/test/harness";
@@ -8,7 +8,9 @@ import type { AppData } from "@squares/domain/types";
 
 function open(data: AppData, name: string) {
   onDevice(data);
-  renderWithStore(<DetailScreen habitId={idOf(data, name)} />);
+  const onShare = vi.fn();
+  renderWithStore(<DetailScreen habitId={idOf(data, name)} onShare={onShare} />);
+  return { onShare };
 }
 
 /** The Habit's name is its heading and the field that changes it. */
@@ -213,13 +215,31 @@ describe("hiding is a switch that can be moved back", () => {
     expect(archiveSwitch()).toHaveAttribute("aria-checked", "false");
   });
 
-  it("hides the Streak and Share Card switches while the Habit is Hidden", () => {
+  it("hides the Streak switch and the Habit Card link while the Habit is Hidden", () => {
     open(account({ habits: ["workout"], hidden: ["workout"] }), "workout");
 
     // A switch that sits on and provably does nothing is worse than no switch.
+    // ADR 0011: the Habit Card link goes with it — Hide means unreachable by
+    // any Share Card, and a link that leads nowhere useful is the same fault.
     expect(screen.queryByRole("switch", { name: /count a streak/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("switch", { name: /name on share card/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "make a share card ›" })).not.toBeInTheDocument();
     expect(archiveSwitch()).toBeInTheDocument();
+  });
+
+  it("has no Share Card switch at all — ADR 0010 gives the card no per-Habit control", () => {
+    open(account({ habits: ["workout"] }), "workout");
+    expect(screen.queryByRole("switch", { name: /name on/ })).not.toBeInTheDocument();
+  });
+
+  it("offers its own Habit Card regardless of the Streak toggle", async () => {
+    const user = userEvent.setup();
+    const data = account({ habits: ["workout"] });
+    const { onShare } = open(data, "workout");
+
+    // Position only (ADR 0011) — available whether or not "count a streak" is
+    // on, and gone only when the Habit is Hidden.
+    await user.click(screen.getByRole("button", { name: "make a share card ›" }));
+    expect(onShare).toHaveBeenCalledWith(idOf(data, "workout"));
   });
 
   it("shows a Hidden Habit no current Streak, even when it is a Streak Habit", () => {
@@ -250,7 +270,7 @@ describe("hiding is a switch that can be moved back", () => {
 describe("leaving the screen", () => {
   it("renders nothing for a Habit that is not there", () => {
     onDevice(account({ habits: ["workout"] }));
-    const { container } = renderWithStore(<DetailScreen habitId="ghost" />);
+    const { container } = renderWithStore(<DetailScreen habitId="ghost" onShare={vi.fn()} />);
     expect(container).toBeEmptyDOMElement();
   });
 });

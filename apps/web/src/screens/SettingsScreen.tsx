@@ -86,11 +86,8 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       <h2 className="title-sub" style={{ margin: "0 0 9px" }}>
         share card
       </h2>
-      {/* The line the opt-ins used to carry, now that they are not next to the
-          card to say it themselves. */}
-      <p className="note" style={{ margin: "0 0 10px" }}>
-        anonymous unless you name a habit on its own screen.
-      </p>
+      {/* ADR 0010: naming stopped being an opt-in, so there is nothing left to
+          disclose here — the card itself says who it names. */}
       <div className="stack" style={{ gap: 7 }}>
         <button type="button" className="btn-list" onClick={onShare}>
           make a share card ›

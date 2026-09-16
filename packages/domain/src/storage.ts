@@ -70,7 +70,11 @@ function parseHabit(value: unknown): Habit | null {
     spans,
     // `chained` is what v1 and v2 called it.
     streaks: raw.streaks === true || raw.chained === true,
-    sharedName: raw.sharedName === true,
+    // Deliberately not `raw.sharedName` — ADR 0010 narrowed this flag to the
+    // Reminder alone, and a file written under the old, broader meaning must
+    // not silently opt a Habit into naming its Reminder. Every import starts
+    // this at false; the user re-opts in per Habit if they still want it.
+    namedHabit: raw.namedHabit === true,
   };
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, toKey, type DateKey } from "./date";
-import { addHabit, setHidden, setSharedName, toggleLog } from "./mutations";
+import { addHabit, setHidden, setNamedHabit, toggleLog } from "./mutations";
 import {
   DEFAULT_TIME,
   HORIZON_DAYS,
@@ -106,7 +106,7 @@ describe("the Daily Reminder", () => {
 
   it("never names a Habit, however the Habit is opted in", () => {
     let data = account(["antidepressants"]);
-    data = setSharedName(data, idOf(data, "antidepressants"), true);
+    data = setNamedHabit(data, idOf(data, "antidepressants"), true);
     for (const reminder of planReminders(data, daily(), MORNING)) {
       expect(`${reminder.title} ${reminder.body}`).not.toContain("antidepressants");
     }
@@ -176,7 +176,7 @@ describe("a name on a lock screen", () => {
   it("names the Habit once it is a Named Habit", () => {
     let data = account(["yoga"]);
     const settings = setHabitReminder(noReminders(), idOf(data, "yoga"), EVENING);
-    data = setSharedName(data, idOf(data, "yoga"), true);
+    data = setNamedHabit(data, idOf(data, "yoga"), true);
     expect(planReminders(data, settings, MORNING)[0]!.body).toBe("yoga");
   });
 });

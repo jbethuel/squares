@@ -122,12 +122,23 @@ export function drawShareCard(
   // this week — and the card is handed to someone with no other context.
   ctx.fillText(`logs · ${lensNoun(model.lens)}`, u(PAD), u(captionY));
 
+  let lineY = captionY + CAPTION_SIZE + 6;
+
   if (model.names.length > 0) {
     // One lowercase line, never separate rows — a per-Habit breakdown is a
     // leak waiting to happen.
     ctx.fillStyle = css(CARD.names);
     ctx.font = `400 ${u(NAMES_SIZE)}px ${FONT}`;
-    ctx.fillText(model.names.join(" · "), u(PAD), u(captionY + CAPTION_SIZE + 6));
+    ctx.fillText(model.names.join(" · "), u(PAD), u(lineY));
+    lineY += NAMES_SIZE + 6;
+  }
+
+  if (model.streak !== null) {
+    // ADR 0011: only a Habit Card ever sets this, and only for a Streak
+    // Habit — the same gate that Habit's own Screen shows its Streak behind.
+    ctx.fillStyle = css(CARD.names);
+    ctx.font = `400 ${u(NAMES_SIZE)}px ${FONT}`;
+    ctx.fillText(`${model.streak}-day streak`, u(PAD), u(lineY));
   }
 
   ctx.textAlign = "right";

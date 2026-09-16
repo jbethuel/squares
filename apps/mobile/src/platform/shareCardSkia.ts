@@ -185,6 +185,8 @@ export function drawShareCard(canvas: SkCanvas, model: ShareCardModel, scale: nu
     fill(skColour(CARD.muted)),
   );
 
+  let lineY = captionY + CAPTION_SIZE + 6;
+
   if (model.names.length > 0) {
     // One lowercase line, never separate rows — a per-Habit breakdown is a
     // leak waiting to happen.
@@ -192,7 +194,21 @@ export function drawShareCard(canvas: SkCanvas, model: ShareCardModel, scale: nu
       canvas,
       model.names.join(" · "),
       u(PAD),
-      u(captionY + CAPTION_SIZE + 6),
+      u(lineY),
+      Skia.Font(regular, u(NAMES_SIZE)),
+      fill(skColour(CARD.names)),
+    );
+    lineY += NAMES_SIZE + 6;
+  }
+
+  if (model.streak !== null) {
+    // ADR 0011: only a Habit Card ever sets this, and only for a Streak
+    // Habit — the same gate that Habit's own Screen shows its Streak behind.
+    text(
+      canvas,
+      `${model.streak}-day streak`,
+      u(PAD),
+      u(lineY),
       Skia.Font(regular, u(NAMES_SIZE)),
       fill(skColour(CARD.names)),
     );

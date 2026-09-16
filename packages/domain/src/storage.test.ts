@@ -53,10 +53,18 @@ describe("a v1 file is migrated, never refused", () => {
   });
 
   it("keeps everything else the file said", () => {
-    const parsed = v1([legacy({ chained: true, sharedName: true })]);
+    const parsed = v1([legacy({ chained: true })]);
     expect(parsed?.version).toBe(3);
     expect(parsed?.theme).toBe("dark");
-    expect(parsed?.habits[0]).toMatchObject({ streaks: true, sharedName: true, name: "workout" });
+    expect(parsed?.habits[0]).toMatchObject({ streaks: true, name: "workout" });
+  });
+
+  it("never carries an old sharedName flag into namedHabit", () => {
+    // ADR 0010: Named Habit narrowed to the Reminder alone. A file written
+    // under the old, broader meaning must not silently opt a Habit into
+    // naming its Reminder.
+    const parsed = v1([legacy({ sharedName: true })]);
+    expect(parsed?.habits[0]?.namedHabit).toBe(false);
   });
 
   it("still refuses a version it has never written", () => {

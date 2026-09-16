@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Heatmap } from "@/components/Heatmap";
 import { LensPicker } from "@/components/LensPicker";
 import { ReminderRow } from "@/components/ReminderRow";
 import { ToggleRow } from "@/components/Toggle";
-import { Divider, Label, Screen } from "@/components/ui";
+import { Divider, Label, ListButton, Screen } from "@/components/ui";
 import { weekdayOf } from "@squares/domain/date";
 import {
   DEFAULT_LENS,
@@ -17,7 +17,7 @@ import {
   lensScrolls,
   type Lens,
 } from "@squares/domain/lens";
-import { renameHabit, setHidden, setStreaks, setSharedName } from "@squares/domain/mutations";
+import { renameHabit, setHidden, setStreaks, setNamedHabit } from "@squares/domain/mutations";
 import {
   streakOf,
   dateAt,
@@ -34,6 +34,7 @@ import { FS, MONO, useTheme } from "@/platform/theme";
 
 export default function Detail() {
   const t = useTheme();
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, today, update } = useStore();
   // Declared above the missing-Habit guard: a hook may not sit behind a return.
@@ -159,10 +160,13 @@ export default function Detail() {
       />
 
       {/*
-        While a Habit is Hidden neither the Card nor the Streak applies to it,
-        so the controls for them are not on the Screen — a switch that sits on
-        and provably does nothing is worse than no switch. Both come back
-        holding their remembered state when the Habit does.
+        While a Habit is Hidden neither the Streak nor its Reminder applies to
+        it — ADR 0008 cancels a Hidden Habit's Reminder outright — so the
+        controls for them are not on the Screen — a switch that sits on and
+        provably does nothing is worse than no switch. Both come back holding
+        their remembered state when the Habit does. The Habit Card's own row
+        sits inside this same block for the same reason: ADR 0011 gives a
+        Hidden Habit no Habit Card at all, not even a link to try to make one.
       */}
       {hidden ? null : (
         <Animated.View
@@ -176,13 +180,21 @@ export default function Detail() {
             on={habit.streaks}
             onToggle={() => update((current) => setStreaks(current, habit.id, !habit.streaks))}
           />
-          {/* The label says what it puts where. "share" alone would not say
-              that the thing being shared is the name. */}
+          {/* Positioned here rather than with "hide" at the bottom: the switch
+              directly above decides whether the card this opens can carry a
+              Streak at all. ADR 0011. */}
+          <ListButton
+            label="make a share card ›"
+            onPress={() => router.push(`/habit/${habit.id}/share`)}
+          />
+          {/* The label says where it applies. "name" alone would not say this
+              is the Reminder's name — the Share Card has no toggle of its
+              own; ADR 0010 has it always name every visible Habit. */}
           <ToggleRow
-            label="name on share card"
-            on={habit.sharedName}
+            label="name on reminder"
+            on={habit.namedHabit}
             onToggle={() =>
-              update((current) => setSharedName(current, habit.id, !habit.sharedName))
+              update((current) => setNamedHabit(current, habit.id, !habit.namedHabit))
             }
           />
           {/*
@@ -197,7 +209,7 @@ export default function Detail() {
           <ReminderRow
             label="remind me"
             hint={
-              habit.sharedName
+              habit.namedHabit
                 ? "names this habit on your lock screen"
                 : "says '1 habit left', not the name"
             }

@@ -260,22 +260,6 @@ select {
   padding: 4px 0;
   cursor: pointer;
 }
-/*
-  A Habit's name inside a sentence, and the way to the switch that takes it off
-  the card. It inherits the sentence's size so the line reads as prose rather
-  than as a row of buttons, and it is underlined because the card paints these
-  same names in this same colour — colour alone would read as emphasis.
-*/
-.name-link {
-  border: none;
-  background: none;
-  padding: 0;
-  font: inherit;
-  color: var(--streak-fg);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
 /* 44px tall, not 25px. It stays visually quiet — the size is in the hit box. */
 .btn-chip {
   display: inline-flex;

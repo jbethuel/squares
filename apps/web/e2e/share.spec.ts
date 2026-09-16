@@ -2,9 +2,9 @@ import { weekdayOf } from "@squares/domain/date";
 import { expect, optIn, test, today } from "./fixtures";
 
 /**
- * A card that leaks a name is the one unforgivable bug, so these drive the
- * real canvas: the PNG is decoded and compared against a card drawn with no
- * names at all, rather than trusting the sentence above the button.
+ * ADR 0010: naming is unconditional, so these drive the real canvas — the PNG
+ * is decoded and compared against a card drawn with a different set of
+ * Habits, rather than trusting the sentence above the button.
  */
 async function cardPixels(page: import("@playwright/test").Page): Promise<string> {
   const canvas = page.locator("canvas.share-preview");
@@ -12,74 +12,46 @@ async function cardPixels(page: import("@playwright/test").Page): Promise<string
   return canvas.evaluate((el) => (el as HTMLCanvasElement).toDataURL("image/png"));
 }
 
-test.describe("the Share Card is anonymous by default", () => {
-  test("says it carries no names, and draws none", async ({ app }) => {
-    const page = await app({ age: 60, habits: ["took my meds", "no drinking"], logs: { "took my meds": [0, 1] } });
-
-    await page.getByRole("button", { name: "settings" }).click();
-    await page.getByRole("button", { name: "make a share card ›" }).click();
-
-    await expect(page.getByText(/no habit names on this card/)).toBeVisible();
-    await expect(page.getByRole("img", { name: /no habit names/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /change what is named/ })).toHaveCount(0);
-  });
-
-  test("draws a name only once that Habit is opted in by hand", async ({ app }) => {
-    const page = await app({ age: 60, habits: ["workout", "no drinking"], logs: { workout: [0, 1] } });
-
-    await page.getByRole("button", { name: "settings" }).click();
-    await page.getByRole("button", { name: "make a share card ›" }).click();
-    const anonymous = await cardPixels(page);
-
-    // The opt-in lives on the Habit's own Screen now, so the route to it runs
-    // out through Home rather than sideways within settings.
-    await page.getByRole("button", { name: "‹ back" }).click();
-    await page.getByRole("button", { name: "‹ back" }).click();
-    await page.getByRole("button", { name: "Open workout" }).click();
-    await optIn(page, "name on share card").click();
-    await page.getByRole("button", { name: "‹ back" }).click();
-    await page.getByRole("button", { name: "settings" }).click();
-    await page.getByRole("button", { name: "make a share card ›" }).click();
-
-    await expect(page.getByText("workout")).toBeVisible();
-    await expect(page.getByText(/everything else stays anonymous/)).toBeVisible();
-    await expect(page.getByRole("img", { name: /naming workout/ })).toBeVisible();
-
-    // The drawing itself changed, not merely the sentence beside it.
-    expect(await cardPixels(page)).not.toBe(anonymous);
-  });
-
-  test("names only what was opted in, never the Habit beside it", async ({ app }) => {
+test.describe("the Share Card names every visible Habit", () => {
+  test("names every Habit, with nothing withheld", async ({ app }) => {
     const page = await app({
       age: 60,
-      habits: ["workout", "no drinking"],
-      sharedNames: ["workout"],
+      habits: ["took my meds", "no drinking"],
+      logs: { "took my meds": [0, 1] },
     });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    const label = await page.getByRole("img", { name: /Share card/ }).getAttribute("aria-label");
-    expect(label).toContain("naming workout");
-    expect(label).not.toContain("drinking");
-    await expect(page.getByText("workout", { exact: true })).toBeVisible();
+    await expect(page.getByText("this card names took my meds, no drinking.")).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /naming took my meds, no drinking/ }),
+    ).toBeVisible();
   });
 
-  test("withdrawing the opt-in takes the name straight back off", async ({ app }) => {
-    const page = await app({ age: 60, habits: ["took my meds"], sharedNames: ["took my meds"] });
+  test("drops a Habit's name, and its Squares, the moment it is Hidden", async ({ app }) => {
+    const page = await app({ age: 60, habits: ["workout", "no drinking"], logs: { workout: [0, 1] } });
 
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
-    await expect(page.getByRole("img", { name: /naming took my meds/ })).toBeVisible();
+    const both = await cardPixels(page);
 
-    // The name on the card is the way to the switch that removes it: one tap
-    // from the card that carries it to the control that withdraws it.
-    await page.getByRole("button", { name: "took my meds", exact: true }).click();
-    await optIn(page, "name on share card").click();
+    // Hide lives on the Habit's own Screen, so the route to it runs out
+    // through Home rather than sideways within settings.
     await page.getByRole("button", { name: "‹ back" }).click();
+    await page.getByRole("button", { name: "‹ back" }).click();
+    await page.getByRole("button", { name: "Open no drinking" }).click();
+    await optIn(page, "hide").click();
+    await page.getByRole("button", { name: "‹ back" }).click();
+    await page.getByRole("button", { name: "settings" }).click();
+    await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByRole("img", { name: /no habit names/ })).toBeVisible();
-    await expect(page.getByText(/no habit names on this card/)).toBeVisible();
+    await expect(page.getByText("this card names workout.")).toBeVisible();
+    await expect(page.getByRole("img", { name: /naming workout/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
+
+    // The drawing itself changed, not merely the sentence beside it.
+    expect(await cardPixels(page)).not.toBe(both);
   });
 
   test("saves a PNG whose filename carries no date", async ({ app }) => {
@@ -98,6 +70,43 @@ test.describe("the Share Card is anonymous by default", () => {
     const page = await app({ habits: ["workout"] });
     await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "settings" })).toBeVisible();
+  });
+});
+
+test.describe("the Habit Card names only its own Habit", () => {
+  test("is reached from the Habit's own Screen, and names only that Habit", async ({ app }) => {
+    const page = await app({
+      age: 60,
+      habits: ["workout", "no drinking"],
+      logs: { workout: [0, 1] },
+    });
+
+    await page.getByRole("button", { name: "Open workout" }).click();
+    await page.getByRole("button", { name: "make a share card ›" }).click();
+
+    await expect(page.getByRole("heading", { name: "share workout" })).toBeVisible();
+    await expect(page.getByText("this card names workout.")).toBeVisible();
+    await expect(page.getByRole("img", { name: /naming workout/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
+  });
+
+  test("offers no such link once the Habit is Hidden", async ({ app }) => {
+    const page = await app({ habits: ["workout"] });
+    await page.getByRole("button", { name: "Open workout" }).click();
+    await optIn(page, "hide").click();
+    await expect(page.getByRole("button", { name: "make a share card ›" })).toHaveCount(0);
+  });
+
+  test("shows the Streak once the Habit opts in, matching its own Screen", async ({ app }) => {
+    const page = await app({ age: 30, habits: ["workout"], logs: { workout: [0] } });
+
+    await page.getByRole("button", { name: "Open workout" }).click();
+    await optIn(page, "count a streak").click();
+    await page.getByRole("button", { name: "make a share card ›" }).click();
+
+    // The Streak is drawn onto the canvas itself and read back through the
+    // accessible label, the same way the names line already is.
+    await expect(page.getByRole("img", { name: /naming workout, a 1-day streak/ })).toBeVisible();
   });
 });
 

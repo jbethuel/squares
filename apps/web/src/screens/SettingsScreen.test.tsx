@@ -22,19 +22,16 @@ async function importFile(user: ReturnType<typeof userEvent.setup>, file: File) 
 }
 
 describe("settings holds nothing about one Habit", () => {
-  // A Habit's Streak and its Share Card name are set on that Habit's own Screen.
+  // A Habit's Streak and its Reminder name are set on that Habit's own Screen.
   // Two places to change one flag is how they drift.
   it("offers no per-Habit switches at all", () => {
     open(account({ habits: ["workout", "read"] }));
     expect(screen.queryAllByRole("switch")).toHaveLength(0);
   });
 
-  it("leads to the card, and says what the card promises", async () => {
+  it("leads to the Overview Card", async () => {
     const user = userEvent.setup();
     const props = open();
-    expect(
-      screen.getByText("anonymous unless you name a habit on its own screen."),
-    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "make a share card ›" }));
     expect(props.onShare).toHaveBeenCalled();
@@ -196,7 +193,7 @@ describe("import replaces the year on this device", () => {
       ),
     );
 
-    expect(storedData().habits[0]?.sharedName).toBe(false);
+    expect(storedData().habits[0]?.namedHabit).toBe(false);
     expect(storedData().habits[0]?.streaks).toBe(false);
   });
 });

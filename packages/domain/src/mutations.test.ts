@@ -4,7 +4,7 @@ import {
   addHabit,
   renameHabit,
   setHidden,
-  setSharedName,
+  setNamedHabit,
   setStreaks,
   setTheme,
   toggleLog,
@@ -36,10 +36,10 @@ describe("naming a Habit", () => {
     expect(addHabit(before, "", TODAY)).toBe(before);
   });
 
-  it("starts every Habit without a Streak and unnamed on the Share Card", () => {
+  it("starts every Habit without a Streak and unnamed on its Reminder", () => {
     const data = addHabit(emptyData(TODAY), "took my meds", TODAY);
     expect(data.habits[0]?.streaks).toBe(false);
-    expect(data.habits[0]?.sharedName).toBe(false);
+    expect(data.habits[0]?.namedHabit).toBe(false);
     expect(data.habits[0]?.spans).toEqual([{ from: TODAY, to: null }]);
   });
 
@@ -171,10 +171,10 @@ describe("preferences change nothing but the display", () => {
     expect(after.days).toEqual(before.days);
   });
 
-  it("keeps the year identical when a name is opted into the Share Card", () => {
+  it("keeps the year identical when a name is opted into the Reminder", () => {
     const before = account(10, ["workout"]);
-    const after = setSharedName(before, idOf(before, "workout"), true);
-    expect(after.habits[0]?.sharedName).toBe(true);
+    const after = setNamedHabit(before, idOf(before, "workout"), true);
+    expect(after.habits[0]?.namedHabit).toBe(true);
     expect(after.days).toEqual(before.days);
   });
 

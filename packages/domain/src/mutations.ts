@@ -15,7 +15,7 @@ export function addHabit(data: AppData, name: string, today: DateKey): AppData {
     name: trimmed,
     spans: [{ from: today, to: null }],
     streaks: false,
-    sharedName: false,
+    namedHabit: false,
   };
   return { ...data, habits: [...data.habits, habit] };
 }
@@ -68,8 +68,8 @@ export function setStreaks(data: AppData, id: string, streaks: boolean): AppData
   return patchHabit(data, id, { streaks });
 }
 
-export function setSharedName(data: AppData, id: string, sharedName: boolean): AppData {
-  return patchHabit(data, id, { sharedName });
+export function setNamedHabit(data: AppData, id: string, namedHabit: boolean): AppData {
+  return patchHabit(data, id, { namedHabit });
 }
 
 export function setTheme(data: AppData, theme: ThemePreference): AppData {

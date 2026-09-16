@@ -14,7 +14,7 @@ import {
   lensScrolls,
   type Lens,
 } from "@squares/domain/lens";
-import { renameHabit, setHidden, setStreaks, setSharedName } from "@squares/domain/mutations";
+import { renameHabit, setHidden, setStreaks } from "@squares/domain/mutations";
 import {
   streakOf,
   dateAt,
@@ -26,7 +26,13 @@ import {
 } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
 
-export function DetailScreen({ habitId }: { habitId: string }) {
+export function DetailScreen({
+  habitId,
+  onShare,
+}: {
+  habitId: string;
+  onShare: (habitId: string) => void;
+}) {
   const { data, today, update } = useStore();
   // Declared above the missing-Habit guard: a hook may not sit behind a return.
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
@@ -137,10 +143,17 @@ export function DetailScreen({ habitId }: { habitId: string }) {
       />
 
       {/*
-        While a Habit is Hidden neither the Card nor the Streak applies to it,
-        so the controls for them are not on the Screen — a switch that sits on
-        and provably does nothing is worse than no switch. Both come back
-        holding their remembered state when the Habit does.
+        While a Habit is Hidden its Streak does not apply, so the control for
+        it is not on the Screen — a switch that sits on and provably does
+        nothing is worse than no switch. It comes back holding its remembered
+        state when the Habit does.
+
+        No Reminder toggle here: ADR 0008 says the web has no Reminder and
+        cannot have one. The Habit Card below has no toggle either — ADR 0010
+        has it always name every visible Habit, with no control to withhold
+        one — but it does get a link: ADR 0011 gives that link to this Habit's
+        own Screen, positioned here because the switch above it decides
+        whether the card it opens can carry a Streak at all.
       */}
       {hidden ? null : (
         <div className="stack" style={{ gap: 7, marginTop: 22 }}>
@@ -149,13 +162,9 @@ export function DetailScreen({ habitId }: { habitId: string }) {
             on={habit.streaks}
             onToggle={() => update((current) => setStreaks(current, habitId, !habit.streaks))}
           />
-          {/* The label says what it puts where. "share" alone would not say
-              that the thing being shared is the name. */}
-          <ToggleRow
-            label="name on share card"
-            on={habit.sharedName}
-            onToggle={() => update((current) => setSharedName(current, habitId, !habit.sharedName))}
-          />
+          <button type="button" className="btn-list" onClick={() => onShare(habitId)}>
+            make a share card ›
+          </button>
         </div>
       )}
 

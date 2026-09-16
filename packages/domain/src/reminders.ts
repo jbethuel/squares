@@ -186,12 +186,12 @@ function dailyBody(count: number): string {
 
 /**
  * ADR 0008: a Reminder names its Habit only if that Habit is a Named Habit.
- * Otherwise it says what the anonymous Share Card says — a count and nothing
- * else. The default is unnamed, and a Reminder arrives unbidden in front of
- * whoever is in the room.
+ * Otherwise it says a count and nothing else. The default is unnamed, and a
+ * Reminder arrives unbidden in front of whoever is in the room — unlike the
+ * Share Card, which names every Habit unconditionally. See ADR 0010.
  */
 function habitBody(habit: Habit): string {
-  return habit.sharedName ? habit.name : "1 Habit left";
+  return habit.namedHabit ? habit.name : "1 Habit left";
 }
 
 function when(reminder: PlannedReminder): string {

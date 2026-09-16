@@ -360,7 +360,7 @@ describe("import", () => {
     expect(parsed?.days[TODAY]).toBeUndefined();
   });
 
-  it("defaults the opt-ins off, so an old file cannot leak a name", () => {
+  it("defaults the opt-ins off, so an old file cannot name a Reminder unasked", () => {
     const parsed = parseAppData({
       version: 1,
       installedOn: TODAY,
@@ -368,7 +368,7 @@ describe("import", () => {
       days: {},
       theme: "system",
     });
-    expect(parsed?.habits[0]?.sharedName).toBe(false);
+    expect(parsed?.habits[0]?.namedHabit).toBe(false);
     expect(parsed?.habits[0]?.streaks).toBe(false);
   });
 });

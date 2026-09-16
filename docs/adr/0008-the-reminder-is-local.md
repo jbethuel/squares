@@ -67,3 +67,8 @@ not a Named Habit, the Reminder says "1 Habit left" and opens the app.
 A Named Habit thus controls the name outside the app, and not only on the Share
 Card. Both places do the same thing. A user who permits the name in one place
 permits it in the other place.
+
+> **Amended by ADR 0010.** The Share Card side of this no longer holds: a
+> Share Card now names every Habit it draws from, unconditionally, and Named
+> Habit governs the Reminder alone. Everything above about *why* the Reminder
+> keeps its own opt-in is unchanged.

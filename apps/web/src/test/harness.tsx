@@ -59,7 +59,7 @@ export function account({
       name,
       spans: [{ from: installedOn, to: hidden.includes(name) ? TODAY : null }],
       streaks: false,
-      sharedName: false,
+      namedHabit: false,
     })),
   };
   for (const [name, offsets] of Object.entries(logs)) {

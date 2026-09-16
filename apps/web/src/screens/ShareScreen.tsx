@@ -1,74 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { handOff } from "@/platform/handoff";
+import { useMemo, useState } from "react";
 import { LensPicker } from "@/components/LensPicker";
 import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
-import { visibleHabits } from "@squares/domain/selectors";
-import { cardSize, shareCardModel } from "@squares/domain/shareCard";
-import { drawShareCard } from "@/platform/shareCardCanvas";
+import { shareCardModel } from "@squares/domain/shareCard";
+import { useCanvasCard } from "@/platform/useCanvasCard";
 import { useStore } from "@squares/domain/store";
 
-/** The PNG is drawn at 4x the card's design units: 1280px wide. */
-const EXPORT_SCALE = 4;
-
-export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) => void }) {
+export function ShareScreen() {
   const { data, today } = useStore();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [status, setStatus] = useState<string | null>(null);
 
   // The card's own Lens. It is picked here rather than inherited from Home,
   // which this Screen is not reached from — a card that quietly depended on
   // what another Screen was last showing would be a card you cannot predict.
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
   const model = useMemo(() => shareCardModel(data, today, lens), [data, today, lens]);
-  const size = cardSize(model, EXPORT_SCALE);
-  // The Habits behind the names on the card. Hidden Habits are never named,
-  // so every one of these still has a live Screen to open.
-  const named = visibleHabits(data, today).filter((habit) => habit.sharedName);
-
-  useEffect(() => {
-    let cancelled = false;
-    const render = async () => {
-      // Without waiting for the face, the canvas silently falls back to a
-      // system mono and the card ships with the wrong typography.
-      try {
-        await Promise.all([
-          document.fonts.load(`700 ${30 * EXPORT_SCALE}px "Hack"`),
-          document.fonts.load(`400 ${10 * EXPORT_SCALE}px "Hack"`),
-        ]);
-      } catch {
-        // Fall through to the fallback stack rather than not drawing at all.
-      }
-      if (cancelled) return;
-      const context = canvasRef.current?.getContext("2d");
-      if (context) drawShareCard(context, model, EXPORT_SCALE);
-    };
-    void render();
-    return () => {
-      cancelled = true;
-    };
-  }, [model]);
-
-  const toBlob = useCallback(
-    () =>
-      new Promise<Blob | null>((resolve) =>
-        canvasRef.current ? canvasRef.current.toBlob(resolve, "image/png") : resolve(null),
-      ),
-    [],
-  );
-
-  const save = async () => {
-    const blob = await toBlob();
-    if (!blob) return;
-    // No date in the filename either — the card carries no date, and neither
-    // should the file it is saved as.
-    const file = new File([blob], "squares.png", { type: "image/png" });
-    // Where the device offers a sheet this is that sheet, driven by the user.
-    // The app never posts anything itself, and it does not claim the card was
-    // saved when the sheet was dismissed.
-    setStatus((await handOff(file)) ? "saved" : null);
-  };
+  const { canvasRef, size, status, save } = useCanvasCard(model);
 
   return (
     <>
@@ -86,50 +33,25 @@ export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) =>
         height={size.height}
         className="share-preview"
         aria-label={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}${
-          model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ", no habit names"
+          model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ""
         }`}
         role="img"
       />
 
       {/*
-        What is on the card, in words, before it is saved. The card is
-        anonymous by default and this is the line that proves it — a card that
-        leaks a name is the one unforgivable bug, so the answer is never more
-        than one glance away.
+        What is on the card, in words, before it is saved. ADR 0010: naming is
+        unconditional, so this is a statement of fact rather than a control —
+        Hide, on each Habit's own Screen, is the only way to keep one off.
       */}
       <div className="card" style={{ marginTop: 16 }}>
         {model.names.length === 0 ? (
           <p className="note" style={{ margin: 0 }}>
-            no habit names on this card. a year of shape and one number.
+            no habits on this card yet.
           </p>
         ) : (
-          <>
-            {/*
-              Each name is the way to its own opt-in. Withdrawing a name is the
-              safety-critical act in this app, so it is one tap from the card
-              that carries it — read the name here, tap it, and the switch that
-              removes it is the next thing on the screen.
-            */}
-            <p className="note" style={{ margin: "0 0 8px" }}>
-              this card names{" "}
-              {named.map((habit, index) => (
-                <span key={habit.id}>
-                  {index > 0 ? " · " : null}
-                  <button
-                    type="button"
-                    className="name-link"
-                    onClick={() => onOpenHabit(habit.id)}
-                  >
-                    {habit.name.trim().toLowerCase()}
-                  </button>
-                </span>
-              ))}
-              . everything else stays anonymous.
-            </p>
-            <p className="note-faint" style={{ margin: 0 }}>
-              tap a name to stop naming it.
-            </p>
-          </>
+          <p className="note" style={{ margin: 0 }}>
+            this card names {model.names.join(", ")}.
+          </p>
         )}
       </div>
 
@@ -148,7 +70,6 @@ export function ShareScreen({ onOpenHabit }: { onOpenHabit: (habitId: string) =>
           {status}
         </p>
       ) : null}
-
     </>
   );
 }
