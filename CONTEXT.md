@@ -262,6 +262,23 @@ The device controls how the file leaves. The app gives the file to the device.
 The device then makes a download or opens a share sheet.
 _Avoid_: backup, download, save, dump.
 
+**Import**:
+The operation that reads an Export file and replaces everything on the device
+with what the file contains. Import is a full replace and not a merge — no
+operation combines the data of two devices. If the device already holds a
+Habit or a Log, Import asks the user to confirm the replacement, because the
+operation cannot be undone.
+
+Moving the data to another device is Export on the old device, then Import on
+the new one. That move is one-way: the old device is retired the moment the
+user Exports from it, because Import is the only door back in, and it always
+replaces rather than combines.
+
+Import carries no Reminder. A Reminder is a property of the device and not of
+the data, and Import drops any Reminder that cannot match a Habit that
+survived the replace.
+_Avoid_: load, restore, sync, merge, transfer, migrate, backup.
+
 ### Sharing
 
 **Share Card**:
