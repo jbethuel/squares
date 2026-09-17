@@ -22,7 +22,7 @@ describe("the Habit Card names only the one Habit", () => {
   it("says in words that it names this Habit, and nothing else", () => {
     const data = account({ habits: ["workout", "no drinking"] });
     open(data, idOf(data, "workout"));
-    expect(screen.getByText("this card shows the names of these habits: workout.")).toBeInTheDocument();
+    expect(screen.getByText("this card shows the name of this habit: workout.")).toBeInTheDocument();
   });
 
   it("paints only this Habit's name", async () => {
@@ -68,11 +68,11 @@ describe("the Streak on a Habit Card", () => {
     data = setStreaks(data, idOf(data, "workout"), true);
     open(data, idOf(data, "workout"));
     const text = await painted();
-    expect(text).toContain("streak: 1 day");
+    expect(text).toContain("1-day streak");
     // The Streak is drawn onto the canvas, not stated only in the disclosure
     // text below it — the accessible label has to say it too.
     expect(
-      screen.getByRole("img", { name: /habits: workout\. streak: 1 day\./ }),
+      screen.getByRole("img", { name: /habits: workout\. 1-day streak\./ }),
     ).toBeInTheDocument();
   });
 });

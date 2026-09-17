@@ -50,7 +50,9 @@ export function ShareScreen() {
           </p>
         ) : (
           <p className="note" style={{ margin: 0 }}>
-            this card shows the names of these habits: {model.names.join(", ")}.
+            this card shows{" "}
+            {model.names.length === 1 ? "the name of this habit" : "the names of these habits"}:{" "}
+            {model.names.join(", ")}.
           </p>
         )}
       </div>

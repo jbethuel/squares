@@ -46,7 +46,7 @@ test.describe("the Share Card names every visible Habit", () => {
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByText("this card shows the names of these habits: workout.")).toBeVisible();
+    await expect(page.getByText("this card shows the name of this habit: workout.")).toBeVisible();
     await expect(page.getByRole("img", { name: /habits: workout\./ })).toBeVisible();
     await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
 
@@ -85,7 +85,7 @@ test.describe("the Habit Card names only its own Habit", () => {
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
     await expect(page.getByRole("heading", { name: "share workout" })).toBeVisible();
-    await expect(page.getByText("this card shows the names of these habits: workout.")).toBeVisible();
+    await expect(page.getByText("this card shows the name of this habit: workout.")).toBeVisible();
     await expect(page.getByRole("img", { name: /habits: workout\./ })).toBeVisible();
     await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
   });
@@ -106,7 +106,7 @@ test.describe("the Habit Card names only its own Habit", () => {
 
     // The Streak is drawn onto the canvas itself and read back through the
     // accessible label, the same way the names line already is.
-    await expect(page.getByRole("img", { name: /habits: workout\. streak: 1 day\./ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /habits: workout\. 1-day streak\./ })).toBeVisible();
   });
 });
 

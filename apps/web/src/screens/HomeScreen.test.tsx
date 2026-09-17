@@ -185,7 +185,7 @@ describe("what Home says about the year", () => {
     const data = account({ habits: ["workout", "read"], logs: { workout: [0, 1], read: [0, 1] } });
     open(setStreaks(data, idOf(data, "workout"), true));
 
-    expect(screen.getByText("streak: 2 days")).toBeInTheDocument();
+    expect(screen.getByText("2-day streak")).toBeInTheDocument();
     expect(screen.getByText("2 logs")).toBeInTheDocument();
   });
 });

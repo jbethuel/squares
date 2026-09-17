@@ -57,7 +57,9 @@ export default function Share() {
         {model.names.length === 0 ? (
           <Note>this card has no habits. add a habit on home.</Note>
         ) : (
-          <Note>this card shows the names of these habits: {model.names.join(", ")}.</Note>
+          <Note>this card shows{" "}
+            {model.names.length === 1 ? "the name of this habit" : "the names of these habits"}:{" "}
+            {model.names.join(", ")}.</Note>
         )}
       </Card>
 

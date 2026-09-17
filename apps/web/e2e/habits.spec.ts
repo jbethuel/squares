@@ -106,7 +106,7 @@ test.describe("Streaks are opt-in", () => {
     await expect(page.getByText("longest streak")).toBeVisible();
 
     await page.getByRole("button", { name: "‹ back" }).click();
-    await expect(page.getByText("streak: 3 days")).toBeVisible();
+    await expect(page.getByText("3-day streak")).toBeVisible();
   });
 
   test("break on a missed Day and are not repaired", async ({ app }) => {
@@ -118,10 +118,10 @@ test.describe("Streaks are opt-in", () => {
     });
 
     // Yesterday was missed, so the Streak is over even though today is open.
-    await expect(page.getByText("streak: 0 days")).toBeVisible();
+    await expect(page.getByText("no streak")).toBeVisible();
 
     await habitRow(page, "workout").click();
-    await expect(page.getByText("streak: 1 day")).toBeVisible();
+    await expect(page.getByText("1-day streak")).toBeVisible();
 
     await page.getByRole("button", { name: "open workout" }).click();
     // The longest Streak is remembered; the current one starts again at 1.
@@ -136,7 +136,7 @@ test.describe("Streaks are opt-in", () => {
       logs: { workout: [0, 1] },
       streaks: ["workout"],
     });
-    await expect(page.getByText("streak: 2 days")).toBeVisible();
+    await expect(page.getByText("2-day streak")).toBeVisible();
 
     await page.getByRole("button", { name: "open workout" }).click();
     await optIn(page, "show streak").click();

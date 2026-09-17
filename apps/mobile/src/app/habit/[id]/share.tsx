@@ -5,6 +5,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { LensPicker } from "@/components/LensPicker";
 import { Card, Note, NoteFaint, PrimaryButton, Screen } from "@/components/ui";
 import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
+import { streakLabel } from "@squares/domain/selectors";
 import { habitCardModel } from "@squares/domain/shareCard";
 import { useStore } from "@squares/domain/store";
 import { useCardExport } from "@/platform/useCardExport";
@@ -46,7 +47,7 @@ export default function HabitShare() {
           entering={FadeIn.duration(MS.reveal)}
           accessibilityRole="image"
           accessibilityLabel={`share card: ${model.tally} logs in ${lensNoun(model.lens)}. habits: ${model.names.join(", ")}.${
-            model.streak !== null ? ` streak: ${model.streak} day${model.streak === 1 ? "" : "s"}.` : ""
+            model.streak !== null ? ` ${streakLabel(model.streak)}.` : ""
           }`}
           source={{ uri: `data:image/png;base64,${card.base64}` }}
           style={{ width: "100%", aspectRatio: card.width / card.height, borderRadius: 14 }}
@@ -58,7 +59,7 @@ export default function HabitShare() {
       {/* Always exactly one name, and no anonymous case: ADR 0011 gives a
           Hidden Habit no Habit Card at all, and every other Habit gets one. */}
       <Card style={{ marginTop: 16 }}>
-        <Note>this card shows the names of these habits: {model.names.join(", ")}.</Note>
+        <Note>this card shows the name of this habit: {model.names.join(", ")}.</Note>
       </Card>
 
       <View style={{ marginTop: 20 }}>

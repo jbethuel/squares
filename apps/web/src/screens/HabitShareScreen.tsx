@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { LensPicker } from "@/components/LensPicker";
 import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
+import { streakLabel } from "@squares/domain/selectors";
 import { habitCardModel } from "@squares/domain/shareCard";
 import { useCanvasCard } from "@/platform/useCanvasCard";
 import { useStore } from "@squares/domain/store";
@@ -42,7 +43,7 @@ export function HabitShareScreen({ habitId }: { habitId: string }) {
         height={size.height}
         className="share-preview"
         aria-label={`share card: ${model.tally} logs in ${lensNoun(model.lens)}. habits: ${model.names.join(", ")}.${
-          model.streak !== null ? ` streak: ${model.streak} day${model.streak === 1 ? "" : "s"}.` : ""
+          model.streak !== null ? ` ${streakLabel(model.streak)}.` : ""
         }`}
         role="img"
       />
@@ -51,7 +52,7 @@ export function HabitShareScreen({ habitId }: { habitId: string }) {
           Hidden Habit no Habit Card at all, and every other Habit gets one. */}
       <div className="card" style={{ marginTop: 16 }}>
         <p className="note" style={{ margin: 0 }}>
-          this card shows the names of these habits: {model.names.join(", ")}.
+          this card shows the name of this habit: {model.names.join(", ")}.
         </p>
       </div>
 

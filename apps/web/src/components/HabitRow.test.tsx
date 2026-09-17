@@ -140,27 +140,27 @@ describe("what the row says about itself", () => {
   it("counts the Streak once the Habit is opted in", () => {
     const data = account({ habits: ["workout"], logs: { workout: [0, 1, 2] } });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("streak: 3 days")).toBeInTheDocument();
+    expect(screen.getByText("3-day streak")).toBeInTheDocument();
   });
 
   it("says a day, not days, at one", () => {
     const data = account({ habits: ["workout"], logs: { workout: [0] } });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("streak: 1 day")).toBeInTheDocument();
+    expect(screen.getByText("1-day streak")).toBeInTheDocument();
   });
 
-  it("shows a stopped Streak as a zero", () => {
+  it("says there is no Streak once one stops", () => {
     const data = account({ habits: ["workout"], logs: { workout: [5, 6] } });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("streak: 0 days")).toBeInTheDocument();
+    expect(screen.getByText("no streak")).toBeInTheDocument();
   });
 
   // A Habit made today has no Log yet. "streak broken" was the old text here,
   // and it said something had stopped that never started.
-  it("shows the same zero for a Habit that has no Log yet", () => {
+  it("says the same for a Habit that has no Log yet", () => {
     const data = account({ age: 30, habits: ["workout"] });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("streak: 0 days")).toBeInTheDocument();
+    expect(screen.getByText("no streak")).toBeInTheDocument();
   });
 });
 

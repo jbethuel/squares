@@ -41,7 +41,7 @@ describe("the card names every visible Habit", () => {
     const data = account({ age: 60, habits: ["workout", "no drinking"], hidden: ["no drinking"] });
     open(data);
 
-    expect(screen.getByText("this card shows the names of these habits: workout.")).toBeInTheDocument();
+    expect(screen.getByText("this card shows the name of this habit: workout.")).toBeInTheDocument();
     expect((await painted()).some((line) => line.includes("drinking"))).toBe(false);
   });
 
