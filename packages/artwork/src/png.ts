@@ -76,8 +76,13 @@ export function encodePng(width: number, height: number, rgba: Uint8Array): Uint
   // to be identical run to run — zlib's output is stable for a fixed level.
   const idat = deflateSync(raw, { level: 9 });
 
+  // The sRGB chunk, rendering intent 0 (perceptual). Every colour here comes out
+  // of `toRgb`, which already encodes to sRGB; without the chunk a decoder only
+  // assumes it. Play's icon spec names the colour space, so the file says it.
+  const srgb = chunk("sRGB", new Uint8Array([0]));
+
   const signature = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  const parts = [signature, chunk("IHDR", ihdr), chunk("IDAT", idat), chunk("IEND", new Uint8Array(0))];
+  const parts = [signature, chunk("IHDR", ihdr), srgb, chunk("IDAT", idat), chunk("IEND", new Uint8Array(0))];
 
   const total = parts.reduce((sum, part) => sum + part.length, 0);
   const png = new Uint8Array(total);

@@ -137,6 +137,12 @@ describe("the encoder", () => {
     expect(png[25]).toBe(6); // truecolour with alpha
   });
 
+  it("declares sRGB, between the header and the pixels", () => {
+    const png = encodePng(2, 2, new Uint8Array(16).fill(255));
+    // IHDR ends at 33. The next chunk: length 1, the tag, intent 0.
+    expect([...png.subarray(33, 42)]).toEqual([0, 0, 0, 1, 0x73, 0x52, 0x47, 0x42, 0]);
+  });
+
   it("gives the same bytes for the same picture", () => {
     // What makes `pnpm icons` safe to run: an unchanged ramp leaves the working
     // tree clean, so a diff on an icon means the ramp actually moved.
