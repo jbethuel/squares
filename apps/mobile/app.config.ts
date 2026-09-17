@@ -44,8 +44,12 @@ const config: ExpoConfig = {
      * treats the new build as a different app, leaves the old one holding the
      * record, and the only way to be rid of it is an uninstall — which is the
      * storage-clearing event ADR 0007 warns arrives with no warning in front of it.
+     *
+     * The domain as it reads, not reversed the way package names usually are.
+     * That is chosen, not a slip: it was `dev.jbethuel.squares` until
+     * 2026-09-17, changed while nothing had shipped under the old one.
      */
-    package: "dev.jbethuel.squares",
+    package: "squares.jbethuel.dev",
 
     /**
      * Android's Auto Backup is on unless a manifest says otherwise, and it
@@ -98,7 +102,7 @@ const config: ExpoConfig = {
   // else. The identifier is claimed here regardless: it costs nothing while it
   // is still free to choose, and AGENTS.md says nothing in this app may assume
   // iOS is not coming.
-  ios: { bundleIdentifier: "dev.jbethuel.squares" },
+  ios: { bundleIdentifier: "squares.jbethuel.dev" },
 
   /**
    * The EAS project, `@jbethuel/squares`. Written here by hand because it had
