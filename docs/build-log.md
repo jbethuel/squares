@@ -234,3 +234,21 @@ any Android work started here. No Data Safety form and no closed testing
 track can exist until a new account (and a new $25) replaces it. That account
 is being made outside this repo; the third carried-forward item — a listing
 with no screenshots or copy — is otherwise done and waiting on it.
+
+## 2026-09-17 — the application id becomes `squares.jbethuel.dev`
+
+`android.package` and `ios.bundleIdentifier` were `dev.jbethuel.squares`. Both
+are now `squares.jbethuel.dev`: the domain as it reads, not reversed. Changed
+now because nothing has shipped under the old id; once a build is on Play, the
+id cannot change.
+
+What the old id leaves behind:
+
+- The first production App Bundle, version code 3
+  (build `a6efe894-8fa1-46c7-ba6d-d97bfa04fb38`), is signed as
+  `dev.jbethuel.squares`. Do not upload it.
+- EAS keeps Android credentials per application id. `Build Credentials
+  C7XyyzfxRU` belongs to the old id, so the next build under the new one has
+  no keystore until one is made, and a `--non-interactive` build stops there.
+- The preview APK on the test device is now a different app from any new
+  build. The two install side by side; uninstall the old one by hand.

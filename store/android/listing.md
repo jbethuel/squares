@@ -61,8 +61,8 @@ https://jbethuel.com/privacy/squares
 
 ## Screenshots
 
-`screenshots/` — captured from a seeded emulator (`app.config.ts`'s package,
-`dev.jbethuel.squares`, on `sdk_gphone16k_arm64`), not real user data. The
+`screenshots/` — captured from a seeded emulator (the app under its earlier
+package, `dev.jbethuel.squares`, on `sdk_gphone16k_arm64`), not real user data. The
 device was loaded with a synthetic ~260-day, 3-habit history built the same
 way `apps/web/e2e/fixtures.ts`'s `buildAccount` builds a test account, so the
 year grid reads as lived-in rather than empty. Regenerate by importing a
