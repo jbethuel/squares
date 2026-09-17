@@ -115,6 +115,20 @@ Log, Day, Square, Span, Intensity, Streak, Total, Tally, Hide, Lens, Frame.
 
 Read `CONTEXT.md` before you change `packages/domain/`.
 
+All the text that a user can read or hear uses ASD-STE100 Simplified Technical
+English. This includes the Screens, the labels for screen readers, the
+notifications and the Share Card.
+
+- Write a note, a hint, a warning or a confirmation as full sentences. Use "the"
+  and "a". Use the active voice. Write one instruction in each sentence.
+- Keep a label, a button or a heading short.
+- Write all the text in lowercase.
+- Speak to the user as "you".
+- When the text names a concept from `CONTEXT.md`, use the glossary word. Do not
+  use a word from an _Avoid_ list.
+- Do not show the user a glossary term that the app does not show now, for
+  example Lens, Tally or Frame.
+
 ## The three rules that the code protects
 
 **The user can Log only today.** There is no window back to yesterday. The

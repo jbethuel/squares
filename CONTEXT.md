@@ -88,10 +88,12 @@ The Daily Reminder is off until the user turns it on. The app asks the user one
 time, when the user makes the first Habit. The app asks because the user cannot
 recover a Day that the user missed.
 
-The app sends the Daily Reminder every Day that has an Active Habit, whether or
-not the user already Logged every Habit for that Day (ADR 0012). Its text is
-fixed and never names a Habit or counts what is left — that is what makes it
-different from a Reminded Habit.
+The app sends the Daily Reminder on each Day that has an Active Habit. The app
+also sends it when the user Logged all the Habits for that Day. See ADR 0012.
+
+The text of the Daily Reminder does not change. It does not name a Habit, and
+it does not count the Habits that the user did not Log. This is the difference
+between the Daily Reminder and a Reminded Habit.
 
 A Reminder is a property of the device and not of the data. An Export does not
 contain a Reminder. If the user moves the data to a different phone, that phone
@@ -265,74 +267,77 @@ The device then makes a download or opens a share sheet.
 _Avoid_: backup, download, save, dump.
 
 **Import**:
-The operation that reads an Export file and replaces everything on the device
-with what the file contains. Import is a full replace and not a merge — no
-operation combines the data of two devices. If the device already holds a
-Habit or a Log, Import asks the user to confirm the replacement, because the
-operation cannot be undone.
+The operation that reads an Export file. Import replaces all the data on the
+device with the data in the file. Import does not merge. No operation combines
+the data of two devices.
 
-Moving the data to another device is Export on the old device, then Import on
-the new one. That move is one-way: the old device is retired the moment the
-user Exports from it, because Import is the only door back in, and it always
-replaces rather than combines.
+If the device has a Habit or a Log, Import asks the user to confirm. The user
+cannot undo an Import.
 
-Import carries no Reminder. A Reminder is a property of the device and not of
-the data, and Import drops any Reminder that cannot match a Habit that
-survived the replace.
+To move the data to a different device, the user does an Export on the old
+device and an Import on the new device. This move goes in one direction only.
+After the Export, the user must not use the old device. A Log on the old device
+cannot go to the new device, because Import always replaces the data and does
+not combine it.
+
+Import does not contain a Reminder. A Reminder is a property of the device and
+not of the data. After an Import, the app removes each Reminder that is not for
+a Habit in the new data.
 _Avoid_: load, restore, sync, merge, transfer, migrate, backup.
 
 ### Sharing
 
 **Share Card**:
-A PNG image the app draws on the device and saves to it, for the user to hand
-off. There are two kinds: the Overview Card and the Habit Card.
+An image that the app draws on the device. The app saves the image on the
+device, and the user can then share it. There are two kinds of Share Card: the
+Overview Card and the Habit Card.
 
-Every Share Card, of either kind, has its own Lens, which the user selects
-when the user makes the card. The card draws the full Frame of that Lens.
-Example: a Week card that the user makes on a Wednesday shows all seven Days.
-A Share Card shows a Tally and not a Total, and always uses the Dark Theme.
+Each Share Card has its own Lens. The user selects the Lens when the user makes
+the Share Card. The Share Card draws the full Frame of that Lens. Example: a
+Share Card for the Week that the user makes on a Wednesday shows all seven
+Days.
 
-There is no web page for a Share Card, and there is no link between users. A
-Hidden Habit is reachable by no Share Card of either kind — see Hidden Habit.
+A Share Card shows a Tally and not a Total. A Share Card always uses the Dark
+Theme.
+
+A Share Card has no web page, and there is no link between users. No Share Card
+can show a Hidden Habit. See Hidden Habit.
 _Avoid_: badge, profile, screenshot, story.
 
 **Overview Card**:
-The Share Card that draws the Overview Heatmap and its Tally, across every
-Habit that is not Hidden. The card names every Habit that is not Hidden —
-there is no way to make an Overview Card without naming the Habits it draws
-from. See ADR 0010. Hide is the only control over what an Overview Card can
-say.
+The Share Card that draws the Overview Heatmap and its Tally for all the Habits
+that are not Hidden. The Overview Card shows the names of all these Habits. The
+user cannot make an Overview Card without the names. See ADR 0010. To remove a
+Habit from an Overview Card, the user must Hide the Habit. There is no other
+control.
 
-Reached from Settings. No per-Habit breakdown: an Overview Card carries only
-the combined shape, one Tally and the names — never a Streak, a Longest
-Streak or a Log count for any one Habit inside it.
+An Overview Card shows only the shape of all the Habits together, one Tally and
+the names. It does not show a Streak, a Longest Streak or a count of Logs for
+one Habit.
 _Avoid_: the card, share card (when a Habit Card is also possible).
 
 **Habit Card**:
-The Share Card that draws one Habit's own Habit Heatmap: the same binary
-Squares the Habit's own Screen shows, that Habit's own Tally, and its name —
-always, since a Habit Card exists to be about that one Habit. See ADR 0011.
+The Share Card that draws the Habit Heatmap of one Habit. It shows the same
+binary Squares as the Screen of that Habit. It also shows the Tally and the
+name of that Habit. A Habit Card always shows the name, because the card is
+about that one Habit. See ADR 0011.
 
-A Habit Card shows a Streak only if the Habit is a Streak Habit, matching
-exactly what that Habit's own Screen already shows. It never shows the
-Longest Streak or a raw Log count — the same minimalism the Overview Card
-keeps.
-
-Reached from the Habit's own Screen, positioned directly after "count a
-streak": the row above it decides whether the card below it can carry a
-Streak at all.
+A Habit Card shows a Streak only if the Habit is a Streak Habit. Thus the card
+agrees with the Screen of the Habit. A Habit Card does not show the Longest
+Streak or a count of Logs. The Overview Card has the same limit.
 _Avoid_: individual card, per-habit card.
 
 **Named Habit**:
-A Habit whose Reminder may say its name on the lock screen. The user must
-select this for each Habit. A Habit's Reminder does not say its name by
-default; it says "1 Habit left" instead.
+A Habit whose Reminder can show the name of the Habit on the lock screen. The
+user must select this for each Habit. By default, the Reminder of a Habit does
+not show the name.
 
-The default is off because a Reminder arrives at a set time, in front of
-whoever is in the room, and the user did not choose that moment the way they
-choose the moment they make a Share Card. See ADR 0010: a Share Card no
-longer shares this control, and always names every Habit it draws from.
+The default is off for this reason: a Reminder comes at a set time, and other
+persons can be near the user at that time. The user does not select that time
+in the way that the user selects the time to make a Share Card. See ADR 0010.
+The Share Card does not use this control. A Share Card always shows the names
+of the Habits that it draws.
 
-A Hidden Habit sends no Reminder, so a Hidden Habit is never named on a lock
-screen, whatever the toggle says.
+A Hidden Habit sends no Reminder. Thus the lock screen never shows the name of
+a Hidden Habit, and the control has no effect.
 _Avoid_: public habit, shared habit, visible habit, name on share card.
