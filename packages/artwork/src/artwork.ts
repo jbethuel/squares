@@ -143,6 +143,16 @@ const MARK_SPAN = 0.71875;
 const ADAPTIVE_SPAN = 0.4326;
 /** A maskable web icon must survive a crop to 80%. */
 const MASKABLE_SPAN = 0.5605;
+/**
+ * Google Play's square keyline: 304px of its 512px icon.
+ *
+ * Play's grid is the 48-unit launcher grid set in the middle 384px of the
+ * asset, eight pixels a unit, and a logo that is a square goes on its 38-unit
+ * square. The mark is a square. The rest of the asset is the background, full
+ * bleed, because Play rounds the corners (30% of the side) and adds the shadow
+ * itself.
+ */
+const PLAY_SPAN = 304 / 512;
 
 export const ICONS: readonly Art[] = [
   { path: "apps/web/public/icon-512.png", draw: () => icon({ size: 512, span: MARK_SPAN, background: BACKGROUND }) },
@@ -171,9 +181,9 @@ export const ICONS: readonly Art[] = [
 ];
 
 export const STORE_ASSETS: readonly Art[] = [
-  // The same render as the web's, because it is the same icon. Play wants its
-  // own copy at 512, and a second drawing of one mark is a second mark waiting
-  // to happen.
-  { path: "store/android/play-icon-512.png", draw: () => icon({ size: 512, span: MARK_SPAN, background: BACKGROUND }) },
+  // The same drawing as every other icon, at Play's keyline rather than the
+  // web's span: Play masks and scales this one itself, and its spec says where
+  // a logo sits inside it.
+  { path: "store/android/play-icon-512.png", draw: () => icon({ size: 512, span: PLAY_SPAN, background: BACKGROUND }) },
   { path: "store/android/play-feature-graphic-1024x500.png", draw: featureGraphic },
 ];

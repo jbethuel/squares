@@ -97,6 +97,40 @@ describe("the feature graphic", () => {
   });
 });
 
+describe("the Play icon", () => {
+  // Google Play's icon spec: a full square, opaque, with no corners or shadow
+  // of its own, and a square logo on the 304px square keyline.
+  const play = STORE_ASSETS.find((a) => a.path.endsWith("play-icon-512.png"))!;
+  const span = 304 / 512;
+
+  it("is opaque to its corners, for Play to round and shadow", () => {
+    const art = play.draw();
+    for (let i = 3; i < art.data.length; i += 4) expect(art.data[i]).toBe(255);
+    expect(at(art, 0, 0)).toEqual([...toRgb(CARD.bg), 255]);
+    expect(at(art, 511, 511)).toEqual([...toRgb(CARD.bg), 255]);
+  });
+
+  it("puts the mark on the square keyline and no further", () => {
+    const art = play.draw();
+    const ground = toRgb(CARD.bg);
+    for (let y = 0; y < 512; y++) {
+      for (let x = 0; x < 512; x++) {
+        if (x >= 104 && x < 408 && y >= 104 && y < 408) continue;
+        expect(at(art, x, y).slice(0, 3)).toEqual(ground);
+      }
+    }
+    // It reaches the keyline, not only stays inside it.
+    const [, row] = cellCentre(512, span, 0, 0);
+    expect(at(art, 104, row).slice(0, 3)).not.toEqual(ground);
+    expect(at(art, 407, row).slice(0, 3)).not.toEqual(ground);
+  });
+
+  it("is under Play's 1024KB limit", () => {
+    const art = play.draw();
+    expect(encodePng(art.width, art.height, art.data).length).toBeLessThanOrEqual(1024 * 1024);
+  });
+});
+
 describe("every file the scripts write", () => {
   it("draws at the size its name and platform promise", () => {
     const sizes = new Map([
