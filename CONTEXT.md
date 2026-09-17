@@ -88,8 +88,10 @@ The Daily Reminder is off until the user turns it on. The app asks the user one
 time, when the user makes the first Habit. The app asks because the user cannot
 recover a Day that the user missed.
 
-The app does not send the Daily Reminder if the user Logged all Habits for that
-Day.
+The app sends the Daily Reminder every Day that has an Active Habit, whether or
+not the user already Logged every Habit for that Day (ADR 0012). Its text is
+fixed and never names a Habit or counts what is left — that is what makes it
+different from a Reminded Habit.
 
 A Reminder is a property of the device and not of the data. An Export does not
 contain a Reminder. If the user moves the data to a different phone, that phone
