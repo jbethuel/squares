@@ -1,16 +1,26 @@
 import { weekdayOf, type DateKey } from "./date";
 import { gridGeometry, gridHeight, type Frame } from "./grid";
 import { lensFrame, lensRows, type Lens } from "./lens";
-import { dateAt, intensityAt, isHidden, totalLogsIn } from "./selectors";
+import {
+  dateAt,
+  intensityAt,
+  isHidden,
+  isLogged,
+  logCountIn,
+  streakOf,
+  totalLogsIn,
+} from "./selectors";
 import type { AppData, Intensity } from "./types";
 
 /**
- * What a Share Card is allowed to contain: a year of shape, one number, and —
- * only if each Habit was individually opted in — a single line of names.
+ * What a Share Card is allowed to contain: a year of shape, one number, and a
+ * line naming every Habit it draws from.
  *
  * No dates, no handle, no per-Habit breakdown, and nothing that identifies the
- * device. The card is anonymous by default because people track "took my meds"
- * and "no drinking", and a card that leaks a name is the one unforgivable bug.
+ * device. ADR 0010: naming is unconditional — Hide is the only way to keep a
+ * Habit off a card at all. One shape serves both kinds (ADR 0011): an Overview
+ * Card and a Habit Card differ only in how `levels`, `tally`, `names` and
+ * `streak` are filled in, not in what the geometry and drawing code expect.
  */
 export interface ShareCardModel {
   /** How much of the record this card draws. Chosen on the card's own Screen. */
@@ -31,8 +41,14 @@ export interface ShareCardModel {
    * that can fall may not be called a Total; see CONTEXT.md.
    */
   tally: number;
-  /** Named Habits only. Empty unless the user opted a Habit in by hand. */
+  /** Every Habit this card draws from, named. See ADR 0010: there is no opt-out. */
   names: string[];
+  /**
+   * Set only by a Habit Card, and only if that Habit is a Streak Habit — the
+   * same gate that Habit's own Screen uses. Always null on an Overview Card,
+   * which has no one Habit to keep a Streak for. See ADR 0011.
+   */
+  streak: number | null;
 }
 
 export function shareCardModel(data: AppData, today: DateKey, lens: Lens): ShareCardModel {
@@ -49,10 +65,45 @@ export function shareCardModel(data: AppData, today: DateKey, lens: Lens): Share
     levels,
     tally: totalLogsIn(data, today, frame.back),
     // ADR 0001: a Hidden Habit is not in the Overview this card is drawn from,
-    // so it reaches no card whatever its opt-in says.
+    // so it reaches no card. Every other Habit is named — ADR 0010.
     names: data.habits
-      .filter((habit) => habit.sharedName && !isHidden(habit, today))
+      .filter((habit) => !isHidden(habit, today))
       .map((habit) => habit.name.trim().toLowerCase()),
+    streak: null,
+  };
+}
+
+/**
+ * ADR 0011: a Habit Card is still a Share Card, so a Hidden Habit gets none —
+ * this returns null exactly where that Habit's own Screen would have nothing
+ * to share from.
+ */
+export function habitCardModel(
+  data: AppData,
+  habitId: string,
+  today: DateKey,
+  lens: Lens,
+): ShareCardModel | null {
+  const habit = data.habits.find((h) => h.id === habitId);
+  if (!habit || isHidden(habit, today)) return null;
+
+  const frame = lensFrame(lens, today);
+  const levels: Intensity[] = [];
+  for (let offset = 0; offset < frame.back; offset++) {
+    // A Habit Heatmap is binary and uses level 3 only — the same rule the
+    // Habit's own Screen draws by. A gradient here would be a lie: there is
+    // nothing to be partial about.
+    levels.push(isLogged(data, habitId, dateAt(today, offset)) ? 3 : 0);
+  }
+  return {
+    lens,
+    frame,
+    rows: lensRows(lens),
+    weekday: weekdayOf(today),
+    levels,
+    tally: logCountIn(data, habitId, today, frame.back),
+    names: [habit.name.trim().toLowerCase()],
+    streak: habit.streaks ? streakOf(data, habitId, today) : null,
   };
 }
 
@@ -91,6 +142,7 @@ export function cardGeometry(model: ShareCardModel) {
 
 export function cardHeight(model: ShareCardModel): number {
   const names = model.names.length > 0 ? NAMES_SIZE + 6 : 0;
+  const streak = model.streak !== null ? NAMES_SIZE + 6 : 0;
   return (
     PAD +
     gridHeight(cardGeometry(model)) +
@@ -99,6 +151,7 @@ export function cardHeight(model: ShareCardModel): number {
     5 +
     CAPTION_SIZE +
     names +
+    streak +
     PAD
   );
 }

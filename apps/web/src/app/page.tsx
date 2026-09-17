@@ -6,6 +6,7 @@ import { StoreProvider } from "@squares/domain/store";
 import { webStorage } from "@/platform/storage";
 import { ApplyTheme } from "@/platform/theme";
 import { DetailScreen } from "@/screens/DetailScreen";
+import { HabitShareScreen } from "@/screens/HabitShareScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { NewHabitScreen } from "@/screens/NewHabitScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
@@ -16,7 +17,8 @@ type Screen =
   | { name: "detail"; habitId: string }
   | { name: "new" }
   | { name: "settings" }
-  | { name: "share" };
+  | { name: "share" }
+  | { name: "habitShare"; habitId: string };
 
 export default function Page() {
   return (
@@ -69,10 +71,16 @@ function App() {
 
   const body = () => {
     switch (screen.name) {
-      // Everything about one Habit is on this Screen: its name, its Streak, its
-      // Share Card opt-in, and whether it is Hidden.
+      // Everything about one Habit is on this Screen: its name, its Streak,
+      // the link to its own Habit Card, its Reminder name, and whether it is
+      // Hidden.
       case "detail":
-        return <DetailScreen habitId={screen.habitId} />;
+        return (
+          <DetailScreen
+            habitId={screen.habitId}
+            onShare={(habitId) => push({ name: "habitShare", habitId })}
+          />
+        );
       case "new":
         return <NewHabitScreen onDone={home} />;
       case "settings":
@@ -83,10 +91,10 @@ function App() {
             onOpenHabit={(habitId) => push({ name: "detail", habitId })}
           />
         );
-      // A name on the card opens the Habit that put it there, one level deeper
-      // rather than back — the bar still leads to the card it came from.
       case "share":
-        return <ShareScreen onOpenHabit={(habitId) => push({ name: "detail", habitId })} />;
+        return <ShareScreen />;
+      case "habitShare":
+        return <HabitShareScreen habitId={screen.habitId} />;
       default:
         return (
           <HomeScreen

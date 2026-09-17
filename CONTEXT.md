@@ -262,30 +262,75 @@ The device controls how the file leaves. The app gives the file to the device.
 The device then makes a download or opens a share sheet.
 _Avoid_: backup, download, save, dump.
 
+**Import**:
+The operation that reads an Export file and replaces everything on the device
+with what the file contains. Import is a full replace and not a merge — no
+operation combines the data of two devices. If the device already holds a
+Habit or a Log, Import asks the user to confirm the replacement, because the
+operation cannot be undone.
+
+Moving the data to another device is Export on the old device, then Import on
+the new one. That move is one-way: the old device is retired the moment the
+user Exports from it, because Import is the only door back in, and it always
+replaces rather than combines.
+
+Import carries no Reminder. A Reminder is a property of the device and not of
+the data, and Import drops any Reminder that cannot match a Habit that
+survived the replace.
+_Avoid_: load, restore, sync, merge, transfer, migrate, backup.
+
 ### Sharing
 
 **Share Card**:
-A PNG image of the Overview Heatmap and its Tally. The app draws the image on
-the device and saves it to the device.
+A PNG image the app draws on the device and saves to it, for the user to hand
+off. There are two kinds: the Overview Card and the Habit Card.
 
-A Share Card has its own Lens, which the user selects when the user makes the
-card. The card draws the full Frame of that Lens. Example: a Week card that the
-user makes on a Wednesday shows all seven Days.
+Every Share Card, of either kind, has its own Lens, which the user selects
+when the user makes the card. The card draws the full Frame of that Lens.
+Example: a Week card that the user makes on a Wednesday shows all seven Days.
+A Share Card shows a Tally and not a Total, and always uses the Dark Theme.
 
-There is no web page for a Share Card, and there is no link between users.
+There is no web page for a Share Card, and there is no link between users. A
+Hidden Habit is reachable by no Share Card of either kind — see Hidden Habit.
 _Avoid_: badge, profile, screenshot, story.
 
+**Overview Card**:
+The Share Card that draws the Overview Heatmap and its Tally, across every
+Habit that is not Hidden. The card names every Habit that is not Hidden —
+there is no way to make an Overview Card without naming the Habits it draws
+from. See ADR 0010. Hide is the only control over what an Overview Card can
+say.
+
+Reached from Settings. No per-Habit breakdown: an Overview Card carries only
+the combined shape, one Tally and the names — never a Streak, a Longest
+Streak or a Log count for any one Habit inside it.
+_Avoid_: the card, share card (when a Habit Card is also possible).
+
+**Habit Card**:
+The Share Card that draws one Habit's own Habit Heatmap: the same binary
+Squares the Habit's own Screen shows, that Habit's own Tally, and its name —
+always, since a Habit Card exists to be about that one Habit. See ADR 0011.
+
+A Habit Card shows a Streak only if the Habit is a Streak Habit, matching
+exactly what that Habit's own Screen already shows. It never shows the
+Longest Streak or a raw Log count — the same minimalism the Overview Card
+keeps.
+
+Reached from the Habit's own Screen, positioned directly after "count a
+streak": the row above it decides whether the card below it can carry a
+Streak at all.
+_Avoid_: individual card, per-habit card.
+
 **Named Habit**:
-A Habit that can show its name outside the app. The name can go on a Share Card,
-and on the lock screen with the Reminder of a Reminded Habit.
+A Habit whose Reminder may say its name on the lock screen. The user must
+select this for each Habit. A Habit's Reminder does not say its name by
+default; it says "1 Habit left" instead.
 
-The user must select this for each Habit. A Habit does not show its name by
-default. A Share Card shows no Habit names unless the user selected each name. A
-Reminder for a Habit without a name says "1 Habit left".
+The default is off because a Reminder arrives at a set time, in front of
+whoever is in the room, and the user did not choose that moment the way they
+choose the moment they make a Share Card. See ADR 0010: a Share Card no
+longer shares this control, and always names every Habit it draws from.
 
-One selection controls both places, because both do the same thing: they let
-another person read the name.
-
-A Hidden Habit is on no Share Card, because a Hidden Habit is not in the
-Overview Heatmap.
-_Avoid_: public habit, shared habit, visible habit.
+A Hidden Habit sends no Reminder, so a Hidden Habit is never named on a lock
+screen, whatever the toggle says.
+_Avoid_: public habit, shared habit, visible habit, name on share card.

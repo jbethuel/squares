@@ -131,7 +131,7 @@ test.describe("the year lives on this device", () => {
 
     await expect(page.getByRole("status")).toHaveText("imported");
     const data = await readDevice(page);
-    expect(data.habits[0]?.sharedName).toBe(false);
+    expect(data.habits[0]?.namedHabit).toBe(false);
     expect(data.habits[0]?.streaks).toBe(false);
   });
 

@@ -1,26 +1,36 @@
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { LensPicker } from "@/components/LensPicker";
 import { Card, Note, NoteFaint, PrimaryButton, Screen } from "@/components/ui";
 import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
-import { shareCardModel } from "@squares/domain/shareCard";
+import { habitCardModel } from "@squares/domain/shareCard";
 import { useStore } from "@squares/domain/store";
 import { useCardExport } from "@/platform/useCardExport";
 import { MS, settle } from "@/platform/motion";
 
-export default function Share() {
+/**
+ * The Habit Card (ADR 0011). Line for line this is the Overview Card's
+ * Screen with one thing swapped: `habitCardModel` instead of `shareCardModel`.
+ */
+export default function HabitShare() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { data, today } = useStore();
+  const habit = data.habits.find((h) => h.id === id);
 
-  // The card's own Lens. It is picked here rather than inherited from Home,
-  // which this Screen is not reached from — a card that quietly depended on
-  // what another Screen was last showing would be a card you cannot predict.
   const [lens, setLens] = useState<Lens>(DEFAULT_LENS);
-  const model = useMemo(() => shareCardModel(data, today, lens), [data, today, lens]);
+  // ADR 0011: null for a Habit that is Hidden or gone — the same state that
+  // Habit's own Screen already treats as nothing to show.
+  const model = useMemo(() => habitCardModel(data, id, today, lens), [data, id, today, lens]);
   const { card, status, save } = useCardExport(model);
+
+  if (!model) return null;
 
   return (
     <Screen>
+      <Stack.Screen options={{ title: habit ? `share ${habit.name}` : "share" }} />
+
       <View style={{ marginBottom: 12 }}>
         <LensPicker
           value={lens}
@@ -30,16 +40,13 @@ export default function Share() {
       </View>
 
       {card ? (
-        // Keyed on the card itself so a new Lens fades its card in rather than
-        // swapping the image under a fixed frame — the card changes height as
-        // well as content, and `layout` carries everything below it down.
         <Animated.Image
           key={card.height}
           layout={settle()}
           entering={FadeIn.duration(MS.reveal)}
           accessibilityRole="image"
-          accessibilityLabel={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}${
-            model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ""
+          accessibilityLabel={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}, naming ${model.names.join(", ")}${
+            model.streak !== null ? `, a ${model.streak}-day streak` : ""
           }`}
           source={{ uri: `data:image/png;base64,${card.base64}` }}
           style={{ width: "100%", aspectRatio: card.width / card.height, borderRadius: 14 }}
@@ -48,21 +55,12 @@ export default function Share() {
         <NoteFaint>the card could not be drawn on this device.</NoteFaint>
       )}
 
-      {/*
-        What is on the card, in words, before it is saved. ADR 0010: naming is
-        unconditional, so this is a statement of fact rather than a control —
-        Hide, on each Habit's own Screen, is the only way to keep one off.
-      */}
+      {/* Always exactly one name, and no anonymous case: ADR 0011 gives a
+          Hidden Habit no Habit Card at all, and every other Habit gets one. */}
       <Card style={{ marginTop: 16 }}>
-        {model.names.length === 0 ? (
-          <Note>no habits on this card yet.</Note>
-        ) : (
-          <Note>this card names {model.names.join(", ")}.</Note>
-        )}
+        <Note>this card names {model.names.join(", ")}.</Note>
       </Card>
 
-      {/* One button, because on a phone the two were the same act. The share
-          sheet is where "save to photos" and "save to files" both live. */}
       <View style={{ marginTop: 20 }}>
         <PrimaryButton label="save .png" onPress={() => void save()} />
       </View>

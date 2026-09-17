@@ -2,16 +2,13 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ShareScreen } from "./ShareScreen";
-import { setSharedName } from "@squares/domain/mutations";
-import { account, idOf, onDevice, renderWithStore, TODAY } from "@/test/harness";
+import { account, onDevice, renderWithStore } from "@/test/harness";
 import { downloads, drawnText, shared, stubSharing } from "@/test/dom";
 import type { AppData } from "@squares/domain/types";
 
 function open(data: AppData) {
   onDevice(data);
-  const onOpenHabit = vi.fn();
-  renderWithStore(<ShareScreen onOpenHabit={onOpenHabit} />);
-  return { onOpenHabit };
+  renderWithStore(<ShareScreen />);
 }
 
 /** Everything the card actually painted, once the face has loaded. */
@@ -20,67 +17,37 @@ async function painted(): Promise<string[]> {
   return drawnText();
 }
 
-function named(data: AppData, ...names: string[]): AppData {
-  return names.reduce((current, name) => setSharedName(current, idOf(current, name), true), data);
-}
-
-describe("the card is anonymous by default", () => {
-  it("says in words that it carries no names, before it can be saved", async () => {
+describe("the card names every visible Habit", () => {
+  it("names every Habit in words, before it can be saved", () => {
     open(account({ habits: ["took my meds", "no drinking"] }));
-    expect(
-      screen.getByText(/no habit names on this card. a year of shape and one number/),
-    ).toBeInTheDocument();
-    // And the canvas agrees with the words.
-    expect(await painted()).not.toContain("took my meds");
+    expect(screen.getByText("this card names took my meds, no drinking.")).toBeInTheDocument();
   });
 
-  it("never paints a name that was not opted in", async () => {
-    open(account({ age: 60, habits: ["took my meds", "no drinking"], logs: { "took my meds": [0, 1] } }));
-    const text = await painted();
-    expect(text.some((line) => line.includes("meds"))).toBe(false);
-    expect(text.some((line) => line.includes("drinking"))).toBe(false);
-  });
-
-  it("names only what was opted in, and says so before saving", async () => {
-    const data = account({ age: 60, habits: ["workout", "no drinking", "pickleball"] });
-    open(named(data, "workout", "pickleball"));
-
-    expect(screen.getByRole("button", { name: "workout" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "pickleball" })).toBeInTheDocument();
-    expect(screen.getByText(/everything else stays anonymous/)).toBeInTheDocument();
-
-    const text = await painted();
-    // One line, lowercase, never a per-Habit breakdown.
-    expect(text).toContain("workout · pickleball");
-    expect(text.some((line) => line.includes("drinking"))).toBe(false);
+  it("paints every visible Habit's name", async () => {
+    open(
+      account({
+        age: 60,
+        habits: ["took my meds", "no drinking"],
+        logs: { "took my meds": [0, 1] },
+      }),
+    );
+    expect(await painted()).toContain("took my meds · no drinking");
   });
 
   // A name on a Card reads as something the user does, and a retired Habit is
-  // not that. The opt-in is reachable again — this is a rule about what the
+  // not that. Showing it again is reachable — this is a rule about what the
   // Card may claim, not a workaround for a control that could not be found.
-  it("drops an hidden Habit's name, whatever its opt-in says", async () => {
-    const data = account({ age: 60, habits: ["no drinking"], hidden: ["no drinking"] });
-    open(named(data, "no drinking"));
+  it("drops a Hidden Habit's name, and keeps naming what is still visible", async () => {
+    const data = account({ age: 60, habits: ["workout", "no drinking"], hidden: ["no drinking"] });
+    open(data);
 
-    expect(screen.getByText(/no habit names on this card/)).toBeInTheDocument();
+    expect(screen.getByText("this card names workout.")).toBeInTheDocument();
     expect((await painted()).some((line) => line.includes("drinking"))).toBe(false);
   });
 
-  // Withdrawing a name is the safety-critical act in this app, so it is one tap
-  // from the card that carries it.
-  it("makes each name the way to the switch that removes it", async () => {
-    const user = userEvent.setup();
-    const data = named(account({ habits: ["workout"] }), "workout");
-    const { onOpenHabit } = open(data);
-
-    expect(screen.getByText("tap a name to stop naming it.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "workout" }));
-    expect(onOpenHabit).toHaveBeenCalledWith(idOf(data, "workout"));
-  });
-
-  it("offers no such link when there is nothing named to change", () => {
-    open(account({ habits: ["workout"] }));
-    expect(screen.queryByText(/tap a name/)).not.toBeInTheDocument();
+  it("says plainly when there are no Habits to name", () => {
+    open(account({ habits: [] }));
+    expect(screen.getByText("no habits on this card yet.")).toBeInTheDocument();
   });
 });
 
@@ -100,17 +67,16 @@ describe("what the card carries", () => {
   });
 
   it("describes itself to assistive tech, names included", () => {
-    const data = named(account({ age: 60, habits: ["workout"], logs: { workout: [0, 2] } }), "workout");
-    open(data);
+    open(account({ age: 60, habits: ["workout"], logs: { workout: [0, 2] } }));
     expect(
       screen.getByRole("img", { name: "Share card: 2 logs across the year, naming workout" }),
     ).toBeInTheDocument();
   });
 
-  it("says plainly when it names nothing", () => {
-    open(account({ age: 60, habits: ["workout"], logs: { workout: [0] } }));
+  it("says plainly when it names nothing, because there is nothing on it", () => {
+    open(account({ habits: [] }));
     expect(
-      screen.getByRole("img", { name: "Share card: 1 logs across the year, no habit names" }),
+      screen.getByRole("img", { name: "Share card: 0 logs across the year" }),
     ).toBeInTheDocument();
   });
 });

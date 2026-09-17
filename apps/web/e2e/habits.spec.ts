@@ -88,10 +88,9 @@ test.describe("keeping the list of Habits", () => {
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "read ›" }).click();
 
-    // Neither the Card nor the Streak applies while it is Hidden, so neither
-    // switch is on the Screen to sit there doing nothing.
+    // The Streak does not apply while it is Hidden, so its switch is not on
+    // the Screen to sit there doing nothing.
     await expect(optIn(page, "count a streak")).toHaveCount(0);
-    await expect(optIn(page, "name on share card")).toHaveCount(0);
     await expect(optIn(page, "hide")).toBeVisible();
   });
 });

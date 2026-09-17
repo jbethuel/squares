@@ -70,7 +70,11 @@ function parseHabit(value: unknown): Habit | null {
     spans,
     // `chained` is what v1 and v2 called it.
     streaks: raw.streaks === true || raw.chained === true,
-    sharedName: raw.sharedName === true,
+    // Deliberately not `raw.sharedName` — ADR 0010 narrowed this flag to the
+    // Reminder alone, and a file written under the old, broader meaning must
+    // not silently opt a Habit into naming its Reminder. Every import starts
+    // this at false; the user re-opts in per Habit if they still want it.
+    namedHabit: raw.namedHabit === true,
   };
 }
 
@@ -110,6 +114,15 @@ export function parseAppData(value: unknown): AppData | null {
   if (!raw) return null;
   // v1 and v2 files are read and migrated; only a version we have never written
   // is refused. See ADR 0003.
+  //
+  // This one check conflates two different failures once a v4 exists: a file
+  // this build has never written (foreign or corrupt — `ImportResult`'s
+  // "not-ours") and a file a *newer* build wrote (this build is behind —
+  // moving to a new device that Exported on an updated phone and Imports on
+  // one that hasn't updated yet). Both return null here and both surface as
+  // "not a squares export" today, which is wrong for the second case: the
+  // file is real, the app is old. When v4 lands, split `raw.version > 3` into
+  // its own `ImportResult` kind so that case can say "update the app" instead.
   if (raw.version !== 1 && raw.version !== 2 && raw.version !== 3) return null;
   if (!isDateKey(raw.installedOn)) return null;
 

@@ -82,7 +82,7 @@ packages/domain/  the rules — no DOM, tested in node
   lens.ts           how much data a Heatmap draws
   axis.ts           the names at the edges of a Heatmap
   palette.ts        the Intensity ramp — the one definition
-  shareCard.ts      the permitted content of a Share Card, and its measurements
+  shareCard.ts      the permitted content of a Share Card — Overview and Habit — and its measurements
   storage.ts        the format of the data: validation, migration, Export
   store.tsx         the one React context, above an injected storage adapter
 
@@ -92,8 +92,9 @@ apps/web/         the Next.js app, statically exported
     handoff.ts        gives a file to the device
     theme.tsx         puts the Theme on the document
     shareCardCanvas.ts  draws the Share Card to a Canvas2D
+    useCanvasCard.ts  renders and saves a card, shared by both its Screens
   src/components/   Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
-  src/screens/      Home, Detail, NewHabit, Settings, Share
+  src/screens/      Home, Detail, NewHabit, Settings, Share, HabitShare
   src/hooks/        element width, delayed value, install prompt
   src/app/          Next shell, globals.css, tokens.css (generated)
   src/test/         jsdom stubs and the fixture harness
@@ -209,16 +210,28 @@ against the column width, because the same grid steps 14px when it moves and
 The weekday names are outside the scroll box and do not move. A Share Card has
 none of these names, because a month is a date and a card has no date.
 
-**A Share Card cannot show a name by accident.** The app draws the card on the
-device to a canvas and saves a PNG of 1280px.
+**A Share Card names every Habit it draws from, with no way to withhold one**
+(ADR 0010). The app draws the card on the device to a canvas and saves a PNG
+of 1280px. There are two kinds (ADR 0011): the Overview Card, built by
+`shareCardModel`, and the Habit Card, built by `habitCardModel` for one Habit
+at a time. Both return the same `ShareCardModel` shape, and every drawing and
+sizing function in `shareCard.ts` reads that one shape — the two kinds differ
+only in how the model is filled in, never in what draws it.
 
-`shareCardModel` is a pure function. Its output has seven fields: lens, frame,
-rows, weekday, levels, tally and names. There is no date, no user name and no
-breakdown for each Habit. A breakdown is a risk.
+`ShareCardModel` has eight fields: lens, frame, rows, weekday, levels, tally,
+names and streak. There is no date, no user name and no breakdown for each
+Habit on the Overview Card. A breakdown is a risk.
 
-The default value of `sharedName` is false, and a file without the field parses
-as false. A Hidden Habit is on no card, because a Hidden Habit is not in the
-Overview Heatmap.
+`names` lists every Habit that is not Hidden, unconditionally — there is no
+per-Habit flag left to check. On the Overview Card that can be several names
+or none; on a Habit Card it is always exactly one, because a Hidden Habit has
+no Habit Card to draw from. Hide is the only lever left over what any card
+can say.
+
+`streak` is null on every Overview Card, which has no one Habit to keep a
+Streak for. A Habit Card sets it to that Habit's own Streak, but only if the
+Habit is a Streak Habit — the same gate its own Screen shows the Streak
+behind.
 
 The card always uses the Dark Theme, because it is an image and not a Screen.
 

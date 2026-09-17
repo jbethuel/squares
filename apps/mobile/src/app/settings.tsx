@@ -93,11 +93,8 @@ export default function Settings() {
         drift.
       */}
       <SubTitle style={{ marginBottom: 9 }}>share card</SubTitle>
-      {/* The line the opt-ins used to carry, now that they are not next to the
-          card to say it themselves. */}
-      <Note style={{ marginBottom: 10 }}>
-        anonymous unless you name a habit on its own screen.
-      </Note>
+      {/* ADR 0010: naming stopped being an opt-in, so there is nothing left to
+          disclose here — the card itself says who it names. */}
       <ListButton label="make a share card ›" onPress={() => router.push("/share")} />
 
       <Rule />

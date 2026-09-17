@@ -30,8 +30,8 @@ export interface Habit {
   spans: Span[];
   /** A Streak Habit is one whose Streak the user has opted into seeing. */
   streaks: boolean;
-  /** A Named Habit may have its name shown on a Share Card. Off by default. */
-  sharedName: boolean;
+  /** A Named Habit may have its name shown on its Reminder. Off by default. See ADR 0010. */
+  namedHabit: boolean;
 }
 
 /**

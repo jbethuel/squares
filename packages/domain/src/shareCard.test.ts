@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addDays, type DateKey } from "./date";
-import { addHabit, setHidden, setSharedName } from "./mutations";
-import { shareCardModel } from "./shareCard";
+import { addHabit, setHidden, setStreaks, toggleLog } from "./mutations";
+import { habitCardModel, shareCardModel } from "./shareCard";
 import { parseAppData } from "./storage";
 import { emptyData, type AppData } from "./types";
 
@@ -16,37 +16,21 @@ function account(age: number, names: string[]): AppData {
 
 const idOf = (data: AppData, name: string) => data.habits.find((h) => h.name === name)!.id;
 
-describe("the Share Card is anonymous by default", () => {
-  it("carries no Habit names at all unless one was opted in", () => {
+describe("the Share Card names every visible Habit", () => {
+  // ADR 0010: naming is unconditional. There is no per-Habit opt-in left to
+  // withhold a name from the card — only Hide removes one.
+  it("names every Habit, with no opt-in required", () => {
     const data = account(60, ["took my meds", "no drinking"]);
-    expect(data.habits.every((habit) => habit.sharedName === false)).toBe(true);
-    expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
+    expect(shareCardModel(data, TODAY, "year").names).toEqual(["took my meds", "no drinking"]);
   });
 
-  it("carries only the Habits individually opted in, not the rest", () => {
-    let data = account(60, ["workout", "no drinking", "pickleball"]);
-    data = setSharedName(data, idOf(data, "workout"), true);
-    data = setSharedName(data, idOf(data, "pickleball"), true);
-    expect(shareCardModel(data, TODAY, "year").names).toEqual(["workout", "pickleball"]);
-  });
-
-  it("drops a name the moment the opt-in is withdrawn", () => {
-    let data = account(60, ["took my meds"]);
-    const meds = idOf(data, "took my meds");
-    data = setSharedName(data, meds, true);
-    expect(shareCardModel(data, TODAY, "year").names).toEqual(["took my meds"]);
-    data = setSharedName(data, meds, false);
-    expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
-  });
-
-  it("drops an hidden Habit's name, whatever its opt-in says", () => {
+  it("drops a Habit's name the moment it is Hidden", () => {
     let data = account(60, ["no drinking"]);
-    data = setSharedName(data, idOf(data, "no drinking"), true);
     data = setHidden(data, idOf(data, "no drinking"), true, TODAY);
     expect(shareCardModel(data, TODAY, "year").names).toEqual([]);
   });
 
-  it("treats a missing opt-in in an imported file as off, never as on", () => {
+  it("names a Habit read back from an import, the same as any other", () => {
     const parsed = parseAppData({
       version: 1,
       installedOn: TODAY,
@@ -54,18 +38,7 @@ describe("the Share Card is anonymous by default", () => {
       days: {},
       theme: "system",
     });
-    expect(parsed!.habits[0]!.sharedName).toBe(false);
-    expect(shareCardModel(parsed!, TODAY, "year").names).toEqual([]);
-  });
-
-  it("keeps a deliberate opt-in across an export and re-import", () => {
-    // Restoring your own backup must not silently drop settings you chose.
-    // The card names every Habit it will show before it is saved, so a
-    // preserved opt-in is visible rather than a surprise.
-    let data = account(60, ["workout"]);
-    data = setSharedName(data, idOf(data, "workout"), true);
-    const restored = parseAppData(JSON.parse(JSON.stringify(data)));
-    expect(shareCardModel(restored!, TODAY, "year").names).toEqual(["workout"]);
+    expect(shareCardModel(parsed!, TODAY, "year").names).toEqual(["took my meds"]);
   });
 });
 
@@ -122,18 +95,71 @@ describe("the Share Card model", () => {
   });
 
   it("carries no date, handle or per-Habit breakdown", () => {
-    let data = account(60, ["workout"]);
-    data = setSharedName(data, idOf(data, "workout"), true);
+    const data = account(60, ["workout"]);
     const model = shareCardModel(data, TODAY, "year");
-    // The whole surface of the card is these seven fields.
+    // The whole surface of the card is these eight fields.
     expect(Object.keys(model).sort()).toEqual([
       "frame",
       "lens",
       "levels",
       "names",
       "rows",
+      "streak",
       "tally",
       "weekday",
     ]);
+    // An Overview Card has no one Habit to keep a Streak for. See ADR 0011.
+    expect(model.streak).toBeNull();
+  });
+});
+
+describe("the Habit Card", () => {
+  it("names only the one Habit it draws from", () => {
+    const data = account(60, ["took my meds", "no drinking"]);
+    const id = idOf(data, "took my meds");
+    expect(habitCardModel(data, id, TODAY, "year")!.names).toEqual(["took my meds"]);
+  });
+
+  it("gives a Hidden Habit no card at all", () => {
+    let data = account(60, ["no drinking"]);
+    const id = idOf(data, "no drinking");
+    data = setHidden(data, id, true, TODAY);
+    expect(habitCardModel(data, id, TODAY, "year")).toBeNull();
+  });
+
+  it("gives a Habit that no longer exists no card either", () => {
+    const data = account(60, ["workout"]);
+    expect(habitCardModel(data, "not-an-id", TODAY, "year")).toBeNull();
+  });
+
+  it("draws binary Squares, exactly as the Habit's own Heatmap does", () => {
+    let data = account(30, ["workout"]);
+    const id = idOf(data, "workout");
+    data = toggleLog(data, id, TODAY, TODAY);
+    const model = habitCardModel(data, id, TODAY, "year")!;
+    expect(model.levels[0]).toBe(3);
+    expect(model.levels[1]).toBe(0);
+  });
+
+  it("tallies only this Habit's own Logs, not every Habit's", () => {
+    let data = account(30, ["workout", "read"]);
+    const workout = idOf(data, "workout");
+    data = toggleLog(data, workout, TODAY, TODAY);
+    data = toggleLog(data, idOf(data, "read"), TODAY, TODAY);
+    expect(habitCardModel(data, workout, TODAY, "year")!.tally).toBe(1);
+  });
+
+  it("carries no Streak unless the Habit is a Streak Habit", () => {
+    const data = account(30, ["workout"]);
+    const id = idOf(data, "workout");
+    expect(habitCardModel(data, id, TODAY, "year")!.streak).toBeNull();
+  });
+
+  it("carries the Streak once the Habit opts in, matching its own Screen", () => {
+    let data = account(30, ["workout"]);
+    const id = idOf(data, "workout");
+    data = setStreaks(data, id, true);
+    data = toggleLog(data, id, TODAY, TODAY);
+    expect(habitCardModel(data, id, TODAY, "year")!.streak).toBe(1);
   });
 });

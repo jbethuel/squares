@@ -18,7 +18,6 @@ interface AccountSpec {
   /** Habit name -> the Day offsets it was Logged on. 0 is today. */
   logs?: Record<string, number[]>;
   streaks?: string[];
-  sharedNames?: string[];
   /** Habits whose Span was closed at today, so they read as Hidden. */
   hidden?: string[];
   theme?: AppData["theme"];
@@ -29,7 +28,6 @@ export function buildAccount({
   habits = [],
   logs = {},
   streaks = [],
-  sharedNames = [],
   hidden = [],
   theme = "system",
 }: AccountSpec): AppData {
@@ -44,7 +42,7 @@ export function buildAccount({
       name,
       spans: [{ from: installedOn, to: hidden.includes(name) ? now : null }],
       streaks: streaks.includes(name),
-      sharedName: sharedNames.includes(name),
+      namedHabit: false,
     })),
   };
 
