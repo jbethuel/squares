@@ -75,7 +75,7 @@ describe("the Daily Reminder", () => {
 
   it("never counts outstanding Active Habits — its body is fixed", () => {
     const data = account(["yoga", "meds", "walk"]);
-    expect(planReminders(data, daily(), MORNING)[0]!.body).toBe("log your habits");
+    expect(planReminders(data, daily(), MORNING)[0]!.body).toBe("log your habits for today.");
   });
 
   it("still fires on a Day whose Active Habits were all Logged", () => {
@@ -84,7 +84,7 @@ describe("the Daily Reminder", () => {
     data = toggleLog(data, idOf(data, "meds"), TODAY, TODAY);
     const plan = planReminders(data, daily(), MORNING);
     const todays = plan.find((r) => r.date === TODAY);
-    expect(todays?.body).toBe("log your habits");
+    expect(todays?.body).toBe("log your habits for today.");
     expect(plan.some((r) => r.date === addDays(TODAY, 1))).toBe(true);
   });
 
@@ -92,7 +92,7 @@ describe("the Daily Reminder", () => {
     let data = account(["yoga", "meds"]);
     data = toggleLog(data, idOf(data, "yoga"), TODAY, TODAY);
     const todays = planReminders(data, daily(), MORNING).find((r) => r.date === TODAY);
-    expect(todays?.body).toBe("log your habits");
+    expect(todays?.body).toBe("log your habits for today.");
   });
 
   it("keeps firing whether or not a Log silenced it before", () => {
@@ -170,11 +170,11 @@ describe("a Reminded Habit", () => {
 });
 
 describe("a name on a lock screen", () => {
-  it("says '1 Habit left' for a Habit that was never opted in", () => {
+  it("says a Habit is not logged, and not which one, for a Habit that was never opted in", () => {
     const data = account(["no drinking"]);
     const settings = setHabitReminder(noReminders(), idOf(data, "no drinking"), EVENING);
     for (const reminder of planReminders(data, settings, MORNING)) {
-      expect(reminder.body).toBe("1 Habit left");
+      expect(reminder.body).toBe("a habit is not logged today.");
       expect(reminder.title).not.toContain("drinking");
     }
   });
@@ -183,7 +183,7 @@ describe("a name on a lock screen", () => {
     let data = account(["yoga"]);
     const settings = setHabitReminder(noReminders(), idOf(data, "yoga"), EVENING);
     data = setNamedHabit(data, idOf(data, "yoga"), true);
-    expect(planReminders(data, settings, MORNING)[0]!.body).toBe("yoga");
+    expect(planReminders(data, settings, MORNING)[0]!.body).toBe("yoga is not logged today.");
   });
 });
 
@@ -334,7 +334,7 @@ describe("when a Reminder is due", () => {
       date: TODAY,
       time: EVENING,
       title: "squares",
-      body: "1 Habit left",
+      body: "a habit is not logged today.",
     });
     expect(toKey(due)).toBe(TODAY);
     expect([due.getHours(), due.getMinutes(), due.getSeconds()]).toEqual([20, 0, 0]);

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, Text } from "react-native";
+import { Pressable, Text, useWindowDimensions } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -12,7 +12,7 @@ import { Tail } from "./Tail";
 import * as haptics from "@/platform/haptics";
 import { MS, settle } from "@/platform/motion";
 import { longLabel, type DateKey } from "@squares/domain/date";
-import { streakOf, dateAt, isLogged, logCountOf } from "@squares/domain/selectors";
+import { streakLabel, streakOf, dateAt, isLogged, logCountOf } from "@squares/domain/selectors";
 import type { AppData, Habit } from "@squares/domain/types";
 import { FS, MONO, useTheme } from "@/platform/theme";
 
@@ -40,6 +40,7 @@ export function HabitRow({
   onOpen,
 }: HabitRowProps) {
   const t = useTheme();
+  const { width } = useWindowDimensions();
   const [pressed, setPressed] = useState(false);
   const [pulse, setPulse] = useState<"log" | "unlog" | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -64,13 +65,7 @@ export function HabitRow({
 
   const streak = streakOf(data, habit.id, today);
   const count = logCountOf(data, habit.id, today);
-  const subtitle = !habit.streaks
-    ? `${count} log${count === 1 ? "" : "s"}`
-    : streak > 0
-      ? `streak ${streak} day${streak === 1 ? "" : "s"}`
-      : elapsed === 1
-        ? "no streak yet"
-        : "streak broken";
+  const subtitle = habit.streaks ? streakLabel(streak) : `${count} log${count === 1 ? "" : "s"}`;
 
   /*
     The row answering a Log. The web eases the background over 90ms and the
@@ -128,13 +123,15 @@ export function HabitRow({
           minWidth: 0,
           flexDirection: "row",
           alignItems: "center",
-          gap: 12,
+          // Under 375pt the subtitle gets too little room for "90-day streak".
+          // The gap gives way, not the tail or the 44pt chevron.
+          gap: width < 375 ? 4 : 12,
           paddingVertical: 10,
           paddingHorizontal: 14,
         }}
       >
-        {/* The subtitle changes length as a Streak grows — "streak 9 days" to
-            "streak 10 days" — so the block resettles instead of reflowing. */}
+        {/* The subtitle changes length as a Streak grows — "9-day streak" to
+            "10-day streak" — so the block resettles instead of reflowing. */}
         <Animated.View layout={settle()} style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1} style={{ fontFamily: MONO, fontSize: FS.md, color: t.fg }}>
             {habit.name}
@@ -167,7 +164,7 @@ export function HabitRow({
       {onOpen ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Open ${habit.name}`}
+          accessibilityLabel={`open ${habit.name}`}
           onPress={() => {
             haptics.selected();
             onOpen(habit.id);

@@ -75,9 +75,9 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         <div>
           <Total value={totalLogs(data, today)} />
           <div className="caption">
-            {/* No span on day one: "last 1 days" is wrong and "last 1 day" is
-                sad. On the first morning the word alone is the whole caption. */}
-            {elapsed === 1 ? "logs" : `logs · last ${elapsed} days`}
+            {/* No span on day one: "the last 1 days" is wrong, and on the first
+                morning every Log there is was made today. */}
+            {elapsed === 1 ? "logs today" : `logs in the last ${elapsed} days`}
           </div>
         </div>
         {/* One chip is all the chrome Home gets. The Share Card lives in
@@ -88,7 +88,7 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
       </header>
 
       <div style={{ marginBottom: 8 }}>
-        <LensPicker value={lens} onChange={setLens} label="how much of the record to draw" />
+        <LensPicker value={lens} onChange={setLens} label="days to show" />
       </div>
 
       <Heatmap
@@ -102,7 +102,7 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
         titleFor={(offset) => longLabel(dateAt(today, offset))}
         // Logs are counted over the part of the frame that has happened: the
         // rest of it has nothing in it yet by definition.
-        ariaLabel={`Overview heatmap: ${totalLogsIn(data, today, frame.back)} logs across ${lensNoun(lens)}`}
+        ariaLabel={`all habits: ${totalLogsIn(data, today, frame.back)} logs in ${lensNoun(lens)}`}
         markToday
         echo={echo}
       />
@@ -138,17 +138,9 @@ export function HomeScreen({ onOpenHabit, onNewHabit, onSettings }: HomeScreenPr
           />
         ))}
         <button type="button" className="row-add" onClick={onNewHabit}>
-          {habits.length === 0 ? "name your first habit" : "+ new habit"}
+          {habits.length === 0 ? "add your first habit" : "+ new habit"}
         </button>
       </div>
-
-      {/* The one line Home carries, and only while there is nothing else to
-          read. Once a Habit exists the rows are the instructions. */}
-      {habits.length === 0 ? (
-        <p className="note" style={{ textAlign: "center", marginTop: 20, color: "var(--dim)" }}>
-          three is the ceiling. start with one.
-        </p>
-      ) : null}
     </>
   );
 }

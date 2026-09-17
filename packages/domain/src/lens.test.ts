@@ -46,7 +46,7 @@ describe("the frame a Lens draws", () => {
   });
 
   it("names what it draws", () => {
-    expect(LENSES.map(lensNoun)).toEqual(["the week", "the month", "the year"]);
+    expect(LENSES.map(lensNoun)).toEqual(["this week", "this month", "the last 365 days"]);
   });
 });
 

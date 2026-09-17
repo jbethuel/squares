@@ -57,7 +57,7 @@ export default function Settings() {
       `navigator.share()` rejects on dismissal; telling someone their year is
       backed up when it is not is the one thing this line must never do.
     */
-    setStatus((await exportRecord(data, today)) ? "sent to the share sheet" : null);
+    setStatus((await exportRecord(data, today)) ? "squares sent the file to the share sheet." : null);
   };
 
   const doImport = async () => {
@@ -68,17 +68,17 @@ export default function Settings() {
     // bottom of a block the thumb is nowhere near.
     if (result.kind === "not-ours") {
       haptics.refused();
-      return setStatus("that file is not a squares export");
+      return setStatus("the file is not a squares export.");
     }
     if (result.kind === "unreadable") {
       haptics.refused();
-      return setStatus("could not read that file");
+      return setStatus("squares cannot read the file.");
     }
     // An import replaces the year on this device, and there is no undo, so a
     // year that already has something in it has to be confirmed first.
     if (data.habits.length === 0) {
       replace(result.data);
-      setStatus("imported");
+      setStatus("import complete.");
       return;
     }
     setPending(result.data);
@@ -99,7 +99,7 @@ export default function Settings() {
 
       <Rule />
 
-      <SubTitle style={{ marginBottom: 9 }}>data · lives on this device only</SubTitle>
+      <SubTitle style={{ marginBottom: 9 }}>data · only on this device</SubTitle>
       <View style={{ gap: 7 }}>
         <ListButton label="export .json" onPress={() => void doExport()} />
         <ListButton label="import .json" onPress={() => void doImport()} />
@@ -116,8 +116,9 @@ export default function Settings() {
         >
         <Card accent style={{ marginTop: 10 }}>
           <Note style={{ marginBottom: 12 }}>
-            replace this device&apos;s year with {pending.habits.length} habits and{" "}
-            {Object.keys(pending.days).length} logged days? this cannot be undone.
+            replace all the data on this device with the file? the file has{" "}
+            {pending.habits.length} habits and {Object.keys(pending.days).length} logged days. you
+            cannot undo this.
           </Note>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <PrimaryButton
@@ -126,10 +127,10 @@ export default function Settings() {
               onPress={() => {
                 replace(pending);
                 setPending(null);
-                setStatus("imported");
+                setStatus("import complete.");
               }}
             />
-            <QuietButton label="keep mine" style={{ flex: 1 }} onPress={() => setPending(null)} />
+            <QuietButton label="cancel" style={{ flex: 1 }} onPress={() => setPending(null)} />
           </View>
         </Card>
         </Animated.View>
@@ -163,17 +164,18 @@ export default function Settings() {
         Reminder touches the network, and nothing about it is in an Export —
         which is why it is under its own heading here and not under "data".
       */}
-      <SubTitle style={{ marginBottom: 9 }}>reminder · this device only</SubTitle>
+      <SubTitle style={{ marginBottom: 9 }}>reminder · only on this device</SubTitle>
       <ReminderRow
         label="daily reminder"
-        hint="one a day, logged or not"
+        hint="one notification each day."
         time={reminders.daily}
         onSet={reminders.setDaily}
       />
       {/* The rule the lock screen follows, said where it can still be acted on:
           the switch that changes it is on the Habit's own Screen. */}
       <NoteFaint style={{ marginTop: 10 }}>
-        a reminder never names a habit unless that habit is named on its share card.
+        a habit reminder shows the name of the habit only if &quot;show name in reminder&quot; is on
+        for that habit.
       </NoteFaint>
 
       <Rule />
@@ -214,7 +216,7 @@ export default function Settings() {
         setting — it is the only route back to a Screen Home no longer shows.
         Without it, Hide would be a switch that cannot be moved back.
       */}
-      <SubTitle style={{ marginBottom: 9 }}>hidden</SubTitle>
+      <SubTitle style={{ marginBottom: 9 }}>hidden habits</SubTitle>
       {/* A Habit taken back out of the Hide leaves this list while the
           Screen is open, so the rows below it close the gap. */}
       <Animated.View layout={settle()} style={{ gap: 7 }}>
@@ -225,7 +227,7 @@ export default function Settings() {
             onPress={() => router.push(`/habit/${habit.id}`)}
           />
         ))}
-        {hidden.length === 0 ? <NoteFaint>none.</NoteFaint> : null}
+        {hidden.length === 0 ? <NoteFaint>no hidden habits.</NoteFaint> : null}
       </Animated.View>
 
       <Rule />
@@ -233,8 +235,8 @@ export default function Settings() {
       {/* Below the last rule and under no label: this is what the Screen
           promises, not another thing on it to set. */}
       <NoteFaint>
-        no account. no sync. no analytics. uninstalling clears your progress. do frequent backups
-        using export .json.
+        squares has no account, no sync and no analytics. export your data often. if you uninstall
+        squares, you lose all your data.
       </NoteFaint>
     </Screen>
   );

@@ -16,7 +16,7 @@ test.describe("keeping the list of Habits", () => {
   test("refuses to save a Habit with no name", async ({ app }) => {
     const page = await app({ habits: [] });
 
-    await page.getByRole("button", { name: "name your first habit" }).click();
+    await page.getByRole("button", { name: "add your first habit" }).click();
     await expect(page.getByRole("button", { name: "save" })).toBeDisabled();
 
     await page.getByLabel("name").fill("   ");
@@ -26,7 +26,7 @@ test.describe("keeping the list of Habits", () => {
   test("renames a Habit where the name is, and the Logs follow it", async ({ app }) => {
     const page = await app({ age: 30, habits: ["workout"], logs: { workout: [0, 1, 3] } });
 
-    await page.getByRole("button", { name: "Open workout" }).click();
+    await page.getByRole("button", { name: "open workout" }).click();
     // The heading is the field. There is no save to press: leaving it is the
     // commit, and a blank field puts the old name back.
     await habitName(page).fill("lift");
@@ -42,7 +42,7 @@ test.describe("keeping the list of Habits", () => {
     const page = await app({ age: 30, habits: ["workout", "read"], logs: { workout: [2, 3] } });
     await expect(total(page)).toHaveText("2");
 
-    await page.getByRole("button", { name: "Open workout" }).click();
+    await page.getByRole("button", { name: "open workout" }).click();
     await optIn(page, "hide").click();
 
     // The switch is reversible, so it asks nothing first and goes nowhere after.
@@ -90,7 +90,7 @@ test.describe("keeping the list of Habits", () => {
 
     // The Streak does not apply while it is Hidden, so its switch is not on
     // the Screen to sit there doing nothing.
-    await expect(optIn(page, "count a streak")).toHaveCount(0);
+    await expect(optIn(page, "show streak")).toHaveCount(0);
     await expect(optIn(page, "hide")).toBeVisible();
   });
 });
@@ -101,12 +101,12 @@ test.describe("Streaks are opt-in", () => {
 
     await expect(page.getByText("3 logs")).toBeVisible();
 
-    await page.getByRole("button", { name: "Open workout" }).click();
-    await page.getByRole("switch", { name: /count a streak/ }).click();
-    await expect(page.getByText("longest")).toBeVisible();
+    await page.getByRole("button", { name: "open workout" }).click();
+    await page.getByRole("switch", { name: /show streak/ }).click();
+    await expect(page.getByText("longest streak")).toBeVisible();
 
     await page.getByRole("button", { name: "‹ back" }).click();
-    await expect(page.getByText("streak 3 days")).toBeVisible();
+    await expect(page.getByText("3-day streak")).toBeVisible();
   });
 
   test("break on a missed Day and are not repaired", async ({ app }) => {
@@ -118,15 +118,15 @@ test.describe("Streaks are opt-in", () => {
     });
 
     // Yesterday was missed, so the Streak is over even though today is open.
-    await expect(page.getByText("streak broken")).toBeVisible();
+    await expect(page.getByText("no streak")).toBeVisible();
 
     await habitRow(page, "workout").click();
-    await expect(page.getByText("streak 1 day")).toBeVisible();
+    await expect(page.getByText("1-day streak")).toBeVisible();
 
-    await page.getByRole("button", { name: "Open workout" }).click();
+    await page.getByRole("button", { name: "open workout" }).click();
     // The longest Streak is remembered; the current one starts again at 1.
     await expect(page.locator(".stat-value").first()).toHaveText("1");
-    await expect(page.getByText("longest").locator("xpath=preceding-sibling::*[1]")).toHaveText("3");
+    await expect(page.getByText("longest streak").locator("xpath=preceding-sibling::*[1]")).toHaveText("3");
   });
 
   test("can be turned back off on the Habit's own screen, leaving the count", async ({ app }) => {
@@ -136,10 +136,10 @@ test.describe("Streaks are opt-in", () => {
       logs: { workout: [0, 1] },
       streaks: ["workout"],
     });
-    await expect(page.getByText("streak 2 days")).toBeVisible();
+    await expect(page.getByText("2-day streak")).toBeVisible();
 
-    await page.getByRole("button", { name: "Open workout" }).click();
-    await optIn(page, "count a streak").click();
+    await page.getByRole("button", { name: "open workout" }).click();
+    await optIn(page, "show streak").click();
     await page.getByRole("button", { name: "‹ back" }).click();
 
     await expect(page.getByText("2 logs")).toBeVisible();

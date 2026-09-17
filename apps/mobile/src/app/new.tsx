@@ -10,6 +10,8 @@ import { MS, settle } from "@/platform/motion";
 import { useReminders } from "@/platform/useReminders";
 import { FS, MONO, useTheme } from "@/platform/theme";
 
+const DEFAULT_CLOCK = `${String(DEFAULT_TIME.hour).padStart(2, "0")}:${String(DEFAULT_TIME.minute).padStart(2, "0")}`;
+
 /**
  * Naming a new Habit, and nothing else.
  *
@@ -71,7 +73,7 @@ export default function NewHabit() {
         value={draft}
         onChangeText={setDraft}
         maxLength={40}
-        placeholder="something you do daily"
+        placeholder="example: read 10 pages"
         placeholderTextColor={t.faint}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -119,13 +121,12 @@ export default function NewHabit() {
                   protects nobody.
                 */}
                 <Note style={{ marginBottom: 6 }}>
-                  a missed day cannot be filled in later. a daily reminder is the only thing that
-                  stops one.
+                  you can log a habit only on the same day. after midnight, you cannot change that
+                  day.
                 </Note>
                 <NoteFaint style={{ marginBottom: 14 }}>
-                  {`one notification at ${String(DEFAULT_TIME.hour).padStart(2, "0")}:${String(
-                    DEFAULT_TIME.minute,
-                  ).padStart(2, "0")}, and only on a day you have not logged. it never names a habit. change the time or turn it off in settings.`}
+                  a daily reminder sends one notification each day at {DEFAULT_CLOCK}. it does not
+                  show the names of your habits. you can change the time in settings.
                 </NoteFaint>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <PrimaryButton
@@ -148,8 +149,9 @@ export default function NewHabit() {
                   Reminder is set.
                 */}
                 <Note style={{ marginBottom: 14 }}>
-                  notifications are off for squares, so no reminder was set. you can turn them on in
-                  your phone&apos;s settings, then switch it on from squares settings.
+                  squares cannot send notifications, so the daily reminder is off. to turn it on,
+                  first allow notifications for squares in the settings of your phone. then turn on
+                  the daily reminder in squares settings.
                 </Note>
                 <PrimaryButton label="ok" onPress={() => router.back()} />
               </>

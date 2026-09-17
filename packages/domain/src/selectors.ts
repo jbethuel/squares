@@ -153,6 +153,17 @@ export function streakOf(data: AppData, habitId: string, today: DateKey): number
   return length;
 }
 
+/**
+ * A Streak in words: "4-day streak", or "no streak" at zero.
+ *
+ * The number leads because the Habit row gives this about 86px at a 360px
+ * width, and "streak: 4 days" does not fit there. "0-day streak" reads as a
+ * fault, and "no streak" says nothing about whether there ever was one.
+ */
+export function streakLabel(streak: number): string {
+  return streak > 0 ? `${streak}-day streak` : "no streak";
+}
+
 /** The longest Streak this Habit has ever held. Unlike a Streak it cannot fall. */
 export function longestStreakOf(data: AppData, habitId: string, today: DateKey): number {
   let best = 0;

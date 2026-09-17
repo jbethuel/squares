@@ -136,12 +136,12 @@ test.describe("the Lens", () => {
   test("is offered over a Habit's own Heatmap too", async ({ app }) => {
     const page = await app({ age: AGE, habits: ["workout"], logs: { workout: [0] } });
 
-    await page.getByRole("button", { name: "Open workout" }).click();
-    await expect(page.getByText("every day of the year · logged or not")).toBeVisible();
+    await page.getByRole("button", { name: "open workout" }).click();
+    await expect(page.getByText("your logs for the last 365 days")).toBeVisible();
 
     await lens(page, "week").click();
 
-    await expect(page.getByText("every day of the week · logged or not")).toBeVisible();
+    await expect(page.getByText("your logs for this week")).toBeVisible();
     await expect(drawn(page)).toHaveCount(7);
     // Today is marked here as well, so a Day still to come cannot be mistaken
     // for one that was missed.

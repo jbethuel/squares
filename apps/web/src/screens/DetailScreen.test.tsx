@@ -30,7 +30,7 @@ describe("a Habit's own screen", () => {
     expect(stat("logs")).toBe("4");
     // One number, not three. There is no longest Streak to report for a Habit
     // that never counted one, and the count is not worth saying twice.
-    expect(screen.queryByText("longest")).not.toBeInTheDocument();
+    expect(screen.queryByText("longest streak")).not.toBeInTheDocument();
     expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 
@@ -39,7 +39,7 @@ describe("a Habit's own screen", () => {
     open(setStreaks(data, idOf(data, "workout"), true), "workout");
 
     expect(stat("streak")).toBe("3");
-    expect(stat("longest")).toBe("5");
+    expect(stat("longest streak")).toBe("5");
     expect(stat("logs")).toBe("8");
   });
 
@@ -62,7 +62,7 @@ describe("a Habit's own screen", () => {
 
   it("describes the whole year to assistive tech in one label", () => {
     open(account({ age: 30, habits: ["workout"], logs: { workout: [0, 1] } }), "workout");
-    expect(screen.getByRole("img", { name: "workout: 2 logs across the year" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "workout: 2 logs in the last 365 days" })).toBeInTheDocument();
   });
 });
 
@@ -87,20 +87,20 @@ describe("the Lens over a Habit's own Heatmap", () => {
   it("names the span it is drawing rather than always claiming a year", async () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout"] }), "workout");
-    expect(screen.getByText("every day of the year · logged or not")).toBeInTheDocument();
+    expect(screen.getByText("your logs for the last 365 days")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "month" }));
-    expect(screen.getByText("every day of the month · logged or not")).toBeInTheDocument();
+    expect(screen.getByText("your logs for this month")).toBeInTheDocument();
   });
 
   it("describes what it drew, not what it did not", async () => {
     const user = userEvent.setup();
     open(account({ age: 30, habits: ["workout"], logs: { workout: [0, 1] } }), "workout");
-    expect(screen.getByRole("img", { name: "workout: 2 logs across the year" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "workout: 2 logs in the last 365 days" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "week" }));
     // Both Logs are inside this week; the count is of the part that has been lived.
-    expect(screen.getByRole("img", { name: "workout: 2 logs across the week" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "workout: 2 logs in this week" })).toBeInTheDocument();
   });
 
   it("leaves the stats above it on the year, so nothing on screen can fall", async () => {
@@ -118,7 +118,7 @@ describe("the Lens over a Habit's own Heatmap", () => {
 describe("opting a Habit into a Streak", () => {
   it("is off by default, and shows the count rather than a Streak", () => {
     open(account({ habits: ["workout"] }), "workout");
-    const toggle = screen.getByRole("switch", { name: /count a streak/ });
+    const toggle = screen.getByRole("switch", { name: /show streak/ });
     expect(toggle).toHaveAttribute("aria-checked", "false");
     expect(screen.getByText("logs")).toBeInTheDocument();
     expect(screen.queryByText("streak")).not.toBeInTheDocument();
@@ -129,13 +129,13 @@ describe("opting a Habit into a Streak", () => {
     const data = account({ habits: ["workout"], logs: { workout: [0, 1] } });
     open(data, "workout");
 
-    await user.click(screen.getByRole("switch", { name: /count a streak/ }));
+    await user.click(screen.getByRole("switch", { name: /show streak/ }));
 
     expect(storedData().habits[0]?.streaks).toBe(true);
     // The stats are the only thing that says what a Streak is: a count with a
     // longest beside it, where a moment ago there was one number.
     expect(stat("streak")).toBe("2");
-    expect(stat("longest")).toBe("2");
+    expect(stat("longest streak")).toBe("2");
     // Opting in changes the display and nothing else.
     expect(storedData().days).toEqual(data.days);
   });
@@ -146,7 +146,7 @@ describe("opting a Habit into a Streak", () => {
     open(setStreaks(data, idOf(data, "workout"), true), "workout");
 
     expect(stat("streak")).toBe("2");
-    await user.click(screen.getByRole("switch", { name: /count a streak/ }));
+    await user.click(screen.getByRole("switch", { name: /show streak/ }));
     expect(storedData().habits[0]?.streaks).toBe(false);
     expect(stat("logs")).toBe("2");
   });
@@ -221,7 +221,7 @@ describe("hiding is a switch that can be moved back", () => {
     // A switch that sits on and provably does nothing is worse than no switch.
     // ADR 0011: the Habit Card link goes with it — Hide means unreachable by
     // any Share Card, and a link that leads nowhere useful is the same fault.
-    expect(screen.queryByRole("switch", { name: /count a streak/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: /show streak/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "make a share card ›" })).not.toBeInTheDocument();
     expect(archiveSwitch()).toBeInTheDocument();
   });
@@ -236,7 +236,7 @@ describe("hiding is a switch that can be moved back", () => {
     const data = account({ habits: ["workout"] });
     const { onShare } = open(data, "workout");
 
-    // Position only (ADR 0011) — available whether or not "count a streak" is
+    // Position only (ADR 0011) — available whether or not "show streak" is
     // on, and gone only when the Habit is Hidden.
     await user.click(screen.getByRole("button", { name: "make a share card ›" }));
     expect(onShare).toHaveBeenCalledWith(idOf(data, "workout"));
@@ -250,7 +250,7 @@ describe("hiding is a switch that can be moved back", () => {
     // it would read 0 forever. What it did, and its longest run, are still true.
     expect(screen.queryByText("streak")).not.toBeInTheDocument();
     expect(stat("logs")).toBe("3");
-    expect(stat("longest")).toBe("3");
+    expect(stat("longest streak")).toBe("3");
   });
 
   it("still lets a Hidden Habit be renamed, so the list stays right", async () => {

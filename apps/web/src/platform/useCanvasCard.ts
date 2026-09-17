@@ -57,7 +57,7 @@ export function useCanvasCard(model: ShareCardModel | null) {
     // Where the device offers a sheet this is that sheet, driven by the user.
     // The app never posts anything itself, and it does not claim the card was
     // saved when the sheet was dismissed.
-    setStatus((await handOff(file)) ? "saved" : null);
+    setStatus((await handOff(file)) ? "the card is saved." : null);
   };
 
   return { canvasRef, size, status, save };

@@ -15,7 +15,7 @@ test.describe("the year lives on this device", () => {
     const contents = JSON.parse(await readFile((await file.path())!, "utf8"));
     expect(contents.version).toBe(3);
     expect(contents.habits.map((h: { name: string }) => h.name)).toEqual(["workout", "read"]);
-    await expect(page.getByRole("status")).toHaveText("exported");
+    await expect(page.getByRole("status")).toHaveText("export complete.");
   });
 
   test("imports straight into a device with nothing to lose", async ({ app }) => {
@@ -29,7 +29,7 @@ test.describe("the year lives on this device", () => {
       buffer: Buffer.from(JSON.stringify(incoming)),
     });
 
-    await expect(page.getByRole("status")).toHaveText("imported");
+    await expect(page.getByRole("status")).toHaveText("import complete.");
     await page.getByRole("button", { name: "‹ back" }).click();
 
     await expect(habitRow(page, "read")).toBeVisible();
@@ -49,13 +49,13 @@ test.describe("the year lives on this device", () => {
     });
 
     await expect(
-      page.getByText(/replace this device's year with 2 habits and 3 logged days\?/),
+      page.getByText(/the file has 2 habits and 3 logged days\./),
     ).toBeVisible();
-    await expect(page.getByText(/this cannot be undone/)).toBeVisible();
+    await expect(page.getByText(/you cannot undo this/)).toBeVisible();
     // Nothing has happened yet.
     expect((await readDevice(page)).habits.map((h) => h.name)).toEqual(["workout"]);
 
-    await page.getByRole("button", { name: "keep mine" }).click();
+    await page.getByRole("button", { name: "cancel" }).click();
     expect((await readDevice(page)).habits.map((h) => h.name)).toEqual(["workout"]);
 
     await page.getByRole("button", { name: "‹ back" }).click();
@@ -75,7 +75,7 @@ test.describe("the year lives on this device", () => {
     });
     await page.getByRole("button", { name: "replace" }).click();
 
-    await expect(page.getByRole("status")).toHaveText("imported");
+    await expect(page.getByRole("status")).toHaveText("import complete.");
     await page.getByRole("button", { name: "‹ back" }).click();
     await expect(habitRow(page, "read")).toBeVisible();
     await expect(habitRow(page, "workout")).toHaveCount(0);
@@ -92,7 +92,7 @@ test.describe("the year lives on this device", () => {
       buffer: Buffer.from(JSON.stringify({ hello: "world" })),
     });
 
-    await expect(page.getByRole("status")).toHaveText("that file is not a squares export");
+    await expect(page.getByRole("status")).toHaveText("the file is not a squares export.");
     expect((await readDevice(page)).habits.map((h) => h.name)).toEqual(["workout"]);
   });
 
@@ -106,7 +106,7 @@ test.describe("the year lives on this device", () => {
       buffer: Buffer.from("this is my year, honest"),
     });
 
-    await expect(page.getByRole("status")).toHaveText("could not read that file");
+    await expect(page.getByRole("status")).toHaveText("squares cannot read the file.");
     expect((await readDevice(page)).habits.map((h) => h.name)).toEqual(["workout"]);
   });
 
@@ -129,7 +129,7 @@ test.describe("the year lives on this device", () => {
       ),
     });
 
-    await expect(page.getByRole("status")).toHaveText("imported");
+    await expect(page.getByRole("status")).toHaveText("import complete.");
     const data = await readDevice(page);
     expect(data.habits[0]?.namedHabit).toBe(false);
     expect(data.habits[0]?.streaks).toBe(false);

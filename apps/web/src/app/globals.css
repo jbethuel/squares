@@ -491,6 +491,16 @@ select {
   text-align: left;
   cursor: pointer;
 }
+/*
+ * Under 375px the name and its subtitle get 86px beside the tail, and
+ * "90-day streak" needs 87. The gap gives way, not the tail or the 44px
+ * chevron.
+ */
+@media (max-width: 374px) {
+  .row-log {
+    gap: 4px;
+  }
+}
 .row[data-logged="true"] {
   background: var(--surface-on);
   border-color: var(--row-on-line);

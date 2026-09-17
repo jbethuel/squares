@@ -182,19 +182,20 @@ export interface PlannedReminder {
 
 /**
  * ADR 0012: the Daily Reminder is a check-in, not a nag about what's left, so
- * its body never counts outstanding Habits the way a Reminded Habit's
- * fallback text does — it says the same thing whether the Day is done or not.
+ * its body never counts outstanding Habits — it says the same thing whether
+ * the Day is done or not.
  */
-const DAILY_BODY = "log your habits";
+const DAILY_BODY = "log your habits for today.";
 
 /**
  * ADR 0008: a Reminder names its Habit only if that Habit is a Named Habit.
- * Otherwise it says a count and nothing else. The default is unnamed, and a
+ * Otherwise it says that a Habit is not Logged, and not which one. It is not a
+ * count, and it never reads like the Daily Reminder. The default is unnamed, and a
  * Reminder arrives unbidden in front of whoever is in the room — unlike the
  * Share Card, which names every Habit unconditionally. See ADR 0010.
  */
 function habitBody(habit: Habit): string {
-  return habit.namedHabit ? habit.name : "1 Habit left";
+  return habit.namedHabit ? `${habit.name} is not logged today.` : "a habit is not logged today.";
 }
 
 function when(reminder: PlannedReminder): string {

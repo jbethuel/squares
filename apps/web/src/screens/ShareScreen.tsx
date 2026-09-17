@@ -24,7 +24,7 @@ export function ShareScreen() {
       </h1>
 
       <div style={{ marginBottom: 12 }}>
-        <LensPicker value={lens} onChange={setLens} label="how much of the record to put on the card" />
+        <LensPicker value={lens} onChange={setLens} label="days to show on the card" />
       </div>
 
       <canvas
@@ -32,8 +32,8 @@ export function ShareScreen() {
         width={size.width}
         height={size.height}
         className="share-preview"
-        aria-label={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}${
-          model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ""
+        aria-label={`share card: ${model.tally} logs in ${lensNoun(model.lens)}.${
+          model.names.length > 0 ? ` habits: ${model.names.join(", ")}.` : ""
         }`}
         role="img"
       />
@@ -46,11 +46,13 @@ export function ShareScreen() {
       <div className="card" style={{ marginTop: 16 }}>
         {model.names.length === 0 ? (
           <p className="note" style={{ margin: 0 }}>
-            no habits on this card yet.
+            this card has no habits. add a habit on home.
           </p>
         ) : (
           <p className="note" style={{ margin: 0 }}>
-            this card names {model.names.join(", ")}.
+            this card shows{" "}
+            {model.names.length === 1 ? "the name of this habit" : "the names of these habits"}:{" "}
+            {model.names.join(", ")}.
           </p>
         )}
       </div>

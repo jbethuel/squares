@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { HabitRow } from "@/components/HabitRow";
 import { Heatmap } from "@/components/Heatmap";
@@ -29,13 +29,12 @@ import {
 } from "@squares/domain/selectors";
 import { useStore } from "@squares/domain/store";
 import * as haptics from "@/platform/haptics";
-import { MS, settle, usePressScale } from "@/platform/motion";
+import { settle, usePressScale } from "@/platform/motion";
 import { FS, MONO, useTheme } from "@/platform/theme";
 
 const ECHO_MS = 300;
 
 export default function Home() {
-  const t = useTheme();
   const router = useRouter();
   const { data, today, update } = useStore();
   const [echo, setEcho] = useState(false);
@@ -82,10 +81,10 @@ export default function Home() {
         */}
         <View>
           <Total value={totalLogs(data, today)} />
-          {/* No span on day one: "last 1 days" is wrong and "last 1 day" is
-              sad. On the first morning the word alone is the whole caption. */}
+          {/* No span on day one: "the last 1 days" is wrong, and on the first
+              morning every Log there is was made today. */}
           <Caption style={{ marginTop: 5 }}>
-            {elapsed === 1 ? "logs" : `logs · last ${elapsed} days`}
+            {elapsed === 1 ? "logs today" : `logs in the last ${elapsed} days`}
           </Caption>
         </View>
         {/* One chip is all the chrome Home gets. The Share Card lives in
@@ -94,7 +93,7 @@ export default function Home() {
       </View>
 
       <View style={{ marginBottom: 8 }}>
-        <LensPicker value={lens} onChange={setLens} label="how much of the record to draw" />
+        <LensPicker value={lens} onChange={setLens} label="days to show" />
       </View>
 
       <Heatmap
@@ -107,7 +106,7 @@ export default function Home() {
         levelFor={(offset) => intensityAt(data, dateAt(today, offset), today)}
         // Logs are counted over the part of the frame that has happened: the
         // rest of it has nothing in it yet by definition.
-        label={`Overview heatmap: ${totalLogsIn(data, today, frame.back)} logs across ${lensNoun(lens)}`}
+        label={`all habits: ${totalLogsIn(data, today, frame.back)} logs in ${lensNoun(lens)}`}
         markToday
         echo={echo}
       />
@@ -142,29 +141,10 @@ export default function Home() {
           />
         ))}
         <AddRow
-          label={habits.length === 0 ? "name your first habit" : "+ new habit"}
+          label={habits.length === 0 ? "add your first habit" : "+ new habit"}
           onPress={() => router.push("/new")}
         />
       </Animated.View>
-
-      {/* The one line Home carries, and only while there is nothing else to
-          read. Once a Habit exists the rows are the instructions. */}
-      {habits.length === 0 ? (
-        <Animated.Text
-          layout={settle()}
-          exiting={FadeOut.duration(MS.reveal)}
-          style={{
-            fontFamily: MONO,
-            fontSize: FS.xs,
-            lineHeight: 19,
-            color: t.dim,
-            textAlign: "center",
-            marginTop: 20,
-          }}
-        >
-          three is the ceiling. start with one.
-        </Animated.Text>
-      ) : null}
     </Screen>
   );
 }

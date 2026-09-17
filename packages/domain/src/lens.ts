@@ -100,9 +100,13 @@ export function lensDays(lens: Lens, today: DateKey): number {
   return frame.back + frame.ahead;
 }
 
-/** "the week" · "the month" · "the year", for prose that names what is drawn. */
+/**
+ * "this week" · "this month" · "the last 365 days", for prose that names what
+ * is drawn. The Year is not the calendar year: it is the 365 Days that end on
+ * today, and "the year" on 17 September reads as January to September.
+ */
 export function lensNoun(lens: Lens): string {
-  return `the ${lens}`;
+  return lens === "year" ? "the last 365 days" : `this ${lens}`;
 }
 
 export interface LensLegend {

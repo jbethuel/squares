@@ -1,6 +1,7 @@
 import { CARD, css, DARK_LEVELS } from "@squares/domain/palette";
 import { gridHeight, gridSquares, squareRadius } from "@squares/domain/grid";
 import { lensNoun } from "@squares/domain/lens";
+import { streakLabel } from "@squares/domain/selectors";
 import {
   CAPTION_SIZE,
   CARD_WIDTH,
@@ -138,7 +139,7 @@ export function drawShareCard(
     // Habit — the same gate that Habit's own Screen shows its Streak behind.
     ctx.fillStyle = css(CARD.names);
     ctx.font = `400 ${u(NAMES_SIZE)}px ${FONT}`;
-    ctx.fillText(`${model.streak}-day streak`, u(PAD), u(lineY));
+    ctx.fillText(streakLabel(model.streak), u(PAD), u(lineY));
   }
 
   ctx.textAlign = "right";

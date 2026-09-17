@@ -11,6 +11,7 @@ import {
 import { CARD, DARK_LEVELS, toRgb, type Oklch } from "@squares/domain/palette";
 import { gridHeight, gridSquares, squareRadius } from "@squares/domain/grid";
 import { lensNoun } from "@squares/domain/lens";
+import { streakLabel } from "@squares/domain/selectors";
 import {
   CAPTION_SIZE,
   CARD_WIDTH,
@@ -206,7 +207,7 @@ export function drawShareCard(canvas: SkCanvas, model: ShareCardModel, scale: nu
     // Habit — the same gate that Habit's own Screen shows its Streak behind.
     text(
       canvas,
-      `${model.streak}-day streak`,
+      streakLabel(model.streak),
       u(PAD),
       u(lineY),
       Skia.Font(regular, u(NAMES_SIZE)),

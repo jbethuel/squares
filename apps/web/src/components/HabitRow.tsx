@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tail } from "./Tail";
 import { longLabel, type DateKey } from "@squares/domain/date";
-import { streakOf, dateAt, isLogged, logCountOf } from "@squares/domain/selectors";
+import { streakLabel, streakOf, dateAt, isLogged, logCountOf } from "@squares/domain/selectors";
 import type { AppData, Habit } from "@squares/domain/types";
 
 /** The spring is 260ms; the pulse is released just after it lands. */
@@ -49,13 +49,7 @@ export function HabitRow({ habit, data, today, elapsed, offset, onLog, onOpen }:
 
   const streak = streakOf(data, habit.id, today);
   const count = logCountOf(data, habit.id, today);
-  const subtitle = !habit.streaks
-    ? `${count} log${count === 1 ? "" : "s"}`
-    : streak > 0
-      ? `streak ${streak} day${streak === 1 ? "" : "s"}`
-      : elapsed === 1
-        ? "no streak yet"
-        : "streak broken";
+  const subtitle = habit.streaks ? streakLabel(streak) : `${count} log${count === 1 ? "" : "s"}`;
 
   return (
     <div className="row" data-logged={logged} data-pressed={pressed || undefined}>
@@ -94,7 +88,7 @@ export function HabitRow({ habit, data, today, elapsed, offset, onLog, onOpen }:
         <button
           type="button"
           className="row-open"
-          aria-label={`Open ${habit.name}`}
+          aria-label={`open ${habit.name}`}
           onClick={() => onOpen(habit.id)}
         >
           ›

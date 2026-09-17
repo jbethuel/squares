@@ -6,7 +6,7 @@ import type { Lens } from "@squares/domain/lens";
 
 function open(value: Lens = "year") {
   const onChange = vi.fn();
-  render(<LensPicker value={value} onChange={onChange} label="how much of the year to draw" />);
+  render(<LensPicker value={value} onChange={onChange} label="days to show" />);
   return onChange;
 }
 
@@ -40,6 +40,6 @@ describe("the Lens picker", () => {
 
   it("names itself, because a screen can carry one for each Heatmap", () => {
     open();
-    expect(screen.getByRole("group", { name: "how much of the year to draw" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "days to show" })).toBeInTheDocument();
   });
 });

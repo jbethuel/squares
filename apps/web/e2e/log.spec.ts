@@ -4,10 +4,9 @@ test.describe("the whole app, one tap at a time", () => {
   test("starts empty, names a first Habit, and fills a Square", async ({ app }) => {
     const page = await app();
 
-    await expect(page.getByText("three is the ceiling. start with one.")).toBeVisible();
     await expect(total(page)).toHaveText("0");
 
-    await page.getByRole("button", { name: "name your first habit" }).click();
+    await page.getByRole("button", { name: "add your first habit" }).click();
     await page.getByLabel("name").fill("workout");
     await page.getByRole("button", { name: "save" }).click();
 
@@ -71,7 +70,7 @@ test.describe("the whole app, one tap at a time", () => {
   test("draws the year in full from day one, with no progress number", async ({ app }) => {
     const page = await app({ age: 1, habits: ["workout"] });
 
-    await expect(page.getByText("logs", { exact: true })).toBeVisible();
+    await expect(page.getByText("logs today", { exact: true })).toBeVisible();
 
     // The frame is a calendar and does not grow into one: the same 365 Squares
     // on day one as on day 365, and still nothing counting down anywhere.
@@ -116,7 +115,7 @@ test.describe("the whole app, one tap at a time", () => {
   test("opens a Habit's own year and comes back", async ({ app }) => {
     const page = await app({ age: 60, habits: ["workout"], logs: { workout: [0, 1, 2] } });
 
-    await page.getByRole("button", { name: "Open workout" }).click();
+    await page.getByRole("button", { name: "open workout" }).click();
     await expect(page.getByRole("heading", { name: "workout" })).toBeVisible();
     await expect(page.getByText("logs", { exact: true })).toBeVisible();
 

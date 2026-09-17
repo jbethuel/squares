@@ -82,7 +82,7 @@ describe("moving through the app", () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout"], logs: { workout: [0, 1] } }));
 
-    await click(user, "Open workout");
+    await click(user, "open workout");
     expect(screen.getByRole("heading", { name: "workout" })).toBeInTheDocument();
 
     await click(user, "‹ back");
@@ -118,7 +118,7 @@ describe("moving through the app", () => {
     const user = userEvent.setup();
     open(account({ habits: [] }));
 
-    await click(user, "name your first habit");
+    await click(user, "add your first habit");
     await user.type(screen.getByLabelText("name"), "workout");
     await click(user, "‹ back");
 
@@ -130,7 +130,7 @@ describe("moving through the app", () => {
     const user = userEvent.setup();
     open(account({ habits: [] }));
 
-    await click(user, "name your first habit");
+    await click(user, "add your first habit");
     await user.type(screen.getByLabelText("name"), "workout{Enter}");
     await settle();
 
@@ -156,7 +156,7 @@ describe("the way out", () => {
     const user = userEvent.setup();
     open();
 
-    await click(user, "Open workout");
+    await click(user, "open workout");
     expect(backBar()).toBeInTheDocument();
 
     await pressBack();
@@ -214,7 +214,7 @@ describe("hiding from inside a Habit", () => {
     const user = userEvent.setup();
     open(account({ habits: ["workout", "read"] }));
 
-    await click(user, "Open workout");
+    await click(user, "open workout");
     await user.click(screen.getByRole("switch", { name: /^hide/ }));
 
     // Nothing navigates: the Habit is still the subject of the Screen, and the

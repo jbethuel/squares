@@ -5,6 +5,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { LensPicker } from "@/components/LensPicker";
 import { Card, Note, NoteFaint, PrimaryButton, Screen } from "@/components/ui";
 import { DEFAULT_LENS, lensNoun, type Lens } from "@squares/domain/lens";
+import { streakLabel } from "@squares/domain/selectors";
 import { habitCardModel } from "@squares/domain/shareCard";
 import { useStore } from "@squares/domain/store";
 import { useCardExport } from "@/platform/useCardExport";
@@ -35,7 +36,7 @@ export default function HabitShare() {
         <LensPicker
           value={lens}
           onChange={setLens}
-          label="how much of the record to put on the card"
+          label="days to show on the card"
         />
       </View>
 
@@ -45,20 +46,20 @@ export default function HabitShare() {
           layout={settle()}
           entering={FadeIn.duration(MS.reveal)}
           accessibilityRole="image"
-          accessibilityLabel={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}, naming ${model.names.join(", ")}${
-            model.streak !== null ? `, a ${model.streak}-day streak` : ""
+          accessibilityLabel={`share card: ${model.tally} logs in ${lensNoun(model.lens)}. habits: ${model.names.join(", ")}.${
+            model.streak !== null ? ` ${streakLabel(model.streak)}.` : ""
           }`}
           source={{ uri: `data:image/png;base64,${card.base64}` }}
           style={{ width: "100%", aspectRatio: card.width / card.height, borderRadius: 14 }}
         />
       ) : (
-        <NoteFaint>the card could not be drawn on this device.</NoteFaint>
+        <NoteFaint>squares cannot make the card on this device.</NoteFaint>
       )}
 
       {/* Always exactly one name, and no anonymous case: ADR 0011 gives a
           Hidden Habit no Habit Card at all, and every other Habit gets one. */}
       <Card style={{ marginTop: 16 }}>
-        <Note>this card names {model.names.join(", ")}.</Note>
+        <Note>this card shows the name of this habit: {model.names.join(", ")}.</Note>
       </Card>
 
       <View style={{ marginTop: 20 }}>

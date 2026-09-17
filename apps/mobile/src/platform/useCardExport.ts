@@ -18,7 +18,7 @@ export function useCardExport(model: ShareCardModel | null) {
     // Where the device offers a sheet this is that sheet, driven by the user.
     // The app never posts anything itself. As on Settings, the claim stops at
     // what the API actually reports — see `handoff.ts`.
-    setStatus((await exportCard(card.base64)) ? "sent to the share sheet" : null);
+    setStatus((await exportCard(card.base64)) ? "squares sent the card to the share sheet." : null);
   };
 
   return { card, status, save };

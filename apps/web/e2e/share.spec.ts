@@ -23,9 +23,9 @@ test.describe("the Share Card names every visible Habit", () => {
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByText("this card names took my meds, no drinking.")).toBeVisible();
+    await expect(page.getByText("this card shows the names of these habits: took my meds, no drinking.")).toBeVisible();
     await expect(
-      page.getByRole("img", { name: /naming took my meds, no drinking/ }),
+      page.getByRole("img", { name: /habits: took my meds, no drinking\./ }),
     ).toBeVisible();
   });
 
@@ -40,14 +40,14 @@ test.describe("the Share Card names every visible Habit", () => {
     // through Home rather than sideways within settings.
     await page.getByRole("button", { name: "‹ back" }).click();
     await page.getByRole("button", { name: "‹ back" }).click();
-    await page.getByRole("button", { name: "Open no drinking" }).click();
+    await page.getByRole("button", { name: "open no drinking" }).click();
     await optIn(page, "hide").click();
     await page.getByRole("button", { name: "‹ back" }).click();
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByText("this card names workout.")).toBeVisible();
-    await expect(page.getByRole("img", { name: /naming workout/ })).toBeVisible();
+    await expect(page.getByText("this card shows the name of this habit: workout.")).toBeVisible();
+    await expect(page.getByRole("img", { name: /habits: workout\./ })).toBeVisible();
     await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
 
     // The drawing itself changed, not merely the sentence beside it.
@@ -63,7 +63,7 @@ test.describe("the Share Card names every visible Habit", () => {
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "save .png" }).click();
     expect((await download).suggestedFilename()).toBe("squares.png");
-    await expect(page.getByRole("status")).toHaveText("saved");
+    await expect(page.getByRole("status")).toHaveText("the card is saved.");
   });
 
   test("is reached from settings and not from Home", async ({ app }) => {
@@ -81,18 +81,18 @@ test.describe("the Habit Card names only its own Habit", () => {
       logs: { workout: [0, 1] },
     });
 
-    await page.getByRole("button", { name: "Open workout" }).click();
+    await page.getByRole("button", { name: "open workout" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
     await expect(page.getByRole("heading", { name: "share workout" })).toBeVisible();
-    await expect(page.getByText("this card names workout.")).toBeVisible();
-    await expect(page.getByRole("img", { name: /naming workout/ })).toBeVisible();
+    await expect(page.getByText("this card shows the name of this habit: workout.")).toBeVisible();
+    await expect(page.getByRole("img", { name: /habits: workout\./ })).toBeVisible();
     await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
   });
 
   test("offers no such link once the Habit is Hidden", async ({ app }) => {
     const page = await app({ habits: ["workout"] });
-    await page.getByRole("button", { name: "Open workout" }).click();
+    await page.getByRole("button", { name: "open workout" }).click();
     await optIn(page, "hide").click();
     await expect(page.getByRole("button", { name: "make a share card ›" })).toHaveCount(0);
   });
@@ -100,13 +100,13 @@ test.describe("the Habit Card names only its own Habit", () => {
   test("shows the Streak once the Habit opts in, matching its own Screen", async ({ app }) => {
     const page = await app({ age: 30, habits: ["workout"], logs: { workout: [0] } });
 
-    await page.getByRole("button", { name: "Open workout" }).click();
-    await optIn(page, "count a streak").click();
+    await page.getByRole("button", { name: "open workout" }).click();
+    await optIn(page, "show streak").click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
     // The Streak is drawn onto the canvas itself and read back through the
     // accessible label, the same way the names line already is.
-    await expect(page.getByRole("img", { name: /naming workout, a 1-day streak/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /habits: workout\. 1-day streak\./ })).toBeVisible();
   });
 });
 
@@ -144,7 +144,7 @@ test.describe("the Share Card's own Lens", () => {
     await page.getByRole("button", { name: "make a share card ›" }).click();
     await page.getByRole("button", { name: "week", exact: true }).click();
 
-    await expect(page.getByRole("img", { name: /0 logs across the week/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /0 logs in this week/ })).toBeVisible();
 
     // The Week runs Sunday to Saturday, so today's column is its weekday, and
     // the column is taken from the app's own rule rather than a second copy.
@@ -169,11 +169,11 @@ test.describe("the Share Card's own Lens", () => {
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByRole("img", { name: /4 logs across the year/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /4 logs in the last 365 days/ })).toBeVisible();
     const year = await cardPixels(page);
 
     await page.getByRole("button", { name: "week", exact: true }).click();
-    await expect(page.getByRole("img", { name: /1 logs across the week/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /1 logs in this week/ })).toBeVisible();
 
     // The drawing changed too, not just the sentence.
     expect(await cardPixels(page)).not.toBe(year);
@@ -188,6 +188,6 @@ test.describe("the Share Card's own Lens", () => {
       "aria-pressed",
       "true",
     );
-    await expect(page.getByRole("img", { name: /across the year/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /in the last 365 days/ })).toBeVisible();
   });
 });

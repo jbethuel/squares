@@ -102,7 +102,7 @@ export default function Detail() {
         to bring the Habit back.
       */}
       {/*
-        Turning "count a streak" on grows this row from one number to three, and
+        Turning "show streak" on grows this row from one number to three, and
         Hide takes one back. Both resettle rather than snapping, because
         the grid beneath them moves when they do.
       */}
@@ -124,7 +124,7 @@ export default function Detail() {
         />
         {habit.streaks ? (
           <>
-            <Stat value={longestStreakOf(data, habit.id, today)} label="longest" colour={t.fg} />
+            <Stat value={longestStreakOf(data, habit.id, today)} label="longest streak" colour={t.fg} />
             {hidden ? null : <Stat value={logs} label="logs" colour={t.fg} />}
           </>
         ) : null}
@@ -135,9 +135,9 @@ export default function Detail() {
         rather than sharing one with the label: at 350px the label wraps if it
         has to share, and a two-line caption above a grid reads as a fault.
       */}
-      <Label style={{ marginBottom: 9 }}>every day of {lensNoun(lens)} · logged or not</Label>
+      <Label style={{ marginBottom: 9 }}>your logs for {lensNoun(lens)}</Label>
       <View style={{ marginBottom: 8 }}>
-        <LensPicker value={lens} onChange={setLens} label={`how much of ${habit.name} to draw`} />
+        <LensPicker value={lens} onChange={setLens} label="days to show" />
       </View>
       {/*
         A Habit Heatmap is binary and uses level 3 only. A gradient here would
@@ -155,7 +155,7 @@ export default function Detail() {
         today={today}
         months={lensMonths(lens)}
         levelFor={(offset) => (isLogged(data, habit.id, dateAt(today, offset)) ? 3 : 0)}
-        label={`${habit.name}: ${logCountIn(data, habit.id, today, frame.back)} logs across ${lensNoun(lens)}`}
+        label={`${habit.name}: ${logCountIn(data, habit.id, today, frame.back)} logs in ${lensNoun(lens)}`}
         markToday
       />
 
@@ -176,7 +176,7 @@ export default function Detail() {
           style={{ gap: 7, marginTop: 22 }}
         >
           <ToggleRow
-            label="count a streak"
+            label="show streak"
             on={habit.streaks}
             onToggle={() => update((current) => setStreaks(current, habit.id, !habit.streaks))}
           />
@@ -191,7 +191,7 @@ export default function Detail() {
               is the Reminder's name — the Share Card has no toggle of its
               own; ADR 0010 has it always name every visible Habit. */}
           <ToggleRow
-            label="name on reminder"
+            label="show name in reminder"
             on={habit.namedHabit}
             onToggle={() =>
               update((current) => setNamedHabit(current, habit.id, !habit.namedHabit))
@@ -210,8 +210,8 @@ export default function Detail() {
             label="remind me"
             hint={
               habit.namedHabit
-                ? "names this habit on your lock screen"
-                : "says '1 habit left', not the name"
+                ? "the notification shows the name of this habit."
+                : "the notification does not show the name of this habit."
             }
             time={reminders.forHabit(habit.id)}
             onSet={(time) => reminders.setForHabit(habit.id, time)}
@@ -227,7 +227,11 @@ export default function Detail() {
       <Divider style={{ marginVertical: 20 }} />
       <ToggleRow
         label="hide"
-        hint={hidden ? "off home. logs kept." : "off home, and out of the year"}
+        hint={
+          hidden
+            ? "this habit and its logs are not on home. turn off to show them again."
+            : "removes this habit and its logs from home. squares keeps the logs."
+        }
         on={hidden}
         onToggle={() => update((current) => setHidden(current, habit.id, !hidden, today))}
       />
