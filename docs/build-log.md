@@ -184,3 +184,22 @@ default time.
 - The listing has no screenshots and no copy. `store/android/` holds the icon
   and the feature graphic only, and the `pnpm icons` and `pnpm store-assets`
   scripts the README documents do not exist in any package.json.
+
+## 2026-09-17 — auditing the merged manifest
+
+A permissions review, not a feature: every native dependency in
+`apps/mobile/package.json` was checked for what it adds to the merged Android
+manifest, the same way the 2026-09-15 entry caught `SYSTEM_ALERT_WINDOW`.
+
+`expo-file-system` merges in three: `INTERNET`, and `READ_EXTERNAL_STORAGE` /
+`WRITE_EXTERNAL_STORAGE` (both capped at API 32). None are used — Export,
+Import and the Share Card go through `Paths.cache` and the OS share sheet /
+document picker (`platform/handoff.ts`), never shared storage, and ADR 0004 is
+the reason nothing in this app calls out to the network at all. `INTERNET` on
+a "no backend" app is the one a security-minded user or a Play reviewer would
+catch, so all three joined `SYSTEM_ALERT_WINDOW` in `blockedPermissions`.
+
+What's left after blocking: `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED`
+(both `expo-notifications`, both earned by the Daily Reminder) and `VIBRATE`
+(`expo-haptics`). Every remaining permission now maps to a feature the app
+actually has.

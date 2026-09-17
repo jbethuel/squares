@@ -65,8 +65,21 @@ const config: ExpoConfig = {
      * the dev menu's overlay, and the manifest merger carries it into the
      * release build, where nothing asks for it. Play treats it as a sensitive
      * permission and wants to know what it is for; the honest answer is nothing.
+     *
+     * `expo-file-system` carries its own three: INTERNET, and
+     * READ/WRITE_EXTERNAL_STORAGE (both capped at API 32). Export, Import and the
+     * Share Card only ever touch `Paths.cache` and hand the file to the OS share
+     * sheet or document picker (see `platform/handoff.ts`) — nothing here reads
+     * or writes shared storage directly, and ADR 0004 is the reason nothing here
+     * calls out to the network at all. INTERNET on a "no backend" app is exactly
+     * the kind of manifest line that undercuts the claim on inspection.
      */
-    blockedPermissions: ["android.permission.SYSTEM_ALERT_WINDOW"],
+    blockedPermissions: [
+      "android.permission.SYSTEM_ALERT_WINDOW",
+      "android.permission.INTERNET",
+      "android.permission.READ_EXTERNAL_STORAGE",
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+    ],
 
     adaptiveIcon: {
       backgroundColor: hex(CARD.bg),
