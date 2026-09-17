@@ -203,3 +203,34 @@ What's left after blocking: `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED`
 (both `expo-notifications`, both earned by the Daily Reminder) and `VIBRATE`
 (`expo-haptics`). Every remaining permission now maps to a feature the app
 actually has.
+
+## 2026-09-17 — the first build, and a full store listing
+
+The 2026-09-15 entry's first carried-forward item: resolved. `eas build
+--profile preview` ran end to end and installed on a device. Skia, Reanimated,
+the React Compiler and the new architecture compiled together for the first
+time and none of it broke — the year grid renders and, the heavier path, the
+Share Card's Skia canvas rendered and encoded a PNG correctly on-device. The
+existing `Build Credentials C7XyyzfxRU` on EAS signed it, so nothing about
+credentials needed setting up.
+
+`store/android/screenshots/` and `store/android/listing.md` now hold the
+listing: four screenshots (Home, a Habit's screen, the Share Card, Settings)
+and the short/long description, category and contact email. The device that
+took them was seeded with a synthetic ~260-day, 3-habit history — built the
+same way `apps/web/e2e/fixtures.ts`'s `buildAccount` builds a test account —
+so the year reads as lived-in rather than the one real Habit and one real Log
+actually on that device. `listing.md` says as much, so nobody mistakes the
+screenshots for real usage later.
+
+The privacy policy the second carried-forward item asked for exists now:
+https://jbethuel.com/privacy/squares. ADR 0004 still needs the amendment
+acknowledging it — the app has one now, hosted outside the app, which the ADR
+as written says doesn't happen.
+
+The Play Console account under `jbethuel` turned out to be closed — Google
+closes developer accounts for inactivity, and this one had been, since before
+any Android work started here. No Data Safety form and no closed testing
+track can exist until a new account (and a new $25) replaces it. That account
+is being made outside this repo; the third carried-forward item — a listing
+with no screenshots or copy — is otherwise done and waiting on it.
