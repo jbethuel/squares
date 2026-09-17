@@ -24,13 +24,12 @@ const lens = (name: string) => screen.getByRole("button", { name });
 describe("Home on day one", () => {
   it("asks for a first Habit rather than showing an empty list", () => {
     open(account({ age: 1 }));
-    expect(screen.getByRole("button", { name: "name your first habit" })).toBeInTheDocument();
-    expect(screen.getByText("three is the ceiling. start with one.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "add your first habit" })).toBeInTheDocument();
   });
 
   it("drops the span on day one rather than showing a zero one", () => {
     open(account({ age: 1, habits: ["workout"] }));
-    expect(screen.getByText("logs")).toBeInTheDocument();
+    expect(screen.getByText("logs today")).toBeInTheDocument();
   });
 
   it("draws the whole year from day one, rather than a grid that grows into one", () => {
@@ -136,7 +135,7 @@ describe("only today can be Logged (ADR 0002)", () => {
 describe("what Home says about the year", () => {
   it("counts the days on file above the grid", () => {
     open(account({ age: 12, habits: ["workout"] }));
-    expect(screen.getByText("logs · last 12 days")).toBeInTheDocument();
+    expect(screen.getByText("logs in the last 12 days")).toBeInTheDocument();
   });
 
   it("names the months across the top of the year", () => {
@@ -186,7 +185,7 @@ describe("what Home says about the year", () => {
     const data = account({ habits: ["workout", "read"], logs: { workout: [0, 1], read: [0, 1] } });
     open(setStreaks(data, idOf(data, "workout"), true));
 
-    expect(screen.getByText("streak 2 days")).toBeInTheDocument();
+    expect(screen.getByText("streak: 2 days")).toBeInTheDocument();
     expect(screen.getByText("2 logs")).toBeInTheDocument();
   });
 });
@@ -231,7 +230,7 @@ describe("the Lens over the Overview", () => {
     // the year's under every Lens: a number that can fall is not on Home.
     expect(drawn()).toHaveLength(7);
     expect(total()).toBe("3");
-    expect(screen.getByText("logs · last 30 days")).toBeInTheDocument();
+    expect(screen.getByText("logs in the last 30 days")).toBeInTheDocument();
   });
 
   it("says what it is drawing, above the grid or under it", async () => {
@@ -291,7 +290,7 @@ describe("getting to the rest of the app", () => {
     const user = userEvent.setup();
     const data = account({ habits: ["workout"] });
     const props = open(data);
-    await user.click(screen.getByRole("button", { name: "Open workout" }));
+    await user.click(screen.getByRole("button", { name: "open workout" }));
     expect(props.onOpenHabit).toHaveBeenCalledWith(idOf(data, "workout"));
   });
 

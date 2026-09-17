@@ -206,7 +206,7 @@ export function drawShareCard(canvas: SkCanvas, model: ShareCardModel, scale: nu
     // Habit — the same gate that Habit's own Screen shows its Streak behind.
     text(
       canvas,
-      `${model.streak}-day streak`,
+      `streak: ${model.streak} day${model.streak === 1 ? "" : "s"}`,
       u(PAD),
       u(lineY),
       Skia.Font(regular, u(NAMES_SIZE)),

@@ -33,7 +33,7 @@ export function HabitShareScreen({ habitId }: { habitId: string }) {
       </h1>
 
       <div style={{ marginBottom: 12 }}>
-        <LensPicker value={lens} onChange={setLens} label="how much of the record to put on the card" />
+        <LensPicker value={lens} onChange={setLens} label="days to show on the card" />
       </div>
 
       <canvas
@@ -41,8 +41,8 @@ export function HabitShareScreen({ habitId }: { habitId: string }) {
         width={size.width}
         height={size.height}
         className="share-preview"
-        aria-label={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}, naming ${model.names.join(", ")}${
-          model.streak !== null ? `, a ${model.streak}-day streak` : ""
+        aria-label={`share card: ${model.tally} logs in ${lensNoun(model.lens)}. habits: ${model.names.join(", ")}.${
+          model.streak !== null ? ` streak: ${model.streak} day${model.streak === 1 ? "" : "s"}.` : ""
         }`}
         role="img"
       />
@@ -51,7 +51,7 @@ export function HabitShareScreen({ habitId }: { habitId: string }) {
           Hidden Habit no Habit Card at all, and every other Habit gets one. */}
       <div className="card" style={{ marginTop: 16 }}>
         <p className="note" style={{ margin: 0 }}>
-          this card names {model.names.join(", ")}.
+          this card shows the names of these habits: {model.names.join(", ")}.
         </p>
       </div>
 

@@ -42,10 +42,10 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       type: "application/json",
     });
     // Only the device knows whether that was a download or a share sheet, and
-    // only it knows whether the user went through with it. "exported" is the
+    // only it knows whether the user went through with it. "export complete." is the
     // strongest honest claim: the sheet completed. Which target took the file
     // is not something the platform reports.
-    setStatus((await handOff(file)) ? "exported" : null);
+    setStatus((await handOff(file)) ? "export complete." : null);
   };
 
   const readFile = async (file: File) => {
@@ -53,19 +53,19 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
     try {
       const parsed = parseAppData(JSON.parse(await file.text()));
       if (!parsed) {
-        setStatus("that file is not a squares export");
+        setStatus("the file is not a squares export.");
         return;
       }
       // An import replaces the year on this device, and there is no undo, so a
       // year that already has something in it has to be confirmed first.
       if (data.habits.length === 0) {
         replace(parsed);
-        setStatus("imported");
+        setStatus("import complete.");
         return;
       }
       setPending(parsed);
     } catch {
-      setStatus("could not read that file");
+      setStatus("squares cannot read the file.");
     }
   };
 
@@ -97,7 +97,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       <Rule />
 
       <h2 className="title-sub" style={{ margin: "0 0 9px" }}>
-        data · lives on this device only
+        data · only on this device
       </h2>
       <div className="stack" style={{ gap: 7 }}>
         <button type="button" className="btn-list" onClick={() => void exportJson()}>
@@ -125,8 +125,9 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       {pending ? (
         <div className="card card-accent" style={{ marginTop: 10 }}>
           <p className="note" style={{ margin: "0 0 12px" }}>
-            replace this device&apos;s year with {pending.habits.length} habits and{" "}
-            {Object.keys(pending.days).length} logged days? this cannot be undone.
+            replace all the data on this device with the file? the file has{" "}
+            {pending.habits.length} habits and {Object.keys(pending.days).length} logged days. you
+            cannot undo this.
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             <button
@@ -136,7 +137,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
               onClick={() => {
                 replace(pending);
                 setPending(null);
-                setStatus("imported");
+                setStatus("import complete.");
               }}
             >
               replace
@@ -147,7 +148,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
               style={{ flex: 1, padding: 12 }}
               onClick={() => setPending(null)}
             >
-              keep mine
+              cancel
             </button>
           </div>
         </div>
@@ -174,7 +175,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
               install to home screen
             </h2>
             <p className="note" style={{ margin: "0 0 13px" }}>
-              a tab you have to find is a habit you&apos;ll drop. put it next to the thumb.
+              put squares on your home screen. then you can open it with one tap each day.
             </p>
             {canInstall ? (
               <button
@@ -187,7 +188,8 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
               </button>
             ) : (
               <p className="note-faint" style={{ margin: 0 }}>
-                use your browser&apos;s share or menu button, then &quot;add to home screen&quot;.
+                tap the share button or the menu button of your browser. then tap &quot;add to
+                home screen&quot;.
               </p>
             )}
           </div>
@@ -225,7 +227,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
         shows. Without it, Hide would be a switch that cannot be moved back.
       */}
       <h2 className="title-sub" style={{ margin: "0 0 9px" }}>
-        hidden
+        hidden habits
       </h2>
       <div className="stack" style={{ gap: 7 }}>
         {hidden.map((habit) => (
@@ -238,7 +240,7 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
             {habit.name} ›
           </button>
         ))}
-        {hidden.length === 0 ? <p className="note-faint">none.</p> : null}
+        {hidden.length === 0 ? <p className="note-faint">no hidden habits.</p> : null}
       </div>
 
       <Rule />
@@ -246,8 +248,8 @@ export function SettingsScreen({ onShare, onOpenHabit }: SettingsScreenProps) {
       {/* Below the last rule and under no label: this is what the Screen
           promises, not another thing on it to set. */}
       <p className="note-faint" style={{ margin: 0 }}>
-        no account. no sync. no analytics. clearing site data clears your progress. do frequent
-        backups using export .json.
+        squares has no account, no sync and no analytics. export your data often. if you clear the
+        site data of your browser, you lose all your data.
       </p>
     </>
   );

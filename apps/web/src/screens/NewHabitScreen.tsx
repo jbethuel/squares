@@ -51,7 +51,7 @@ export function NewHabitScreen({ onDone }: { onDone: () => void }) {
           className="field"
           value={draft}
           maxLength={40}
-          placeholder="something you do daily"
+          placeholder="example: read 10 pages"
           onChange={(event) => setDraft(event.target.value)}
           style={{ marginTop: 8 }}
         />

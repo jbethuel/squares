@@ -140,25 +140,27 @@ describe("what the row says about itself", () => {
   it("counts the Streak once the Habit is opted in", () => {
     const data = account({ habits: ["workout"], logs: { workout: [0, 1, 2] } });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("streak 3 days")).toBeInTheDocument();
+    expect(screen.getByText("streak: 3 days")).toBeInTheDocument();
   });
 
   it("says a day, not days, at one", () => {
     const data = account({ habits: ["workout"], logs: { workout: [0] } });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("streak 1 day")).toBeInTheDocument();
+    expect(screen.getByText("streak: 1 day")).toBeInTheDocument();
   });
 
-  it("says a Streak is broken rather than showing a zero", () => {
+  it("shows a stopped Streak as a zero", () => {
     const data = account({ habits: ["workout"], logs: { workout: [5, 6] } });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("streak broken")).toBeInTheDocument();
+    expect(screen.getByText("streak: 0 days")).toBeInTheDocument();
   });
 
-  it("does not call a Streak broken on day one, when there was never one to break", () => {
-    const data = account({ age: 1, habits: ["workout"] });
+  // A Habit made today has no Log yet. "streak broken" was the old text here,
+  // and it said something had stopped that never started.
+  it("shows the same zero for a Habit that has no Log yet", () => {
+    const data = account({ age: 30, habits: ["workout"] });
     renderRow(setStreaks(data, idOf(data, "workout"), true), "workout");
-    expect(screen.getByText("no streak yet")).toBeInTheDocument();
+    expect(screen.getByText("streak: 0 days")).toBeInTheDocument();
   });
 });
 
@@ -168,7 +170,7 @@ describe("opening a Habit", () => {
     const onOpen = vi.fn();
     const { onLog, habit } = renderRow(account({ habits: ["workout"] }), "workout", { onOpen });
 
-    await user.click(screen.getByRole("button", { name: "Open workout" }));
+    await user.click(screen.getByRole("button", { name: "open workout" }));
     expect(onOpen).toHaveBeenCalledWith(habit.id);
     expect(onLog).not.toHaveBeenCalled();
   });

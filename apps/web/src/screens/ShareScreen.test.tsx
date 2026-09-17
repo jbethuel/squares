@@ -20,7 +20,7 @@ async function painted(): Promise<string[]> {
 describe("the card names every visible Habit", () => {
   it("names every Habit in words, before it can be saved", () => {
     open(account({ habits: ["took my meds", "no drinking"] }));
-    expect(screen.getByText("this card names took my meds, no drinking.")).toBeInTheDocument();
+    expect(screen.getByText("this card shows the names of these habits: took my meds, no drinking.")).toBeInTheDocument();
   });
 
   it("paints every visible Habit's name", async () => {
@@ -41,13 +41,13 @@ describe("the card names every visible Habit", () => {
     const data = account({ age: 60, habits: ["workout", "no drinking"], hidden: ["no drinking"] });
     open(data);
 
-    expect(screen.getByText("this card names workout.")).toBeInTheDocument();
+    expect(screen.getByText("this card shows the names of these habits: workout.")).toBeInTheDocument();
     expect((await painted()).some((line) => line.includes("drinking"))).toBe(false);
   });
 
   it("says plainly when there are no Habits to name", () => {
     open(account({ habits: [] }));
-    expect(screen.getByText("no habits on this card yet.")).toBeInTheDocument();
+    expect(screen.getByText("this card has no habits. add a habit on home.")).toBeInTheDocument();
   });
 });
 
@@ -60,7 +60,7 @@ describe("what the card carries", () => {
     // The caption names what the number counts, because the number is a Tally
     // of the Frame drawn rather than the Total, and the card is handed to
     // someone with no other context.
-    expect(text).toContain("logs · the year");
+    expect(text).toContain("logs · the last 365 days");
     expect(text).toContain("squares");
     // Nothing that says which day it was made, or who made it.
     expect(text.some((line) => /2026|august|aug/i.test(line))).toBe(false);
@@ -69,14 +69,14 @@ describe("what the card carries", () => {
   it("describes itself to assistive tech, names included", () => {
     open(account({ age: 60, habits: ["workout"], logs: { workout: [0, 2] } }));
     expect(
-      screen.getByRole("img", { name: "Share card: 2 logs across the year, naming workout" }),
+      screen.getByRole("img", { name: "share card: 2 logs in the last 365 days. habits: workout." }),
     ).toBeInTheDocument();
   });
 
   it("says plainly when it names nothing, because there is nothing on it", () => {
     open(account({ habits: [] }));
     expect(
-      screen.getByRole("img", { name: "Share card: 0 logs across the year" }),
+      screen.getByRole("img", { name: "share card: 0 logs in the last 365 days." }),
     ).toBeInTheDocument();
   });
 });
@@ -90,13 +90,13 @@ describe("the card's own Lens", () => {
     open(account({ age: 60, habits: ["a"], logs: { a: [0, 1, 2, 20, 40] } }));
 
     expect(screen.getByRole("button", { name: "year" })).toHaveAttribute("aria-pressed", "true");
-    expect(await painted()).toContain("logs · the year");
+    expect(await painted()).toContain("logs · the last 365 days");
 
     await user.click(screen.getByRole("button", { name: "week" }));
 
     // Today is a Monday in the harness, so the week holds today and yesterday:
     // two of those five Logs, and the Tally says two rather than five.
-    await vi.waitFor(async () => expect(await painted()).toContain("logs · the week"));
+    await vi.waitFor(async () => expect(await painted()).toContain("logs · this week"));
     expect(await painted()).toContain("2");
   });
 
@@ -106,7 +106,7 @@ describe("the card's own Lens", () => {
 
     await user.click(screen.getByRole("button", { name: "month" }));
     expect(
-      screen.getByRole("img", { name: /Share card: 2 logs across the month/ }),
+      screen.getByRole("img", { name: /share card: 2 logs in this month/ }),
     ).toBeInTheDocument();
   });
 });
@@ -119,7 +119,7 @@ describe("saving the card", () => {
     await user.click(screen.getByRole("button", { name: "save .png" }));
     await vi.waitFor(() => expect(downloads).toHaveLength(1));
     expect(downloads[0]?.filename).toBe("squares.png");
-    expect(screen.getByRole("status")).toHaveTextContent("saved");
+    expect(screen.getByRole("status")).toHaveTextContent("the card is saved.");
   });
 
   it("is one button, not a save and a share that do the same thing", () => {
@@ -140,7 +140,7 @@ describe("saving the card", () => {
     await vi.waitFor(() => expect(shared.map((f) => f.name)).toEqual(["squares.png"]));
     // iOS never performs the download, so it must not also be attempted.
     expect(downloads).toHaveLength(0);
-    expect(screen.getByRole("status")).toHaveTextContent("saved");
+    expect(screen.getByRole("status")).toHaveTextContent("the card is saved.");
   });
 
   it("does not claim the card was saved when the sheet is dismissed", async () => {

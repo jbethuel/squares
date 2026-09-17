@@ -64,13 +64,9 @@ export function HabitRow({
 
   const streak = streakOf(data, habit.id, today);
   const count = logCountOf(data, habit.id, today);
-  const subtitle = !habit.streaks
-    ? `${count} log${count === 1 ? "" : "s"}`
-    : streak > 0
-      ? `streak ${streak} day${streak === 1 ? "" : "s"}`
-      : elapsed === 1
-        ? "no streak yet"
-        : "streak broken";
+  const subtitle = habit.streaks
+    ? `streak: ${streak} day${streak === 1 ? "" : "s"}`
+    : `${count} log${count === 1 ? "" : "s"}`;
 
   /*
     The row answering a Log. The web eases the background over 90ms and the
@@ -133,8 +129,8 @@ export function HabitRow({
           paddingHorizontal: 14,
         }}
       >
-        {/* The subtitle changes length as a Streak grows — "streak 9 days" to
-            "streak 10 days" — so the block resettles instead of reflowing. */}
+        {/* The subtitle changes length as a Streak grows — "streak: 9 days" to
+            "streak: 10 days" — so the block resettles instead of reflowing. */}
         <Animated.View layout={settle()} style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1} style={{ fontFamily: MONO, fontSize: FS.md, color: t.fg }}>
             {habit.name}
@@ -167,7 +163,7 @@ export function HabitRow({
       {onOpen ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Open ${habit.name}`}
+          accessibilityLabel={`open ${habit.name}`}
           onPress={() => {
             haptics.selected();
             onOpen(habit.id);

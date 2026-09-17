@@ -25,7 +25,7 @@ export default function Share() {
         <LensPicker
           value={lens}
           onChange={setLens}
-          label="how much of the record to put on the card"
+          label="days to show on the card"
         />
       </View>
 
@@ -38,14 +38,14 @@ export default function Share() {
           layout={settle()}
           entering={FadeIn.duration(MS.reveal)}
           accessibilityRole="image"
-          accessibilityLabel={`Share card: ${model.tally} logs across ${lensNoun(model.lens)}${
-            model.names.length > 0 ? `, naming ${model.names.join(", ")}` : ""
+          accessibilityLabel={`share card: ${model.tally} logs in ${lensNoun(model.lens)}.${
+            model.names.length > 0 ? ` habits: ${model.names.join(", ")}.` : ""
           }`}
           source={{ uri: `data:image/png;base64,${card.base64}` }}
           style={{ width: "100%", aspectRatio: card.width / card.height, borderRadius: 14 }}
         />
       ) : (
-        <NoteFaint>the card could not be drawn on this device.</NoteFaint>
+        <NoteFaint>squares cannot make the card on this device.</NoteFaint>
       )}
 
       {/*
@@ -55,9 +55,9 @@ export default function Share() {
       */}
       <Card style={{ marginTop: 16 }}>
         {model.names.length === 0 ? (
-          <Note>no habits on this card yet.</Note>
+          <Note>this card has no habits. add a habit on home.</Note>
         ) : (
-          <Note>this card names {model.names.join(", ")}.</Note>
+          <Note>this card shows the names of these habits: {model.names.join(", ")}.</Note>
         )}
       </Card>
 

@@ -73,7 +73,7 @@ export default function NewHabit() {
         value={draft}
         onChangeText={setDraft}
         maxLength={40}
-        placeholder="something you do daily"
+        placeholder="example: read 10 pages"
         placeholderTextColor={t.faint}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -121,8 +121,8 @@ export default function NewHabit() {
                   protects nobody.
                 */}
                 <Note style={{ marginBottom: 6 }}>
-                  a missed day cannot be filled in later. a daily reminder is the only thing that
-                  stops one.
+                  you can log a habit only on the same day. after midnight, you cannot change that
+                  day.
                 </Note>
                 <NoteFaint style={{ marginBottom: 14 }}>
                   a daily reminder sends one notification each day at {DEFAULT_CLOCK}. it does not
@@ -149,8 +149,9 @@ export default function NewHabit() {
                   Reminder is set.
                 */}
                 <Note style={{ marginBottom: 14 }}>
-                  notifications are off for squares, so no reminder was set. you can turn them on in
-                  your phone&apos;s settings, then switch it on from squares settings.
+                  squares cannot send notifications, so the daily reminder is off. to turn it on,
+                  first allow notifications for squares in the settings of your phone. then turn on
+                  the daily reminder in squares settings.
                 </Note>
                 <PrimaryButton label="ok" onPress={() => router.back()} />
               </>

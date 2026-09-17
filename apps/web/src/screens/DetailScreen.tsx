@@ -98,7 +98,7 @@ export function DetailScreen({
           <>
             <div>
               <div className="stat-value">{longestStreakOf(data, habitId, today)}</div>
-              <div className="stat-label">longest</div>
+              <div className="stat-label">longest streak</div>
             </div>
             {hidden ? null : (
               <div>
@@ -116,10 +116,10 @@ export function DetailScreen({
         has to share, and a two-line caption above a grid reads as a fault.
       */}
       <p className="label" style={{ margin: "0 0 9px" }}>
-        every day of {lensNoun(lens)} · logged or not
+        your logs for {lensNoun(lens)}
       </p>
       <div style={{ marginBottom: 8 }}>
-        <LensPicker value={lens} onChange={setLens} label={`how much of ${habit.name} to draw`} />
+        <LensPicker value={lens} onChange={setLens} label="days to show" />
       </div>
       {/*
         A Habit Heatmap is binary and uses level 3 only. A gradient here would
@@ -138,7 +138,7 @@ export function DetailScreen({
         months={lensMonths(lens)}
         levelFor={(offset) => (isLogged(data, habitId, dateAt(today, offset)) ? 3 : 0)}
         titleFor={(offset) => longLabel(dateAt(today, offset))}
-        ariaLabel={`${habit.name}: ${logCountIn(data, habitId, today, frame.back)} logs across ${lensNoun(lens)}`}
+        ariaLabel={`${habit.name}: ${logCountIn(data, habitId, today, frame.back)} logs in ${lensNoun(lens)}`}
         markToday
       />
 
@@ -158,7 +158,7 @@ export function DetailScreen({
       {hidden ? null : (
         <div className="stack" style={{ gap: 7, marginTop: 22 }}>
           <ToggleRow
-            label="count a streak"
+            label="show streak"
             on={habit.streaks}
             onToggle={() => update((current) => setStreaks(current, habitId, !habit.streaks))}
           />
@@ -181,7 +181,11 @@ export function DetailScreen({
       <hr className="divider" style={{ margin: "20px 0" }} />
       <ToggleRow
         label="hide"
-        hint={hidden ? "off home. logs kept." : "off home, and out of the year"}
+        hint={
+          hidden
+            ? "this habit and its logs are not on home. turn off to show them again."
+            : "removes this habit and its logs from home. squares keeps the logs."
+        }
         on={hidden}
         onToggle={() => update((current) => setHidden(current, habitId, !hidden, today))}
       />
