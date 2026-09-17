@@ -173,7 +173,8 @@ export default function Settings() {
       {/* The rule the lock screen follows, said where it can still be acted on:
           the switch that changes it is on the Habit's own Screen. */}
       <NoteFaint style={{ marginTop: 10 }}>
-        a reminder never names a habit unless that habit is named on its share card.
+        a habit reminder shows the name of the habit only if &quot;name on reminder&quot; is on for
+        that habit.
       </NoteFaint>
 
       <Rule />

@@ -10,6 +10,8 @@ import { MS, settle } from "@/platform/motion";
 import { useReminders } from "@/platform/useReminders";
 import { FS, MONO, useTheme } from "@/platform/theme";
 
+const DEFAULT_CLOCK = `${String(DEFAULT_TIME.hour).padStart(2, "0")}:${String(DEFAULT_TIME.minute).padStart(2, "0")}`;
+
 /**
  * Naming a new Habit, and nothing else.
  *
@@ -123,9 +125,8 @@ export default function NewHabit() {
                   stops one.
                 </Note>
                 <NoteFaint style={{ marginBottom: 14 }}>
-                  {`one notification at ${String(DEFAULT_TIME.hour).padStart(2, "0")}:${String(
-                    DEFAULT_TIME.minute,
-                  ).padStart(2, "0")}, and only on a day you have not logged. it never names a habit. change the time or turn it off in settings.`}
+                  a daily reminder sends one notification each day at {DEFAULT_CLOCK}. it does not
+                  show the names of your habits. you can change the time in settings.
                 </NoteFaint>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <PrimaryButton
