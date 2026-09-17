@@ -1,5 +1,5 @@
 import { addDays, fromKey, toKey, type DateKey } from "./date";
-import { isLogged, wasActive } from "./selectors";
+import { activeOn, isLogged, wasActive } from "./selectors";
 import type { AppData, Habit } from "./types";
 
 /**
@@ -155,9 +155,9 @@ export function reconcileReminders(
 /**
  * Active Habits on that Day whose Square is still empty.
  *
- * This one predicate is the whole of both silence rules. A Hidden Habit is not
- * Active, so it drops out; a Logged Habit drops out; a Day whose Active Habits
- * were all Logged yields nothing at all. A Day still to come has no Day Record,
+ * This one predicate is the whole of a Reminded Habit's silence rule (ADR
+ * 0012 lifted the Daily Reminder off it): a Hidden Habit is not Active, so it
+ * drops out; a Logged Habit drops out. A Day still to come has no Day Record,
  * so every Habit Active on it is outstanding — which is what it is, at the
  * moment the plan is made.
  */
@@ -180,9 +180,12 @@ export interface PlannedReminder {
   body: string;
 }
 
-function dailyBody(count: number): string {
-  return count === 1 ? "1 Habit left" : `${count} Habits left`;
-}
+/**
+ * ADR 0012: the Daily Reminder is a check-in, not a nag about what's left, so
+ * its body never counts outstanding Habits the way a Reminded Habit's
+ * fallback text does — it says the same thing whether the Day is done or not.
+ */
+const DAILY_BODY = "log your habits";
 
 /**
  * ADR 0008: a Reminder names its Habit only if that Habit is a Named Habit.
@@ -201,10 +204,12 @@ function when(reminder: PlannedReminder): string {
 /**
  * Every Reminder the device should have pending, soonest first.
  *
- * A repeating daily trigger cannot be silenced for one Day, and both Reminders
- * are defined by being silent on the Days the work is already done. So the plan
- * is dated one-shots over a horizon, recomputed after every Log and every time
- * the app comes forward, and reconciled against what the device actually holds.
+ * A repeating daily trigger cannot be silenced for one Day, so the plan is
+ * dated one-shots over a horizon, recomputed after every Log and every time
+ * the app comes forward, and reconciled against what the device actually
+ * holds. ADR 0012: only a Reminded Habit goes silent once its Habit is
+ * Logged — the Daily Reminder fires on every Day that has an Active Habit at
+ * all, Logged or not.
  *
  * `now` rather than a DateKey because "has that time already passed today" is
  * the one question in this package that a Day cannot answer.
@@ -223,20 +228,18 @@ export function planReminders(
     const date = addDays(today, offset);
     // Today's Reminder is only worth scheduling if its time is still ahead.
     const stillAhead = (time: TimeOfDay) => offset > 0 || minutesInto(time) > passed;
-    const outstanding = outstandingOn(data, date);
-    if (outstanding.length === 0) continue;
 
-    if (settings.daily && stillAhead(settings.daily)) {
+    if (settings.daily && stillAhead(settings.daily) && activeOn(data.habits, date).length > 0) {
       planned.push({
         key: `daily:${date}`,
         date,
         time: settings.daily,
         title: TITLE,
-        body: dailyBody(outstanding.length),
+        body: DAILY_BODY,
       });
     }
 
-    for (const habit of outstanding) {
+    for (const habit of outstandingOn(data, date)) {
       const time = settings.habits[habit.id];
       if (!time || !stillAhead(time)) continue;
       planned.push({

@@ -166,7 +166,7 @@ export default function Settings() {
       <SubTitle style={{ marginBottom: 9 }}>reminder · this device only</SubTitle>
       <ReminderRow
         label="daily reminder"
-        hint="one a day, and only if a habit is still open"
+        hint="one a day, logged or not"
         time={reminders.daily}
         onSet={reminders.setDaily}
       />

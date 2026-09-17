@@ -73,35 +73,41 @@ describe("the Daily Reminder", () => {
     expect(todays[0]!.time).toEqual(EVENING);
   });
 
-  it("counts the Day's outstanding Active Habits", () => {
+  it("never counts outstanding Active Habits — its body is fixed", () => {
     const data = account(["yoga", "meds", "walk"]);
-    expect(planReminders(data, daily(), MORNING)[0]!.body).toBe("3 Habits left");
+    expect(planReminders(data, daily(), MORNING)[0]!.body).toBe("log your habits");
   });
 
-  it("stays silent on a Day whose Active Habits were all Logged", () => {
+  it("still fires on a Day whose Active Habits were all Logged", () => {
     let data = account(["yoga", "meds"]);
     data = toggleLog(data, idOf(data, "yoga"), TODAY, TODAY);
     data = toggleLog(data, idOf(data, "meds"), TODAY, TODAY);
     const plan = planReminders(data, daily(), MORNING);
-    expect(plan.some((r) => r.date === TODAY)).toBe(false);
-    // Tomorrow is untouched: nothing is Logged there yet.
+    const todays = plan.find((r) => r.date === TODAY);
+    expect(todays?.body).toBe("log your habits");
     expect(plan.some((r) => r.date === addDays(TODAY, 1))).toBe(true);
   });
 
-  it("still prompts while one Habit is left", () => {
+  it("does not distinguish one Habit left from every Habit left", () => {
     let data = account(["yoga", "meds"]);
     data = toggleLog(data, idOf(data, "yoga"), TODAY, TODAY);
     const todays = planReminders(data, daily(), MORNING).find((r) => r.date === TODAY);
-    expect(todays?.body).toBe("1 Habit left");
+    expect(todays?.body).toBe("log your habits");
   });
 
-  it("comes back if the Log that silenced it is undone", () => {
+  it("keeps firing whether or not a Log silenced it before", () => {
     const data = account(["yoga"]);
     const id = idOf(data, "yoga");
     const logged = toggleLog(data, id, TODAY, TODAY);
-    expect(planReminders(logged, daily(), MORNING).some((r) => r.date === TODAY)).toBe(false);
+    expect(planReminders(logged, daily(), MORNING).some((r) => r.date === TODAY)).toBe(true);
     const unlogged = toggleLog(logged, id, TODAY, TODAY);
     expect(planReminders(unlogged, daily(), MORNING).some((r) => r.date === TODAY)).toBe(true);
+  });
+
+  it("stays off a Day with no Active Habit at all", () => {
+    let data = account(["yoga"]);
+    data = setHidden(data, idOf(data, "yoga"), true, TODAY);
+    expect(planReminders(data, daily(), MORNING).some((r) => r.date === TODAY)).toBe(false);
   });
 
   it("never names a Habit, however the Habit is opted in", () => {
