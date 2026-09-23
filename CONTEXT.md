@@ -1,126 +1,115 @@
 # Habit Heatmap
 
-Habit Heatmap is a habit tracker for one user. The user records each Habit once
-each Day with one tap. Each tap fills one Square. The Squares make a year of
-data.
+Habit Heatmap is a single-user habit tracker. You Log each Habit once a Day
+with one tap, each tap fills a Square, and the Squares add up to a year.
 
-This document is the glossary. It gives one name to each concept. The code uses
-these names without change.
+This file is the glossary. Each concept gets exactly one name, and the code uses
+these names verbatim.
 
 ## Language
 
 ### Tracking
 
 **Habit**:
-A thing that the user decided to do each Day. The app tracks the Habit.
+Something the user has decided to do every Day, and that the app tracks.
 _Avoid_: goal, task, routine, activity.
 
 **Log**:
-The single tap that records a Habit as done for a Day. A Log is binary. A Log
-has no quantity, no note and no rating. The app uses "Log" as a noun and as a
-verb. Examples: "41 logs", "log today".
+The single tap that marks a Habit as done for a Day. A Log is binary: no
+quantity, no note, no rating. "Log" is both a noun and a verb, as in "41 logs"
+or "log today".
 _Avoid_: tick, tap, check-in, entry, completion.
 
 **Day**:
-A local calendar date from midnight to midnight. One Square shows one Day. The
-app finds the Day at the time of the Log. The app does not calculate that Day
-again.
+A local calendar date, midnight to midnight. One Square is one Day. The Day is
+fixed at the moment of the Log and never recalculated.
 
-The user can Log only today. The Day closes at local midnight. After the Day
-closes, no operation can change it.
+Only today can be Logged. A Day closes at local midnight, and after that
+nothing can change it.
 _Avoid_: date, session, period.
 
 **Day Record**:
-The permanent data for one Day. A Day Record contains the Habits that the user
-Logged on that Day. The app seals the Day Record at local midnight. After that,
-the app does not write to the Day Record again.
+The permanent data for one Day: which Habits were Logged on it. It's sealed at
+local midnight and never written to again.
 _Avoid_: entry, log, snapshot.
 
 **Span**:
-A continuous set of Days when a Habit was Active. A Span starts on the Day when
-the user made the Habit. A Span ends on the Day when the user Hid the Habit. The
-last Span stays open while the Habit is Active.
+An unbroken run of Days during which a Habit was Active. A Span starts on the
+Day the Habit was created and ends on the Day it was Hidden. The latest Span
+stays open while the Habit is Active.
 
-If the user shows a Hidden Habit again, the app makes a new Span. The app does
-not extend the old Span. Thus a gap stays between the two Spans. No operation
-can remove that gap.
+Unhiding a Habit starts a new Span rather than extending the old one, so the
+gap between them is permanent.
 _Avoid_: active span, period, interval, lifetime, stint.
 
 **Active Habit**:
-A Habit that is inside one of its Spans on a given Day. An Active Habit shows
-that the user tracked that Habit on that Day.
+A Habit that falls inside one of its Spans on a given Day, meaning the user was
+tracking it that Day.
 
-An Active Habit does not always change the Intensity of that Day. The Habit must
-also be visible now.
+Being Active on a Day isn't enough to affect that Day's Intensity; the Habit
+also has to be visible now.
 _Avoid_: enabled, current, live.
 
 **Hide**:
-The operation that removes a Habit from the app. After the operation:
+Taking a Habit out of the app. Once Hidden:
 
-- The Habit is not Active.
-- The user cannot Log the Habit.
-- The app does not send a Reminder for the Habit.
-- The Habit and all its data leave the Overview Heatmap. The Squares that the
-  Habit changed get a new Intensity.
+- The Habit is no longer Active.
+- It can't be Logged.
+- It sends no Reminder.
+- It and all its data drop out of the Overview Heatmap, and the Squares it
+  contributed to are re-shaded.
 
-Hide is a state and not a permanent operation. The app keeps all the Logs of a
-Hidden Habit. The user can find the Habit and show it again. Then the Squares of
-that Habit come back.
+Hide is reversible, not a delete. Every Log of a Hidden Habit is kept, and the
+user can find the Habit and unhide it, at which point its Squares come back.
 
-The app does not give back the Days when the Habit was Hidden. That gap is
-permanent.
+The Days it spent Hidden don't come back, though. That gap is permanent.
 _Avoid_: archive, delete, remove, disable, pause.
 
 **Hidden Habit**:
-A Habit that is in the Hide state. A Hidden Habit is not on Home, not in the
-Overview Heatmap and not on a Share Card. The app shows a Hidden Habit only in
-the list of Hidden Habits, and on a Screen that the user can read. The user
-cannot Log a Hidden Habit.
+A Habit that is currently Hidden. It doesn't appear on Home, in the Overview
+Heatmap or on any Share Card. It only shows up in the list of Hidden Habits and
+on its own read-only Screen, and it can't be Logged.
 _Avoid_: archived habit, inactive habit, deleted habit.
 
 ### Reminding
 
 **Daily Reminder**:
-One notification each Day at a time that the user selects. The Daily Reminder
-tells the user to make the Logs for that Day.
+One notification a Day, at a time the user picks, prompting them to do that
+Day's Logs.
 
-The Daily Reminder is off until the user turns it on. The app asks the user one
-time, when the user makes the first Habit. The app asks because the user cannot
-recover a Day that the user missed.
+It's off until the user turns it on. The app offers it once, when the user
+creates their first Habit, because a missed Day can't be recovered.
 
-The app sends the Daily Reminder on each Day that has an Active Habit. The app
-also sends it when the user Logged all the Habits for that Day. See ADR 0012.
+It fires on every Day that has an Active Habit, even if everything has already
+been Logged. See ADR 0012.
 
-The text of the Daily Reminder does not change. It does not name a Habit, and
-it does not count the Habits that the user did not Log. This is the difference
-between the Daily Reminder and a Reminded Habit.
+Its text never changes: it doesn't name a Habit or count what's left. That's
+what separates it from a Reminded Habit.
 
-A Reminder is a property of the device and not of the data. An Export does not
-contain a Reminder. If the user moves the data to a different phone, that phone
-has no Reminder. A Reminder does not use the network.
+Reminders belong to the device, not the data. An Export doesn't include them,
+so moving your data to a new phone leaves that phone with no Reminders.
+Reminders never use the network.
 _Avoid_: nudge, alert, alarm, push, ping.
 
 **Reminded Habit**:
-A Habit that has its own Reminder at its own time. The user must select this for
-each Habit. A Habit has no Reminder by default.
+A Habit with its own Reminder at its own time. It's opt-in per Habit; by
+default a Habit has no Reminder.
 
-The app does not send the Reminder if the user Logged that Habit. The app does
-not send the Reminder while the Habit is Hidden, because the user cannot Log a
-Hidden Habit.
+The Reminder is skipped if that Habit has already been Logged, and never sent
+while the Habit is Hidden, since a Hidden Habit can't be Logged.
 
-The Daily Reminder is for one Day. A Reminded Habit is for one Habit. The two
-are different, and the user can turn on both.
+The Daily Reminder is about the Day; a Reminded Habit is about one Habit. They're
+separate, and the user can have both on.
 _Avoid_: habit alarm, per-habit reminder, streak reminder.
 
 ### Display
 
 **Heatmap**:
-A Frame of Squares with one Square for each Day. The Lens gives the length of
-the Frame.
+A Frame of Squares, one per Day. The Lens sets how long the Frame is.
 
-On a Screen, the app puts names at the edges of the Heatmap. At the side, the
-app puts Monday, Wednesday and Friday. Above, the app puts the months of the
-Frame, or the name of the one month. A Share Card has no such names.
+On a Screen, the Heatmap is labelled at its edges: Monday, Wednesday and Friday
+down the side, and the Frame's months (or the single month's name) along the
+top. Share Cards have no labels.
 _Avoid_: graph, calendar, grid, contribution graph.
 
 **Square**:
@@ -128,216 +117,196 @@ The cell for one Day in a Heatmap.
 _Avoid_: cell, tile, box, dot, pixel.
 
 **Lens**:
-The quantity of data that a Heatmap draws. The Lens is the Week, the Month or
-the Year.
+How much data a Heatmap shows: the Week, the Month or the Year.
 
-The Lens changes the number of Squares, the size of the Squares and the shape of
-the Heatmap. The Month and the Year are calendar blocks with rows of weekdays.
-The Week is one row from Sunday to Saturday.
+The Lens sets the number of Squares, their size, and the Heatmap's shape. The
+Month and Year are calendar blocks with weekday rows; the Week is a single
+Sunday-to-Saturday row.
 
-The Week and the Month fit on the Screen. The Year does not fit. The Year keeps
-the size of its Squares and moves off the side of the Screen. The Year opens at
-today.
+The Week and Month fit on screen. The Year doesn't, so it keeps its Square size,
+scrolls sideways, and opens at today.
 
-The Lens does not change the sense of a Square. One Square is one Day for all
-three values of the Lens. The Lens does not change the Total, which is always
-for the Year.
+The Lens never changes what a Square means (one Square is always one Day), and
+it never changes the Total, which always covers the Year.
 
-A Share Card has its own Lens. The user selects that Lens when the user makes
-the Share Card. A Share Card shows a Tally and not the Total.
+A Share Card has its own Lens, chosen when the card is made, and shows a Tally
+instead of the Total.
 _Avoid_: view, range, period, zoom, filter.
 
 **Frame**:
-The set of Days that a Lens draws. A Frame has a constant shape:
+The set of Days a Lens draws. A Frame always has the same shape:
 
-- The Week is always seven Squares, from Sunday to Saturday.
-- The Month is always the full month.
-- The Year is always 365 Squares that end on today.
+- The Week is always seven Squares, Sunday to Saturday.
+- The Month is always the whole month.
+- The Year is always the 365 Squares ending today.
 
-The app draws all the Days in the Frame. This includes Days in the future and
-Days before the user installed the app. The app draws these Days at Intensity 0.
-A Day that the user missed also has Intensity 0.
+Every Day in the Frame is drawn, including future Days and Days before the app
+was installed. Those are drawn at Intensity 0, which is also what a missed Day
+looks like.
 
-A Frame is a calendar. The app does not make the Frame smaller to fit the data.
-This is true on a Share Card and on a Screen.
+A Frame is a calendar, and it never shrinks to fit the data, whether on a Screen
+or on a Share Card.
 
-If a Frame goes past today, the app puts a ring around today. Without the ring,
-a Day that the user missed and a Day in the future look the same.
+When a Frame extends past today, today gets a ring. Without it, a missed Day and
+a future Day would look the same.
 _Avoid_: window, span, range, view.
 
 **Overview Heatmap**:
-The Heatmap for all the Habits that are not Hidden. Each Square has an
+The Heatmap covering every Habit that isn't Hidden. Each Square has an
 Intensity.
 
-The Overview Heatmap shows the data as it is today. It does not show the data as
-the app sealed it. If the user Hides a Habit, the Squares of that Habit get a
-new Intensity. If the user shows the Habit again, the old Intensity comes back.
+It reflects the data as it stands today, not as it was when each Day was sealed.
+Hiding a Habit re-shades its Squares, and unhiding it restores the old shading.
 _Avoid_: combined, merged, master, dashboard.
 
 **Habit Heatmap**:
-The Heatmap for one Habit. Each Square is binary: the user Logged the Habit, or
-the user did not Log the Habit. A Hidden Habit also has a Habit Heatmap on its
-own Screen.
+The Heatmap for a single Habit. Each Square is binary: Logged or not. A Hidden
+Habit still has one, on its own Screen.
 _Avoid_: individual, detail view.
 
 **Intensity**:
-The shade of a Square in the Overview Heatmap. The Intensity is the ratio of the
-Habits that the user Logged on that Day to the Habits that the app counts for
-that Day.
+How shaded a Square is in the Overview Heatmap: the share of that Day's counted
+Habits that were Logged.
 
-The app counts a Habit for a Day only if both conditions are true:
+A Habit counts toward a Day only if both are true:
 
-- The Habit was Active on that Day.
-- The Habit is not Hidden now.
+- It was Active on that Day.
+- It isn't Hidden now.
 
-A Square at full shade always shows a complete Day. This is true for any number
-of Habits.
+So a fully shaded Square always means a complete Day, however many Habits there
+are.
 
-A Habit that the user made last week does not change the Intensity of earlier
-Days, because that Habit was not Active on those Days.
+A Habit created last week doesn't affect the Intensity of earlier Days, because
+it wasn't Active then.
 _Avoid_: level, heat, score, completion rate.
 
 **Streak**:
-The number of continuous Days when the user Logged a Habit. A Streak is for one
-Habit. There is no Streak for a group of Habits. The app does not repair a
-Streak.
+How many consecutive Days a Habit has been Logged. Streaks are per Habit; there's
+no Streak across Habits. The app never repairs a Streak.
 
-A Streak stops when the user misses a Day. Today is not a missed Day until today
-ends. Thus one minute after midnight, with no Log, the Streak keeps its value.
+A Streak breaks on a missed Day, and today isn't missed until it's over. So at
+one minute past midnight, with nothing Logged yet, the Streak keeps its value.
 _Avoid_: chain, run, combo.
 
 **Streak Habit**:
-A Habit that shows its Streak. The user must select this for each Habit. A Habit
-does not show its Streak by default.
+A Habit that displays its Streak. It's opt-in per Habit; by default the Streak
+is hidden.
 
-A Habit that does not show its Streak is the same as any other Habit. The user
-Logs it, and it changes the Intensity and the Total. The app only does not show
-the number.
+Otherwise a Streak Habit is like any other Habit: it's Logged the same way and
+counts toward Intensity and the Total. The only difference is whether the number
+is shown.
 
-The app always calculates the Streak. If the user turns this on, the app shows
-the Streak that the Habit has now. The app does not start at zero.
+The Streak is always being calculated, so turning it on shows the Habit's
+current Streak rather than starting from zero.
 
-A Hidden Habit does not show a Streak. A Streak counts back from today, and the
-user cannot Log a Hidden Habit today. Thus the value would always be 0.
+A Hidden Habit never shows a Streak. Streaks count back from today, and a Hidden
+Habit can't be Logged today, so the value would always be 0.
 _Avoid_: chained habit, streaked habit, tracked habit.
 
 **Longest Streak**:
-The largest value that a Streak of a Habit had. The Longest Streak cannot
-decrease. Thus it is the one number that a Hidden Habit can show.
+The highest a Habit's Streak has ever been. It can never go down, which makes it
+the one number a Hidden Habit can still meaningfully show.
 _Avoid_: record, best, personal best, high score.
 
 **Total**:
-The number of Logs in the last year for all the Habits that are not Hidden. The
-app shows the Total with the Overview Heatmap.
+The number of Logs over the past year across every Habit that isn't Hidden. It's
+shown with the Overview Heatmap.
 
-The Total increases with each Log. The Total decreases only when the user Hides
-a Habit. This keeps the Total in agreement with the Squares below it.
+Each Log adds to it, and only hiding a Habit takes away from it. That keeps the
+Total consistent with the Squares below it.
 
-The Lens does not change the Total. The Total is always for the Year. A Total
-for the Week would go to zero each Sunday.
+The Lens doesn't affect the Total; it always covers the Year. A weekly Total
+would drop to zero every Sunday.
 _Avoid_: score, points, streak, contributions.
 
 **Tally**:
-The number of Logs inside the Frame that the app draws. A Share Card shows a
-Tally.
+The number of Logs inside the Frame being drawn. Share Cards show a Tally.
 
-A Tally is not always for the Year. A Tally can be small or zero, and it changes
-when the Frame moves. The app does not show a Tally on Home.
+Unlike the Total, a Tally isn't always for the Year. It can be small or zero,
+and it changes as the Frame moves. Home never shows a Tally.
 _Avoid_: total, score, count, subtotal.
 
 **Theme**:
-The set of colours that the app uses. There are two: the Dark Theme and the
-Light Theme. The user selects System, Light or Dark. System gives the Dark Theme
-unless the device asks for the Light Theme.
+The app's colour scheme: the Dark Theme or the Light Theme. The user picks
+System, Light or Dark; System means Dark unless the device asks for Light.
 
-The Theme is a property of the app and not of the data. The Theme does not
-change a Day, a Log or a Share Card. A Share Card always uses the Dark Theme.
+The Theme belongs to the app, not the data, and it never changes a Day, a Log
+or a Share Card. Share Cards are always Dark.
 _Avoid_: mode, appearance, skin, night mode.
 
 ### Keeping
 
 **Export**:
-The operation that writes all the data to a file and gives the file to the
-device. The file is the only copy that stays if the storage of the app is
-cleared. It is also the only way to move the data out of the app, because the
-app deletes no data.
+Writing all the data to a file and handing that file to the device. It's the
+only copy that survives if the app's storage is cleared, and the only way to get
+data out of the app, since the app never deletes anything.
 
-The device controls how the file leaves. The app gives the file to the device.
-The device then makes a download or opens a share sheet.
+How the file leaves is up to the device: the app hands it over, and the device
+either downloads it or opens a share sheet.
 _Avoid_: backup, download, save, dump.
 
 **Import**:
-The operation that reads an Export file. Import replaces all the data on the
-device with the data in the file. Import does not merge. No operation combines
-the data of two devices.
+Reading an Export file. Import replaces everything on the device with the
+file's contents. It never merges, and nothing combines data from two devices.
 
-If the device has a Habit or a Log, Import asks the user to confirm. The user
-cannot undo an Import.
+If the device already has any Habits or Logs, Import asks for confirmation. It
+can't be undone.
 
-To move the data to a different device, the user does an Export on the old
-device and an Import on the new device. This move goes in one direction only.
-After the Export, the user must not use the old device. A Log on the old device
-cannot go to the new device, because Import always replaces the data and does
-not combine it.
+To move to a new device, Export on the old one and Import on the new one. The
+move is one-way: once you've Exported, stop using the old device, because any
+Log made there afterwards can't be carried over. Import always replaces, never
+combines.
 
-Import does not contain a Reminder. A Reminder is a property of the device and
-not of the data. After an Import, the app removes each Reminder that is not for
-a Habit in the new data.
+Import doesn't bring Reminders with it, since those belong to the device, not
+the data. After an Import, the app clears any Reminder that doesn't match a
+Habit in the new data.
 _Avoid_: load, restore, sync, merge, transfer, migrate, backup.
 
 ### Sharing
 
 **Share Card**:
-An image that the app draws on the device. The app saves the image on the
-device, and the user can then share it. There are two kinds of Share Card: the
-Overview Card and the Habit Card.
+An image drawn on the device, saved there, and then shared by the user if they
+choose. There are two kinds: the Overview Card and the Habit Card.
 
-Each Share Card has its own Lens. The user selects the Lens when the user makes
-the Share Card. The Share Card draws the full Frame of that Lens. Example: a
-Share Card for the Week that the user makes on a Wednesday shows all seven
+Each Share Card has its own Lens, chosen when the card is made, and draws that
+Lens's full Frame. For example, a Week card made on a Wednesday shows all seven
 Days.
 
-A Share Card shows a Tally and not a Total. A Share Card always uses the Dark
+A Share Card shows a Tally rather than the Total, and always uses the Dark
 Theme.
 
-A Share Card has no web page, and there is no link between users. No Share Card
-can show a Hidden Habit. See Hidden Habit.
+Share Cards have no web page, and there's no link between users. No Share Card
+can show a Hidden Habit (see Hidden Habit).
 _Avoid_: badge, profile, screenshot, story.
 
 **Overview Card**:
-The Share Card that draws the Overview Heatmap and its Tally for all the Habits
-that are not Hidden. The Overview Card shows the names of all these Habits. The
-user cannot make an Overview Card without the names. See ADR 0010. To remove a
-Habit from an Overview Card, the user must Hide the Habit. There is no other
-control.
+The Share Card that draws the Overview Heatmap and its Tally for every Habit
+that isn't Hidden. It always lists all of those Habits' names; there's no way to
+make one without them (ADR 0010). The only way to keep a Habit off an Overview
+Card is to Hide it.
 
-An Overview Card shows only the shape of all the Habits together, one Tally and
-the names. It does not show a Streak, a Longest Streak or a count of Logs for
-one Habit.
+It shows just the combined shape, one Tally and the names. No Streak, no Longest
+Streak, and no per-Habit Log count.
 _Avoid_: the card, share card (when a Habit Card is also possible).
 
 **Habit Card**:
-The Share Card that draws the Habit Heatmap of one Habit. It shows the same
-binary Squares as the Screen of that Habit. It also shows the Tally and the
-name of that Habit. A Habit Card always shows the name, because the card is
-about that one Habit. See ADR 0011.
+The Share Card for a single Habit's Heatmap. It shows the same binary Squares as
+that Habit's Screen, plus its Tally and its name. The name is always shown,
+since the card is about that Habit (ADR 0011).
 
-A Habit Card shows a Streak only if the Habit is a Streak Habit. Thus the card
-agrees with the Screen of the Habit. A Habit Card does not show the Longest
-Streak or a count of Logs. The Overview Card has the same limit.
+It shows a Streak only for a Streak Habit, matching the Habit's Screen. Like the
+Overview Card, it never shows the Longest Streak or a Log count.
 _Avoid_: individual card, per-habit card.
 
 **Named Habit**:
-A Habit whose Reminder can show the name of the Habit on the lock screen. The
-user must select this for each Habit. By default, the Reminder of a Habit does
-not show the name.
+A Habit whose Reminder is allowed to show its name on the lock screen. It's
+opt-in per Habit; by default a Habit's Reminder doesn't show the name.
 
-The default is off for this reason: a Reminder comes at a set time, and other
-persons can be near the user at that time. The user does not select that time
-in the way that the user selects the time to make a Share Card. See ADR 0010.
-The Share Card does not use this control. A Share Card always shows the names
-of the Habits that it draws.
+It's off by default because a Reminder arrives at a fixed time, when other people
+may be around. Unlike making a Share Card, the user doesn't choose that moment
+(ADR 0010). This setting has no effect on Share Cards, which always show the
+names of the Habits they draw.
 
-A Hidden Habit sends no Reminder. Thus the lock screen never shows the name of
-a Hidden Habit, and the control has no effect.
+A Hidden Habit sends no Reminder, so its name never reaches the lock screen and
+the setting does nothing.
 _Avoid_: public habit, shared habit, visible habit, name on share card.

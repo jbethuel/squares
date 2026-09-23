@@ -1,31 +1,32 @@
-# Export carries every Habit name in the clear, Named or not
+# Export includes every Habit name in plain text, Named or not
 
-An Export writes the real `name` of every Habit, whether or not the user made
-it a Named Habit. The Named Habit flag (`namedHabit`) governs only the
-Reminder — see ADR 0010, which also drops the Share Card from what it
-governs — and it does nothing to Export either way. The file then leaves
-through whatever the OS share sheet offers: email, a messaging app, a cloud
-folder, anything installed.
+An Export writes out every Habit's real `name`, whether or not it's a Named
+Habit. The Named Habit flag (`namedHabit`) only affects the Reminder (ADR 0010
+removed the Share Card from its scope) and has no bearing on Export. The file
+then leaves through whatever the OS share sheet offers: email, a messaging app,
+a cloud folder, or anything else installed.
 
-We keep it this way, deliberately. A Reminder and a Share Card show a Habit's
-name to someone who is not the user, at a moment the user is not watching: a
-lock screen seen by whoever is in the room, a card posted for an audience. The
-Named Habit flag exists because naming a Habit there is a decision made once,
-in Settings, for an event that later happens without the user present to
-reconsider it. Export is different in kind: the user chooses the moment,
-chooses the app the file goes to, and reads the result as their own data
-leaving under their own hand — closer to a spreadsheet download than a
-disclosure. Restricting Export to Named Habits only would make a "backup"
-that cannot restore what it was taken from, and the reason Reminder hides a
-name does not transfer to a file the user is deliberately making and sending.
+That's deliberate. A Reminder or a Share Card shows a Habit's name to someone
+other than the user, at a moment the user isn't in control of: a lock screen
+seen by whoever is nearby, or a card posted for an audience. The Named Habit
+flag exists because naming a Habit there is decided once, in Settings, for
+something that later happens without the user around to reconsider.
 
-Encrypting the file was considered and rejected. A passphrase needs recovery,
-and ADR 0004 already ruled out the account that recovery would live in.
+Export is a different kind of thing. The user picks the moment, picks where the
+file goes, and sees it as their own data leaving by their own hand. It's closer
+to downloading a spreadsheet than to disclosing something. Limiting Export to
+Named Habits would produce a backup that can't restore what it was taken from,
+and the reason a Reminder hides a name doesn't apply to a file the user is
+deliberately making and sending.
+
+We considered encrypting the file and rejected it. A passphrase needs a
+recovery path, and ADR 0004 already ruled out the account that recovery would
+depend on.
 
 ## Consequences
 
-Export is the one place a Habit's name always appears, even with "Named
-Habit" off everywhere else. A reader who assumes Export honours that flag
-will be wrong, on purpose. If a future change wants to protect names inside
-the file itself, it has to solve key recovery without an account first, which
-is why nothing has been done here.
+Export is the one place a Habit's name always appears, even when Named Habit is
+off. Anyone assuming Export respects that flag will be wrong, and that's
+intended. A future change that wants to protect names inside the file will first
+have to solve key recovery without an account, which is why nothing has been
+done here.

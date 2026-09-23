@@ -1,33 +1,32 @@
 # apps/mobile
 
-This app uses Expo SDK 57, React Native and Expo Router. Android is the first
-target. iOS is planned, and no code here can assume that iOS does not exist.
+Expo SDK 57, React Native and Expo Router. Android comes first. iOS is planned,
+so don't write anything here that assumes iOS won't exist.
 
-**Expo has changed.** Read the versioned documentation at
-https://docs.expo.dev/versions/v57.0.0/ before you write code. Your memory of
-the API of this SDK is not reliable. The trigger types of `expo-notifications`
-changed. `docs/research/` in the root of the repository records what we verified
-and when.
+**Expo has changed a lot.** Read the versioned docs at
+https://docs.expo.dev/versions/v57.0.0/ before writing code; don't trust what
+you remember about this SDK's API. The `expo-notifications` trigger types in
+particular have changed. `docs/research/` at the repo root records what we've
+verified and when.
 
 ## The boundary
 
-The rules stay in `packages/domain`. This app imports the rules and does not
-write them again.
+The rules live in `packages/domain`. This app imports them and never
+reimplements them.
 
-Do not write these in this app:
+Don't write any of these here:
 
-- a date calculation
-- an Intensity
-- a Streak
-- a test for an open Day
-- a test for a Hidden Habit
+- date calculations
+- Intensity
+- Streaks
+- checks for whether a Day is open
+- checks for whether a Habit is Hidden
 
-Each of these belongs in the package. `apps/web` must agree with this app, and
-two copies will become different. See ADR 0007.
+They all belong in the package. `apps/web` has to agree with this app, and two
+copies will drift apart. See ADR 0007.
 
-`src/platform/` holds the operations that only a phone can do: the storage, the
-Skia drawing of the Share Card, the file handoff, and the schedule of the
-Reminder.
+`src/platform/` holds the phone-only operations: storage, the Skia drawing of
+the Share Card, file handoff, and Reminder scheduling.
 
-Read `CONTEXT.md` in the root of the repository before you name anything. The
-code uses its terms without change.
+Read `CONTEXT.md` at the repo root before naming anything. The code uses its
+terms verbatim.

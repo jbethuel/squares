@@ -1,50 +1,47 @@
-# The user can Log only today
+# Only today can be Logged
 
-A Log goes on today. The user cannot Log a different Day. The Day closes at
-local midnight, and no operation can change it after that.
+A Log always goes on today; you can't Log any other Day. A Day closes at local
+midnight, and nothing can change it after that.
 
-The user can remove a Log from today until local midnight, because today is not
-yet a permanent record.
+You can undo today's Log until midnight, since today isn't a permanent record
+yet.
 
-The app uses the mechanic of a year that the user fills by hand. The year has
-value because the user cannot fill it later. If the user can add a Log to an
-earlier Day, each empty Square becomes a task and not a fact. The data then has
-no value.
+The whole app rests on a year you fill in by hand. That year means something
+only because you can't go back and fill it in later. If you could Log earlier
+Days, every empty Square would become a chore to catch up on rather than a fact,
+and the data would stop meaning anything.
 
 ## Considered options
 
-**A window of one Day, where the user can Log yesterday.** This is the option
-that persons will continue to propose. We rejected it because this length is the
-worst length.
+**A one-Day grace window, so you can Log yesterday.** People will keep
+suggesting this. We rejected it because one Day is the worst possible length.
 
-The window is too short to give protection. If the user forgets for two Days,
-the window has already failed. But the window is long enough that the user
-believes that protection exists. The user then finds the limit of the window
-when the user loses data.
+It's too short to actually protect anyone: forget for two Days and the window
+has already failed you. But it's long enough to make you feel protected, so you
+only discover its limit when you lose data.
 
-**A window that the user configures.** We rejected this option. It makes the
-sense of each Heatmap different on each device. A Share Card does not show the
-value of the window that made it.
+**A user-configurable window.** Also rejected. It would make every Heatmap mean
+something different depending on the device, and a Share Card has no way to show
+which window produced it.
 
 ## Consequences
 
-The user cannot recover a Day that the user missed. Thus the Daily Reminder is
-the only protection against a broken Streak.
+A missed Day can't be recovered, which makes the Daily Reminder the only defence
+against a broken Streak.
 
-The Daily Reminder stays off by default. The app must not turn on notifications
-for the user. But the app asks the user one time, when the user makes the first
-Habit. A protection that the user does not know about gives no protection.
+The Daily Reminder is still off by default, because the app shouldn't turn on
+notifications on the user's behalf. It does offer it once, when the first Habit
+is created, since protection you don't know about doesn't protect you.
 
-A user who Logs late at night is one minute from the loss of the Day. This is
-the cost of the decision. The contribution graph has the same cost.
+If you Log late at night, you're a minute away from losing the Day. That's the
+cost of this decision, and the contribution graph has the same cost.
 
-The app must not show that a Streak stopped at one minute after midnight. A
-Streak stops on a Day that the user missed, and today is not a missed Day until
-today ends.
+The app must never show a Streak as broken at 00:01. A Streak breaks on a missed
+Day, and today isn't missed until it's over.
 
-Thus the app counts a Streak back from today if the user Logged today. If the
-user did not Log today, the app counts back from yesterday. Without this rule,
-the app tells each user each morning that the user failed.
+So if today has been Logged, the Streak counts back from today; otherwise it
+counts back from yesterday. Without this rule, the app would tell every user
+they'd failed every morning.
 
-The app seals a Day with a clock event and not with a user event. The app must
-find the change of Day while it is open and while it is in the background.
+Days are sealed by the clock, not by user actions, so the app has to notice the
+date changing both while it's open and while it's in the background.

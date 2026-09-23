@@ -1,22 +1,20 @@
 # squares
 
-A year of small Squares, one Square for each Day. The user fills each Square by
-hand with one tap. This takes ten seconds each day.
+A year of small Squares, one per Day, that you fill in by hand with a single
+tap. It takes about ten seconds a day.
 
-Most habit trackers put a streak on the first screen. A streak is a number that
-goes to zero: the user misses one Tuesday and returns to nothing. Home shows a
-Total instead. A Day that the user missed is an empty Square in a year that
-continues to fill. There is no comparison with other users.
+Most habit trackers lead with a streak, and a streak is a number that drops to
+zero the first Tuesday you miss. Home shows a Total instead. A missed Day is
+just an empty Square in a year that keeps filling up, and there's no
+comparison with anyone else.
 
-Strict Streaks for one Habit are available for users who want the pressure. They
-stay off until the user turns them on.
+If you want the pressure, you can turn on a strict Streak for any one Habit.
+It's off by default.
 
-The shape is the shape of the GitHub contribution graph. The app copies the
-mechanic and not the branding.
+The layout borrows the GitHub contribution graph's mechanic, not its branding.
 
-The app uses TypeScript and React (Next.js, static export). The user can install
-it as a PWA. All the data stays on the device. There is no account, no backend
-and no analytics.
+It's TypeScript and React (Next.js, static export), installable as a PWA.
+Everything stays on the device: no account, no backend, no analytics.
 
 ## Quick start
 
@@ -25,311 +23,302 @@ pnpm install
 pnpm dev              # http://localhost:3000
 ```
 
-| Command | Function |
+| Command | What it does |
 | --- | --- |
 | `pnpm dev` | Start the dev server on port 3000 |
-| `pnpm build` | Make the static export in `apps/web/out/` |
+| `pnpm build` | Build the static export into `apps/web/out/` |
 | `pnpm preview` | Serve the export on port 4173 |
 | `pnpm test` | Run the unit tests (vitest) |
-| `pnpm test:watch` | Run the unit tests and watch for changes |
-| `pnpm test:e2e` | Run the end-to-end tests on a dev server on port 3100 |
+| `pnpm test:watch` | Run the unit tests in watch mode |
+| `pnpm test:e2e` | Run the end-to-end tests against a dev server on port 3100 |
 | `pnpm test:e2e:static` | Run the end-to-end tests against the built export |
-| `pnpm test:all` | Run typecheck, then unit tests, then end-to-end tests |
+| `pnpm test:all` | Typecheck, then unit tests, then end-to-end tests |
 | `pnpm typecheck` | Run `tsc --noEmit` |
-| `pnpm icons` | Make the icons of both apps again from the Intensity ramp |
-| `pnpm tokens` | Make `tokens.css` again from the Intensity ramp |
-| `pnpm store-assets` | Draw the Play Console graphics again. No build uses these. |
+| `pnpm icons` | Regenerate both apps' icons from the Intensity ramp |
+| `pnpm tokens` | Regenerate `tokens.css` from the Intensity ramp |
+| `pnpm store-assets` | Redraw the Play Console graphics (not used by any build) |
 | `pnpm mobile` | Start the phone app's dev server |
-| `pnpm mobile:ios` | Start it and open the iOS simulator |
-| `pnpm mobile:aab` | Build the App Bundle for Play, on EAS |
-| `pnpm mobile:apk` | Build an APK to sideload, on EAS |
+| `pnpm mobile:ios` | Same, and open the iOS simulator |
+| `pnpm mobile:aab` | Build the App Bundle for Play on EAS |
+| `pnpm mobile:apk` | Build a sideloadable APK on EAS |
 
-The two EAS scripts run on Expo's servers, not here, and each one takes about
-fifteen minutes. They need `eas login` once.
+The two EAS scripts run on Expo's servers, take about fifteen minutes each, and
+need a one-time `eas login`.
 
-They make different things, and one cannot stand in for the other. `mobile:aab`
-makes the App Bundle Play requires of a new app; nothing installs one, and Play
-cuts the per-device APKs from it. `mobile:apk` makes an APK and gives back a
-link a phone can open, which is the only way to run the app on a device without
-a JDK, platform-tools and a cable. The bundle is what ships. The APK is how you
-find out whether what ships works.
+They aren't interchangeable. `mobile:aab` produces the App Bundle that Play
+requires for new apps. You can't install a bundle directly; Play generates
+per-device APKs from it. `mobile:apk` produces an APK and a link you can open on
+a phone, which is the only way to get the app onto a device without a JDK,
+platform-tools and a cable. The bundle is what you ship; the APK is how you
+check it works first.
 
 ## Layout
 
-This is a pnpm workspace. The rules stay in `packages/domain`. Each app uses the
-rules and does not write them again. Each app owns its own interface and its own
+It's a pnpm workspace. The rules live in `packages/domain`, and each app
+imports them rather than reimplementing them. Each app owns its own UI and
 platform layer.
 
-The root scripts delegate to the packages. Thus `pnpm dev` and `pnpm test`
-operate from any directory. `pnpm test` runs the tests of each package.
+Root scripts delegate to the packages, so `pnpm dev` and `pnpm test` work from
+any directory. `pnpm test` runs every package's tests.
 
 ```
-docs/adr/       the decisions, for the full system
-CONTEXT.md      the glossary, for the full system
-store/android/  graphics, generated by `pnpm store-assets`
+docs/adr/       architecture decisions for the whole system
+CONTEXT.md      glossary for the whole system
+store/android/  graphics generated by `pnpm store-assets`
 
-packages/artwork/ every PNG in the repository, drawn from the ramp
-  png.ts            a PNG encoder, so no dependency draws four flat colours
+packages/artwork/ every PNG in the repo, drawn from the ramp
+  png.ts            a tiny PNG encoder, so drawing four flat colours needs no dependency
   canvas.ts         an RGBA buffer and one antialiased rounded rectangle
   artwork.ts        the mark, the feature graphic, and where each file goes
 
-packages/domain/  the rules — no DOM, tested in node
+packages/domain/  the rules: no DOM, tested in node
   date.ts           local calendar Days as YYYY-MM-DD
   types.ts          Habit and its Spans, DayRecord, Intensity
   selectors.ts      Intensity, Streak, Total, and which Habits are visible
   mutations.ts      Log, add/rename/hide, and sealDays
   grid.ts           Heatmap geometry
   lens.ts           how much data a Heatmap draws
-  axis.ts           the names at the edges of a Heatmap
-  palette.ts        the Intensity ramp — the one definition
-  shareCard.ts      the permitted content of a Share Card — Overview and Habit — and its measurements
-  storage.ts        the format of the data: validation, migration, Export
-  store.tsx         the one React context, above an injected storage adapter
+  axis.ts           the labels around a Heatmap
+  palette.ts        the Intensity ramp (the single source of truth)
+  shareCard.ts      what a Share Card (Overview or Habit) may contain, and its measurements
+  storage.ts        the data format: validation, migration, Export
+  store.tsx         the one React context, over an injected storage adapter
 
 apps/web/         the Next.js app, statically exported
-  src/platform/     the operations that only the web can do
-    storage.ts        localStorage, and the adapter for the store
-    handoff.ts        gives a file to the device
-    theme.tsx         puts the Theme on the document
-    shareCardCanvas.ts  draws the Share Card to a Canvas2D
-    useCanvasCard.ts  renders and saves a card, shared by both its Screens
+  src/platform/     web-only operations
+    storage.ts        localStorage, plus the store's adapter
+    handoff.ts        hands a file to the device
+    theme.tsx         applies the Theme to the document
+    shareCardCanvas.ts  draws the Share Card on a Canvas2D
+    useCanvasCard.ts  renders and saves a card; shared by both card Screens
   src/components/   Heatmap, HabitRow, Tail, Total, Toggle, LensPicker, ServiceWorker
   src/screens/      Home, Detail, NewHabit, Settings, Share, HabitShare
   src/hooks/        element width, delayed value, install prompt
   src/app/          Next shell, globals.css, tokens.css (generated)
   src/test/         jsdom stubs and the fixture harness
-  e2e/              playwright specs and the device seed
+  e2e/              Playwright specs and the device seed
   scripts/          generate-tokens.mts
 ```
 
-`packages/domain` has no barrel file. Each module is its own entry point. Thus
-an import of a rule cannot also import React.
+`packages/domain` has no barrel file; each module is its own entry point. That
+way importing a rule can't drag React in with it.
 
-The tsconfig of the package omits the `dom` lib. This is deliberate. It finds a
-browser type before the phone app finds it.
+The package's tsconfig leaves out the `dom` lib on purpose, so a stray browser
+type gets caught here before the phone app trips over it.
 
 ## Vocabulary
 
-`CONTEXT.md` is the glossary. The code uses its terms without change: Habit,
-Log, Day, Square, Span, Intensity, Streak, Total, Tally, Hide, Lens, Frame.
+`CONTEXT.md` is the glossary, and the code uses its terms verbatim: Habit, Log,
+Day, Square, Span, Intensity, Streak, Total, Tally, Hide, Lens, Frame.
 
-Read `CONTEXT.md` before you change `packages/domain/`.
+Read it before you change anything in `packages/domain/`.
 
-All the text that a user can read or hear uses ASD-STE100 Simplified Technical
-English. This includes the Screens, the labels for screen readers, the
-notifications and the Share Card.
+All user-facing text is written in ASD-STE100 Simplified Technical English.
+That covers Screens, screen-reader labels, notifications and the Share Card.
 
-- Write a note, a hint, a warning or a confirmation as full sentences. Use "the"
-  and "a". Use the active voice. Write one instruction in each sentence.
-- Keep a label, a button or a heading short.
-- Write all the text in lowercase.
-- Speak to the user as "you".
-- When the text names a concept from `CONTEXT.md`, use the glossary word. Do not
-  use a word from an _Avoid_ list.
-- Do not show the user a glossary term that the app does not show now, for
-  example Lens, Tally or Frame.
+- Write notes, hints, warnings and confirmations as full sentences. Use "the"
+  and "a", use the active voice, and give one instruction per sentence.
+- Keep labels, buttons and headings short.
+- Write everything in lowercase.
+- Address the user as "you".
+- When text refers to a concept in `CONTEXT.md`, use the glossary word, never a
+  word from its _Avoid_ list.
+- Don't show users glossary terms the app doesn't already show them, such as
+  Lens, Tally or Frame.
 
-## The three rules that the code protects
+## The three rules the code protects
 
-**The user can Log only today.** There is no window back to yesterday. The
-mutation refuses any other Day. The interface does not only hide the operation.
-See ADR 0002. `sealDays` writes a record for each Day that ended, and it
-refreshes only today.
+**You can only Log today.** There's no grace window for yesterday. The mutation
+itself rejects any other Day; the UI isn't just hiding the option. See ADR 0002.
+`sealDays` writes a record for each finished Day and only ever touches today.
 
 **The Overview Heatmap is a live projection of the visible Habits.** A Day
-Record contains only the Logs. The app calculates the set of Habits for a Square
-from the Spans of the Habits that are not Hidden now. See ADR 0001.
+Record stores only Logs. Which Habits count toward a Square is worked out from
+the Spans of the Habits that aren't currently Hidden. See ADR 0001.
 
-Thus a Hide gives a new Intensity to the Days in the past, and it decreases the
-Total. Spans stop a new Habit from a change to the Days before that Habit
-existed.
+So hiding a Habit changes the Intensity of past Days and lowers the Total.
+Spans keep a newly added Habit from changing Days before it existed.
 
-**The number on Home does not reset on a schedule.** The Total is always for the
-Year, for each value of the Lens. Only a Hide decreases it. A Streak belongs to
-one Habit, the user must turn it on, and the app does not repair it.
+**The number on Home never resets on a schedule.** The Total always covers the
+Year, whatever the Lens. Only a Hide can lower it. A Streak belongs to a single
+Habit, is opt-in, and is never repaired.
 
-Both the unit tests and the end-to-end tests assert each rule. If you break a
-rule, a test that names the rule must fail. A test that names a file must not be
-the only failure.
+Every rule is asserted by both unit and end-to-end tests. If you break one, a
+test named after that rule should fail, not just a test named after a file.
 
 ## Design
 
 The design comes from the Claude Design project `Squares.dc.html` (turn 1). It
-answers the four questions of the interface:
+answers four UI questions:
 
-- **Day one** — the Overview Heatmap always fills its width, at each age of the
-  account and for each value of the Lens. See `gridGeometry` in
+- **Day one.** The Overview Heatmap always fills its width, however old the
+  account and whatever the Lens. See `gridGeometry` in
   `packages/domain/grid.ts`.
-- **A year on a phone** — 53 columns fit in 350px at approximately 5.4px for
-  each Square. The app no longer does this. The Year keeps an 11px Square and
-  moves sideways, and it opens at today. The Week and the Month fit.
-- **Four heatmaps** — Home has one year grid. Each Habit row has a tail of 8
-  Days. The tail is the target for the Log and also a preview of the Streak. The
-  full year of each Habit is on the detail Screen.
-- **Colour** — the four Intensity levels increase in lightness (0.40, 0.55,
-  0.70, 0.85 in the Dark Theme). The hue turns from 178 to 120 across the
-  blue-yellow axis. Thus the ramp is legible with deuteranopia and in greyscale.
-  `packages/domain/palette.ts` holds the one definition, and the app generates
-  `--lv0` to `--lv4` from it.
+- **A year on a phone.** 53 columns would fit in 350px at about 5.4px per
+  Square, but the app no longer squeezes them. The Year keeps an 11px Square,
+  scrolls sideways, and opens at today. The Week and Month fit as-is.
+- **Four heatmaps.** Home has one year grid. Each Habit row has an 8-Day tail,
+  which is both the Log target and a preview of the Streak. Each Habit's full
+  year lives on its detail Screen.
+- **Colour.** The four Intensity levels step up in lightness (0.40, 0.55, 0.70,
+  0.85 in the Dark Theme) while the hue shifts from 178 to 120 along the
+  blue-yellow axis, so the ramp stays readable with deuteranopia and in
+  greyscale. `packages/domain/palette.ts` is the single definition, and `--lv0`
+  to `--lv4` are generated from it.
 
-Three facts of the design are necessary here. `docs/build-log.md` holds the
-other facts.
+Three design details matter enough to cover here; the rest are in
+`docs/build-log.md`.
 
-**A Frame has a constant shape.** A Lens is a Frame: a set of Days that starts
+**A Frame always has the same shape.** A Lens is a Frame: a set of Days anchored
 at today. See `packages/domain/lens.ts`.
 
-The Week is always seven Squares, from Sunday to Saturday. The Month is always
-the full month. The Year is always 365 Days that end at today. The Year does not
-go from 1 January to 31 December, so it agrees with the Total above it.
+The Week is always seven Squares, Sunday to Saturday. The Month is always the
+whole month. The Year is always the 365 Days ending today, not 1 January to 31
+December, so it matches the Total above it.
 
-A Frame does not become smaller to fit the data. The app draws a Day in the
-future and a Day before the account existed. Both have Intensity 0. A Day that
-the user missed also has Intensity 0.
+A Frame never shrinks to fit the data. Future Days and Days before the account
+existed are still drawn, at Intensity 0, which is also what a missed Day looks
+like.
 
-If a Frame goes past today, the app puts a ring around today. Without the ring,
-a missed Day and a future Day look the same.
+When a Frame extends past today, today gets a ring. Otherwise you couldn't tell
+a missed Day from a future one.
 
-The Lens is view state. It does not change a Day Record, and the Total is always
-for the Year.
+The Lens is view state only. It never changes a Day Record, and the Total always
+covers the Year.
 
-The Lens also selects the shape. The Month and the Year are calendar blocks with
-seven rows of weekdays, because the rows must align across the columns. The Week
-has no second column, so it is one row from Sunday to Saturday. The Week shows
-seven Squares at the maximum size of 40px.
+The Lens also picks the shape. Month and Year are calendar blocks with seven
+weekday rows, because the rows have to line up across columns. The Week would
+be a single column, so it's drawn as one Sunday-to-Saturday row instead, with
+Squares at the maximum 40px.
 
-`gridGeometry` and `gridSquares` receive `rows` for this. `lensRows` calculates
-the value.
+`gridGeometry` and `gridSquares` take a `rows` argument for this, computed by
+`lensRows`.
 
-The Lens also controls the fit. A Week is seven Squares, and a Month is five or
-six columns. Both fit on a phone at the largest size that the app draws.
+The Lens also decides whether the grid fits. A Week is seven Squares and a Month
+is five or six columns, so both fit on a phone at the largest size the app
+draws.
 
-A Year is 53 columns. To fit those columns, a Square loses most of its size.
-Thus the Year keeps an 11px Square and moves sideways, and it opens at today.
-See `lensScrolls` and `scrollGeometry`. The page does not move sideways. Only
-the box of the grid moves.
+A Year is 53 columns, and fitting them would shrink each Square to almost
+nothing. Instead the Year keeps an 11px Square, scrolls sideways, and opens at
+today. See `lensScrolls` and `scrollGeometry`. Only the grid's box scrolls,
+never the page.
 
-**A Heatmap shows which Days it contains.** At the side, the app puts Monday,
-Wednesday and Friday. It puts three names and not seven, because at the row
-height of the Year the names are taller than the Squares.
+**A Heatmap labels the Days it covers.** Down the side are Monday, Wednesday and
+Friday. Only three, because at the Year's row height the labels are taller than
+the Squares.
 
-Above the Heatmap, the app puts the months of the Frame. Each name is above the
-first column of its month. For the Month Lens, the app puts the name of that
-month and the year.
+Along the top are the Frame's months, each above its first column. The Month
+Lens shows that month's name and the year instead.
 
-`packages/domain/axis.ts` calculates all of this without a DOM. It also
-calculates if a month has sufficient space for its name. That test uses pixels
-against the column width, because the same grid steps 14px when it moves and
-6.14px when it is compressed.
+`packages/domain/axis.ts` computes all of this without a DOM, including whether
+a month has room for its label. That check compares pixels to column width,
+because the same grid steps 14px when it scrolls and 6.14px when compressed.
 
-The weekday names are outside the scroll box and do not move. A Share Card has
-none of these names, because a month is a date and a card has no date.
+The weekday labels sit outside the scroll box, so they stay put. Share Cards
+have no labels at all, because a month is a date and cards don't carry dates.
 
-**A Share Card names every Habit it draws from, with no way to withhold one**
-(ADR 0010). The app draws the card on the device to a canvas and saves a PNG
-of 1280px. There are two kinds (ADR 0011): the Overview Card, built by
-`shareCardModel`, and the Habit Card, built by `habitCardModel` for one Habit
-at a time. Both return the same `ShareCardModel` shape, and every drawing and
-sizing function in `shareCard.ts` reads that one shape — the two kinds differ
-only in how the model is filled in, never in what draws it.
+**A Share Card names every Habit it draws from, and you can't leave one out**
+(ADR 0010). The card is drawn on the device to a canvas and saved as a 1280px
+PNG. There are two kinds (ADR 0011): the Overview Card, built by
+`shareCardModel`, and the Habit Card, built by `habitCardModel` for a single
+Habit. Both return the same `ShareCardModel`, and every drawing and sizing
+function in `shareCard.ts` reads only that shape. The two kinds differ in how
+the model is populated, never in how it's drawn.
 
 `ShareCardModel` has eight fields: lens, frame, rows, weekday, levels, tally,
-names and streak. There is no date, no user name and no breakdown for each
-Habit on the Overview Card. A breakdown is a risk.
+names and streak. It deliberately has no date, no user name, and no per-Habit
+breakdown on the Overview Card, since a breakdown could leak more than intended.
 
-`names` lists every Habit that is not Hidden, unconditionally — there is no
-per-Habit flag left to check. On the Overview Card that can be several names
-or none; on a Habit Card it is always exactly one, because a Hidden Habit has
-no Habit Card to draw from. Hide is the only lever left over what any card
-can say.
+`names` lists every Habit that isn't Hidden, with no per-Habit flag to check. On
+an Overview Card that could be several names or none. On a Habit Card it's
+always exactly one, since a Hidden Habit has no Habit Card. Hiding is the only
+way to control what a card shows.
 
-`streak` is null on every Overview Card, which has no one Habit to keep a
-Streak for. A Habit Card sets it to that Habit's own Streak, but only if the
-Habit is a Streak Habit — the same gate its own Screen shows the Streak
-behind.
+`streak` is always null on an Overview Card, since there's no single Habit to
+keep a Streak for. A Habit Card sets it to that Habit's Streak, but only for a
+Streak Habit, which is the same condition its Screen uses.
 
-The card always uses the Dark Theme, because it is an image and not a Screen.
+Cards always use the Dark Theme, because a card is an image, not a Screen.
 
-A card has its own Lens. The user selects the Lens where the user makes the
-card. The card does not use the Lens from Home, because the user does not reach
-the card from Home.
+A card has its own Lens, chosen where you make the card. It doesn't inherit
+Home's Lens, because you don't reach the card from Home.
 
-The card draws the full Frame of that Lens. Example: a Week card that the user
-makes on a Wednesday shows seven Squares with a ring around today. The card
-shows a **Tally**: the Logs inside the Frame, and not the Total. A Week card
-above a number for the Year is not legible.
+The card draws the full Frame for its Lens. For example, a Week card made on a
+Wednesday shows all seven Squares with a ring on today. It shows a **Tally**
+(the Logs inside the Frame) rather than the Total, because a Week card over a
+full-year number wouldn't make sense.
 
-**The Dark Theme is the design. The Light Theme is a port.** Thus `system` gives
-the Dark Theme unless the device asks for the Light Theme. The media query is
-`prefers-color-scheme: light` and not the absence of a dark preference.
+**The Dark Theme is the design; the Light Theme is a port.** So `system` means
+Dark unless the device explicitly asks for Light. The media query is
+`prefers-color-scheme: light`, not "no dark preference".
 
-The app stores the preference in the data with the Habits, so an Export
-restores it. CSS cannot read the data. Thus `layout.tsx` adds a bootstrap script
-that sets `data-theme` before the first paint.
+The Theme preference is stored alongside the Habits, so an Export restores it.
+CSS can't read that data, so `layout.tsx` injects a bootstrap script that sets
+`data-theme` before first paint.
 
-Hack (`public/fonts/*.woff2`) is the font of the design. The app hosts it, so
-the app makes no external request. The stack falls back to the system monospace
-font.
+The design font is Hack (`public/fonts/*.woff2`). It's self-hosted so the app
+makes no external requests, and falls back to the system monospace font.
 
 ## Tests
 
-The tests follow the three rules and not the files. Thus a test that fails names
-the rule that broke.
+Tests are organised around the three rules rather than around files, so a
+failing test tells you which rule broke.
 
-**Unit tests** (`vitest`), with one project for each concern:
+**Unit tests** (`vitest`), with one project per concern:
 
-- `packages/domain` runs in node. The rules are plain TypeScript, and the tests
-  use no DOM. Thus a component cannot become necessary for a rule.
-- The `web` project of `apps/web` runs in jsdom. `src/test/dom.ts` supplies what
-  jsdom does not have: a viewport of 350px, a canvas that records the calls, and
-  a link that reports the requested download. `src/test/harness.tsx` builds an
-  account with the mutations of the app, so a fixture cannot disagree with the
-  rules. It also wires the store in the same way as `page.tsx`.
-- The `css` project of `apps/web` runs in node, for the two tests below that
-  read the stylesheet as text.
+- `packages/domain` runs in node. The rules are plain TypeScript and the tests
+  use no DOM, which keeps components from creeping into rule logic.
+- The `web` project in `apps/web` runs in jsdom. `src/test/dom.ts` fills in what
+  jsdom lacks: a 350px viewport, a canvas that records its calls, and a link
+  that reports requested downloads. `src/test/harness.tsx` builds accounts with
+  the app's own mutations, so fixtures can't contradict the rules, and wires
+  the store the same way `page.tsx` does.
+- The `css` project in `apps/web` runs in node, for the two tests that read
+  stylesheets as text (see below).
 
-The tests replace the clock only. They do not replace `setTimeout`. Three
-animations use real timers: the spring of 260ms for the Log tap, the echo, and
-the roll of 180ms for the Total. The tests assert them as real timers.
+Tests mock the clock and nothing else; `setTimeout` stays real. Three
+animations run on real timers: the 260ms spring on a Log tap, the echo, and the
+180ms roll of the Total. The tests wait on them for real.
 
-`src/app/page.test.tsx` renders in `StrictMode`, because `next.config.ts` turns
-`StrictMode` on. An impure screen push then fails in a test and not in a
-browser.
+`src/app/page.test.tsx` renders under `StrictMode`, because `next.config.ts`
+enables it. An impure screen push then fails in a test instead of in a browser.
 
-Two tests read stylesheets as text, because there is no other way to reach those
-values. `typography.test.ts` asserts that no text control is smaller than 16px.
-Below 16px, iOS zooms the page at focus. `palette.test.ts` asserts two facts:
-`tokens.css` is the exact output of `tokens.ts` from the ramp, and `globals.css`
-declares no `--lv` value of its own.
+Two tests read stylesheets as text, since there's no other way to get at those
+values. `typography.test.ts` checks that no text input is smaller than 16px,
+because iOS zooms the page on focus below that. `palette.test.ts` checks that
+`tokens.css` exactly matches what `tokens.ts` generates from the ramp, and that
+`globals.css` doesn't define any `--lv` values of its own.
 
-**End-to-end tests** (`playwright`), against a real browser and a real
+**End-to-end tests** (`playwright`) run against a real browser and real
 localStorage.
 
-The tests run on port 3100 and not on port 3000. `pnpm dev` uses port 3000. The
-tests never use a server that they did not start.
+They use port 3100, not 3000 (which is `pnpm dev`'s), and never reuse a server
+they didn't start.
 
-Earlier the tests did both. The failure was difficult to find: an earlier run
-left a `next dev` server, or the server was wedged and answered 500. The tests
-then used that server, and each test failed at page load with no explanation.
+They used to reuse servers, and it caused hard-to-diagnose failures: a leftover
+`next dev` from an earlier run, or a wedged server returning 500s, would get
+picked up and every test would fail on page load with no useful message.
 
-A separate port lets `pnpm dev` and `pnpm test:e2e` run at the same time. A
-refusal to use an existing server turns a stale server into a clear "port in
-use" message. Set `PLAYWRIGHT_BASE_URL` to use a server that you started.
+A dedicated port means `pnpm dev` and `pnpm test:e2e` can run side by side, and
+refusing to reuse a server turns a stale one into a clear "port in use" error.
+Set `PLAYWRIGHT_BASE_URL` if you want to point the tests at your own server.
 
-`e2e/fixtures.ts` seeds the device one time, before the first script of the app.
-It does not seed on later navigations. Thus a reload restores the state that the
-test made, and not the initial state.
+`e2e/fixtures.ts` seeds the device once, before the app's first script runs,
+and not on later navigations. That way a reload restores whatever state the test
+built up, not the initial seed.
 
-`share.spec.ts` reads the canvas back as a PNG. It does not trust the text above
-the button, because a card that shows a name is the worst possible defect.
+`share.spec.ts` reads the canvas back as a PNG instead of trusting the text
+above the button, because a card showing the wrong name is the worst bug this
+app could have.
 
-`data.spec.ts` asserts that the app makes no external request. This is ADR 0004
-as a test and not as a statement.
+`data.spec.ts` checks that the app makes no external requests: ADR 0004,
+enforced by a test.
 
 ## Where to find more
 
-| Document | Content |
+| Document | Contents |
 | --- | --- |
-| `CONTEXT.md` | The glossary. The terms that the code uses without change. |
-| `docs/adr/` | The decisions that are expensive to reverse, and the rejected options. |
-| `docs/build-log.md` | What we built, what we decided, and what is still open. |
+| `CONTEXT.md` | The glossary: terms the code uses verbatim. |
+| `docs/adr/` | Decisions that are expensive to reverse, and the options we rejected. |
+| `docs/build-log.md` | What we built, what we decided, and what's still open. |
 | `docs/research/` | What we verified against primary sources, and when. |
