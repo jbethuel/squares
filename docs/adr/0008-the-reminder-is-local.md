@@ -1,74 +1,70 @@
-# The Reminder is local and never a push notification
+# The Reminder is local, never a push notification
 
-The app schedules each Reminder on the device, and the device raises it. There
-is no push service, no subscription endpoint and no server. A Reminder does not
-use the network.
+Every Reminder is scheduled on the device and fired by the device. There's no
+push service, no subscription endpoint and no server, and a Reminder never uses
+the network.
 
-We record this decision because a notification is the first feature that looks
-like a conflict with ADR 0004. The next person who wants a notification will
-select Web Push or FCM before that person examines the requirement. Examples of
-such a feature are a weekly summary, or a warning that a Streak will stop.
+We're writing this down because notifications are the first feature that looks
+like it conflicts with ADR 0004. The next person who wants a notification (say,
+a weekly summary or a "your Streak is about to break" warning) will reach for
+Web Push or FCM before checking whether they need it.
 
-Web Push and FCM are not necessary. All the data for a Reminder is on the
-device. The data belongs to the user, and the Reminder asks if the user Logged
-these Habits. The app calculates nothing on a server, so it sends nothing to a
-server. A push channel moves the data off the device for a feature that does not
-need this.
+They don't. Everything a Reminder needs is already on the device. It's the
+user's data, and the Reminder is only asking whether they've Logged these
+Habits. Nothing is computed on a server, so nothing needs to be sent to one. A
+push channel would move data off the device for a feature that doesn't need it
+to.
 
 ## Consequences
 
-The web build has no Reminder and cannot have one. This is not a gap to close
-later. It is the reason that the phone app exists. See ADR 0007.
+The web build has no Reminder and can't have one. That's not a gap to fill
+later; it's why the phone app exists. See ADR 0007.
 
-A Reminder is a property of the device and not of the data. An Export does not
-contain a Reminder. If the user moves the data to a different phone, that phone
-has no Reminder.
+Reminders belong to the device, not the data. An Export doesn't include them, so
+moving your data to a new phone leaves that phone with no Reminders.
 
-This rule is more strict than the rule for the Theme. The app stores the Theme
-in the data, and the Theme moves with an Export. The difference is deliberate.
-An Import that starts notifications on a new phone is an effect that the user
-did not ask for.
+That's stricter than the Theme, which is stored in the data and travels with an
+Export. The difference is deliberate: an Import that starts firing
+notifications on a new phone is a side effect nobody asked for.
 
-Hide cancels the Reminder of a Habit. The user cannot Log a Hidden Habit. Thus
-its Reminder asks for an operation that the user cannot do. The glossary gives a
-Hidden Habit the same shape in all other places: it shows no Streak, and its
-name goes on no Share Card.
+Hiding a Habit cancels its Reminder. A Hidden Habit can't be Logged, so its
+Reminder would be asking for something the user can't do. This matches how the
+glossary treats Hidden Habits everywhere else: no Streak, and no name on a Share
+Card.
 
-Import removes each Reminder that it cannot match. The app stores Reminder times
-on the device with the id of the Habit. The data does not contain the Reminder
-times. Thus an Import can leave a Reminder that points to a Habit that no longer
-exists.
+Import clears any Reminder it can't match. Reminder times are stored on the
+device, keyed by Habit id, and aren't part of the data, so an Import could
+otherwise leave a Reminder pointing at a Habit that no longer exists.
 
-The Daily Reminder is off until the user turns it on. But the app asks the user
-one time, when the user makes the first Habit. By ADR 0002, the user cannot
-recover a Day that the user missed. The Reminder is thus the only protection,
-and a protection that the user does not know about gives no protection.
+The Daily Reminder is off until the user turns it on, but the app offers it
+once, when the first Habit is created. Per ADR 0002 a missed Day can't be
+recovered, so the Reminder is the only safety net, and a safety net you don't
+know about doesn't help.
 
-To ask the user is not the same as to turn the Reminder on. To turn it on is a
-decision about the lock screen of the user, and the app must not make that
-decision.
+Offering it isn't the same as turning it on. Turning it on is a decision about
+the user's lock screen, and that's not the app's call.
 
-## A name on a lock screen
+## A name on the lock screen
 
-A Reminder for a Habit must identify that Habit. If it does not, the Reminder
-has no value when the user has two Habits.
+A Reminder for a specific Habit has to identify it, or it's useless once you
+have two Habits.
 
-But the Share Card gives the constraint for this app: users track "took my meds"
-and "no drinking", and a name that leaves the app is the worst possible defect.
+But the Share Card sets the constraint for this app: people track things like
+"took my meds" and "no drinking", and a name leaking out of the app is the
+worst bug we could ship.
 
-A lock screen is more dangerous than a Share Card. The user makes a card
-deliberately. A Reminder arrives at the set time, in front of any person in the
-room.
+The lock screen is riskier than a Share Card. You make a card deliberately; a
+Reminder shows up at its scheduled time in front of whoever's in the room.
 
-Thus the app uses the existing control and does not add a second one. A Reminder
-shows the name of its Habit only if that Habit is a Named Habit. If the Habit is
-not a Named Habit, the Reminder says "1 Habit left" and opens the app.
+So instead of adding a second control, the app reuses the existing one. A
+Reminder shows its Habit's name only if that Habit is a Named Habit. Otherwise
+it says "1 Habit left" and opens the app.
 
-A Named Habit thus controls the name outside the app, and not only on the Share
-Card. Both places do the same thing. A user who permits the name in one place
-permits it in the other place.
+That means Named Habit governs the name everywhere outside the app, not just on
+the Share Card. Both places behave the same way: allowing the name in one allows
+it in the other.
 
-> **Amended by ADR 0010.** The Share Card side of this no longer holds: a
-> Share Card now names every Habit it draws from, unconditionally, and Named
-> Habit governs the Reminder alone. Everything above about *why* the Reminder
-> keeps its own opt-in is unchanged.
+> **Amended by ADR 0010.** The Share Card part no longer applies. A Share Card
+> now always names every Habit it draws, and Named Habit governs only the
+> Reminder. The reasoning above for why the Reminder keeps its own opt-in still
+> stands.

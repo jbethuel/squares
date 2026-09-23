@@ -1,40 +1,36 @@
-# A Habit holds a list of Spans, so the user can undo Hide
+# A Habit holds a list of Spans, so Hide can be undone
 
-A Habit contains a list of Spans. A Span is a pair of dates, `{from, to}`. The
-pair is half-open: the date in `to` is the Day when the user Hid the Habit, and
-the Habit is not Active on that Day.
+A Habit has a list of Spans. Each Span is a pair of dates, `{from, to}`, and is
+half-open: `to` is the Day the Habit was Hidden, and the Habit isn't Active on
+that Day.
 
-A Habit does not contain a creation date and a hidden-on date. One pair of dates
-cannot show a Habit that stopped and started again.
+A Habit doesn't have a single created date and hidden date, because one pair of
+dates can't describe a Habit that stopped and started again.
 
-Hide is a control on the Screen of the Habit. A control must operate in two
-directions. Thus a Habit can have any number of Spans, and the data must show
-which Days belong to which Span.
+Hide is a toggle on the Habit's Screen, and toggles go both ways. So a Habit can
+have any number of Spans, and the data has to record which Days belong to which.
 
 ## Considered options
 
-**Move the creation date forward when the Habit comes back.** This option is
-less expensive and needs no migration. We rejected it because it writes a first
-Day that is not correct. The Habit did not start on that Day. The error stays
-hidden until a function other than the Active test reads that field.
+**Move the created date forward when the Habit is unhidden.** Cheaper, and no
+migration needed. We rejected it because it records a start date that's wrong:
+the Habit didn't start that Day. The error stays invisible until something
+other than the Active check reads the field.
 
-**Add a third field for the Day when the Habit came back.** This option is
-correct for one cycle only. At the second Hide, the app writes over the first
-gap. A control that operates in two directions invites more than one cycle.
+**Add a third field for the date it came back.** Correct for exactly one cycle.
+The second Hide overwrites the first gap, and a toggle invites more than one
+cycle.
 
 ## Consequences
 
-The app calculates the set of Habits for a Day from the Spans. See ADR 0001.
-Thus a Span is not only a record of when a Habit existed. A Span controls the
-Intensity of each Square in the past. An error in a Span is an error in the full
-Heatmap.
+The set of Habits for a Day is computed from Spans (see ADR 0001). So a Span
+isn't just a record of when a Habit existed; it decides the Intensity of every
+past Square. A bug in a Span is a bug in the whole Heatmap.
 
-Hide does not move backward in time. The Days when a Habit was Hidden are Days
-when the Habit was not Active. The Habit does not get those Days when it comes
-back. The gap stays in the Habit Heatmap. This is correct behaviour and not a
-defect.
+Hide doesn't reach back in time. Days spent Hidden are Days the Habit wasn't
+Active, and it doesn't get them back when unhidden. The gap stays visible in the
+Habit Heatmap. That's intended, not a bug.
 
-The app has no delete operation. Hide is the only way to remove a Habit from
-Home. A full erase of the storage is the only operation that destroys data. No
-operation removes the data of one Habit and keeps the rest. Thus Export is in
-v1.
+There's no delete. Hide is the only way to take a Habit off Home, and wiping
+storage entirely is the only thing that destroys data. There's no way to remove
+one Habit's data and keep the rest, which is why Export is in v1.

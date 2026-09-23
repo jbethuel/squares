@@ -1,58 +1,56 @@
 # The Overview Heatmap is a live projection of the visible Habits
 
-The app calculates the Overview Heatmap from the Habits that are not Hidden now.
+The Overview Heatmap is computed from whichever Habits aren't Hidden right now.
 
-A Day Record contains only the Logs. The app does not store the set of Habits
-for a Day. The app calculates that set at read time. It uses the Spans of the
-Habits that are on Home now.
+A Day Record stores only the Logs, not which Habits existed that Day. That set
+is worked out at read time from the Spans of the Habits currently on Home.
 
-If the user Hides a Habit, all the Squares of that Habit get a new Intensity. If
-the user shows the Habit again, the old Intensity comes back.
+Hiding a Habit re-shades every Square it touched, and unhiding it restores the
+old shading.
 
-This decision makes the word "Hide" correct. A Habit that the user removed from
-the app must be absent from the app. This includes the Days in the past.
+This is what makes "Hide" honest. If you take a Habit out of the app, it should
+be gone from the app, including from past Days.
 
 ## Considered options
 
-**Store the set of Habits for each Day.** In this option, each Day Record
-contains two sets: the Habits that were Active, and the Habits that the user
-Logged. The Intensity of a Square is then constant after the app seals the Day.
+**Store the set of Habits for each Day.** Each Day Record would hold two sets:
+the Habits that were Active and the Habits that were Logged. A Square's
+Intensity would then be fixed once the Day is sealed.
 
-This option makes a better record. The Heatmap becomes data and not a view. No
-later operation can change a Square in the past.
+That makes a better record. The Heatmap becomes data rather than a view, and
+nothing can later change a past Square.
 
-We rejected this option because it makes Hide impossible. With a stored set,
-Hide removes a Habit from Home but keeps its data in the Overview Heatmap. The
-Squares then disagree with the Habits above them, and the user cannot understand
-the difference.
+We rejected it because it makes Hide impossible. With a stored set, Hide would
+take a Habit off Home but leave its data in the Overview Heatmap. The Squares
+would disagree with the Habits listed above them, and the user would have no
+way to make sense of it.
 
-The alternative in that design is two controls: one control to stop a Habit and
-one control to conceal it. This gives four states for each Habit. The app must
-stay simple, so we rejected this also.
+The workaround would be two controls, one to stop a Habit and one to conceal it,
+giving four states per Habit. That's too much for an app that needs to stay
+simple, so we rejected it too.
 
-**Delete the Logs when the user Hides a Habit.** This option gives the same
-display, but it destroys data. We rejected it. Hide is a control that the user
-can operate more than one time. A control that destroys data cannot do this.
+**Delete a Habit's Logs when it's Hidden.** This looks the same on screen but
+destroys data. We rejected it: Hide is meant to be toggled back and forth, and
+you can't do that with something destructive.
 
 ## Consequences
 
-The Total decreases when the user Hides a Habit. The Total counts the Logs of
-the visible Habits. Thus the Logs of the Hidden Habit leave the Total. A number
-below a Heatmap must agree with the Heatmap.
+The Total drops when a Habit is Hidden. It counts the Logs of visible Habits,
+so a Hidden Habit's Logs fall out of it. A number under a Heatmap has to agree
+with the Heatmap.
 
-The user cannot make the same Share Card again after a Hide. A card from Tuesday
-is different from a card from Wednesday if the user Hid a Habit between the two
-days. A Share Card is a PNG file on the device. The file stays correct, but it
-no longer agrees with the app.
+You can't reproduce an old Share Card after a Hide. A card made on Tuesday will
+differ from one made on Wednesday if a Habit was Hidden in between. The card is
+just a PNG on the device, so it stays correct as a snapshot, but it no longer
+matches the app.
 
-Hide changes today and also the Days in the past. If the user Logs a Habit in
-the morning and Hides it in the afternoon, the Square for today gets a new
-Intensity immediately.
+Hide affects today as well as the past. Log a Habit in the morning, Hide it in
+the afternoon, and today's Square is re-shaded immediately.
 
-Spans become necessary. A Span is the only data that shows that a Habit was not
-Active on a given Day. Without Spans, the app must count all the visible Habits.
-Then each new Habit changes the Intensity of all the earlier Days. See ADR 0003.
+Spans become necessary. They're the only data that says a Habit wasn't Active on
+a given Day. Without them, every visible Habit would count for every Day, and
+adding a Habit would change the Intensity of all earlier Days. See ADR 0003.
 
-There is no stored set to compare with the calculated set. Thus an error in the
-Span logic changes all the Squares in the past, and no test data finds the error.
+There's no stored set to check the computed one against, so a bug in the Span
+logic silently changes every past Square, and no test fixture will catch it.
 The Span logic needs the most tests in `packages/domain`.

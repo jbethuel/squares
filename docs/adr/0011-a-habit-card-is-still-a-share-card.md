@@ -1,39 +1,33 @@
-# A Habit Card is still a Share Card — Hide stays unreachable by either kind
+# A Habit Card is still a Share Card, so Hide keeps it off too
 
-The Share Card now comes in two kinds: the Overview Card (the original,
-drawing every visible Habit at once) and the Habit Card (new, drawing one
-Habit's own Heatmap, its own Tally, and its name, reached from that Habit's
-own Screen).
+There are now two kinds of Share Card: the Overview Card (the original, which
+draws every visible Habit at once) and the Habit Card (new, which draws one
+Habit's Heatmap, its Tally and its name, and is made from that Habit's Screen).
 
-Extending sharing to one Habit at a time reopened a question ADR 0010 had
-already settled for the Overview Card: what can Hide keep off a card. The
-Habit Heatmap already renders for a Hidden Habit, on that Habit's own Screen —
-that view is for the user's own eyes, on a Screen the app shows to nobody
-else. A Habit Card is different in kind: it exists to leave the device. Hide's
-guarantee since the original ADR is "not on Home, not in the Overview, not on
-a Share Card" (see `CONTEXT.md`, Hidden Habit). A second kind of Share Card is
-still a Share Card, and carving an exception into it the first time a second
-kind exists would be exactly the erosion Hide is there to prevent. So a Habit
-Card sits inside the same `hidden ? null : …` guard as the Habit's other
-toggles: Hiding a Habit removes its own "make a share card" row along with
-everything else that stops applying.
+Sharing a single Habit reopened a question ADR 0010 had settled for the Overview
+Card: what can Hide keep off a card? A Hidden Habit's Heatmap is still shown on
+its own Screen, but that's for the user alone. A Habit Card exists to leave the
+device. Hide has promised from the start that a Habit is "not on Home, not in the
+Overview, not on a Share Card" (see Hidden Habit in `CONTEXT.md`). A second kind
+of Share Card is still a Share Card, and making an exception the first time a
+second kind appears is exactly the kind of erosion Hide is meant to prevent. So
+the Habit Card sits inside the same `hidden ? null : …` guard as the Habit's
+other toggles, and hiding a Habit removes its "make a share card" row along with
+everything else that no longer applies.
 
-This creates a deliberate asymmetry with Export, not an oversight. Export
-already carries a Hidden Habit's full history, because Export exists to
-survive a re-install and Hide is not a delete (`CONTEXT.md`, Hide). A Share
-Card is not a backup; it is a thing shown to somebody else, and that is
-exactly the operation Hide turns off.
+This is a deliberate asymmetry with Export, not an oversight. Export carries a
+Hidden Habit's full history, because Export exists to survive a reinstall and
+Hide isn't a delete (see Hide in `CONTEXT.md`). A Share Card isn't a backup; it's
+something you show to someone else, which is exactly what Hide turns off.
 
 ## Consequences
 
-A Habit Card matches the Overview Card's minimalism rather than the Habit's
-own Screen: shape, Tally, and the Habit's name — unconditional, per ADR 0010,
-since a Habit Card that could hide its own subject would be pointless. Its
-Streak appears only if the Habit is a Streak Habit, mirroring what that
-Habit's own Screen already shows; Longest Streak and a raw Log count stay off,
-the same as they stay off the Overview Card.
+A Habit Card follows the Overview Card's minimalism rather than the Habit's
+Screen: the shape, the Tally and the Habit's name. The name is always shown, per
+ADR 0010, since a Habit Card that hid its own subject would be pointless. The
+Streak appears only for a Streak Habit, matching the Habit's Screen. Longest
+Streak and the raw Log count stay off, as they do on the Overview Card.
 
-The entry point lives on the Habit's own Screen, directly after "count a
-streak" — the row immediately above governs whether the card below it carries
-a Streak at all. It is available whether or not that Habit is a Streak
-Habit; only Hide removes it.
+The entry point is on the Habit's Screen, directly below "count a streak",
+because that row decides whether the card below it shows a Streak. It's there
+whether or not the Habit is a Streak Habit; only Hide removes it.
