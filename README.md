@@ -113,16 +113,18 @@ Day, Square, Span, Intensity, Streak, Total, Tally, Hide, Lens, Frame.
 
 Read it before you change anything in `packages/domain/`.
 
-All user-facing text is written in ASD-STE100 Simplified Technical English.
-That covers Screens, screen-reader labels, notifications and the Share Card.
+User-facing text (Screens, screen-reader labels, notifications, the Share Card
+and the store listing) is written in a plain, friendly voice:
 
-- Write notes, hints, warnings and confirmations as full sentences. Use "the"
-  and "a", use the active voice, and give one instruction per sentence.
-- Keep labels, buttons and headings short.
+- Talk to the user as "you", and keep it short. Contractions are fine.
+- Write notes, hints and confirmations as whole sentences. Labels, buttons and
+  headings can be fragments.
 - Write everything in lowercase.
-- Address the user as "you".
+- Say what happened or what to do, not what the app can't do. "couldn't read
+  that file." beats "squares cannot read the file."
+- Skip idioms and in-jokes that only make sense once you know the app.
 - When text refers to a concept in `CONTEXT.md`, use the glossary word, never a
-  word from its _Avoid_ list.
+  word from its _Avoid_ list, but don't capitalise it.
 - Don't show users glossary terms the app doesn't already show them, such as
   Lens, Tally or Frame.
 

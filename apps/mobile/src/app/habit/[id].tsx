@@ -210,8 +210,8 @@ export default function Detail() {
             label="remind me"
             hint={
               habit.namedHabit
-                ? "the notification shows the name of this habit."
-                : "the notification does not show the name of this habit."
+                ? "the notification shows this habit's name."
+                : "the notification won't show this habit's name."
             }
             time={reminders.forHabit(habit.id)}
             onSet={(time) => reminders.setForHabit(habit.id, time)}
@@ -229,8 +229,8 @@ export default function Detail() {
         label="hide"
         hint={
           hidden
-            ? "this habit and its logs are not on home. turn off to show them again."
-            : "removes this habit and its logs from home. squares keeps the logs."
+            ? "hidden from home, logs kept. turn off to bring it back."
+            : "takes this habit off home. nothing is deleted."
         }
         on={hidden}
         onToggle={() => update((current) => setHidden(current, habit.id, !hidden, today))}

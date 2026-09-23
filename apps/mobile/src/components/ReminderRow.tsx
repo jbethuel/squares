@@ -93,8 +93,7 @@ export function ReminderRow({
             */}
             {refused ? (
               <Text style={{ fontFamily: MONO, fontSize: FS.xs, color: t.muted }}>
-                squares cannot send notifications. allow notifications for squares in the settings of
-                your phone.
+                notifications are off for squares. allow them in your phone&apos;s settings.
               </Text>
             ) : hint ? (
               <Text style={{ fontFamily: MONO, fontSize: FS.xs, color: t.muted }}>{hint}</Text>

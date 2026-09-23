@@ -46,12 +46,11 @@ export function ShareScreen() {
       <div className="card" style={{ marginTop: 16 }}>
         {model.names.length === 0 ? (
           <p className="note" style={{ margin: 0 }}>
-            this card has no habits. add a habit on home.
+            no habits yet. add one on home to fill this card.
           </p>
         ) : (
           <p className="note" style={{ margin: 0 }}>
-            this card shows{" "}
-            {model.names.length === 1 ? "the name of this habit" : "the names of these habits"}:{" "}
+            your habit {model.names.length === 1 ? "name appears" : "names appear"} on this card:{" "}
             {model.names.join(", ")}.
           </p>
         )}

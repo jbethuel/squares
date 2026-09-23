@@ -45,7 +45,7 @@ export default function Share() {
           style={{ width: "100%", aspectRatio: card.width / card.height, borderRadius: 14 }}
         />
       ) : (
-        <NoteFaint>squares cannot make the card on this device.</NoteFaint>
+        <NoteFaint>this device can&apos;t draw the card.</NoteFaint>
       )}
 
       {/*
@@ -55,10 +55,9 @@ export default function Share() {
       */}
       <Card style={{ marginTop: 16 }}>
         {model.names.length === 0 ? (
-          <Note>this card has no habits. add a habit on home.</Note>
+          <Note>no habits yet. add one on home to fill this card.</Note>
         ) : (
-          <Note>this card shows{" "}
-            {model.names.length === 1 ? "the name of this habit" : "the names of these habits"}:{" "}
+          <Note>your habit {model.names.length === 1 ? "name appears" : "names appear"} on this card:{" "}
             {model.names.join(", ")}.</Note>
         )}
       </Card>

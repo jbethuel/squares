@@ -23,7 +23,7 @@ test.describe("the Share Card names every visible Habit", () => {
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByText("this card shows the names of these habits: took my meds, no drinking.")).toBeVisible();
+    await expect(page.getByText("your habit names appear on this card: took my meds, no drinking.")).toBeVisible();
     await expect(
       page.getByRole("img", { name: /habits: took my meds, no drinking\./ }),
     ).toBeVisible();
@@ -46,7 +46,7 @@ test.describe("the Share Card names every visible Habit", () => {
     await page.getByRole("button", { name: "settings" }).click();
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
-    await expect(page.getByText("this card shows the name of this habit: workout.")).toBeVisible();
+    await expect(page.getByText("your habit name appears on this card: workout.")).toBeVisible();
     await expect(page.getByRole("img", { name: /habits: workout\./ })).toBeVisible();
     await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
 
@@ -63,7 +63,7 @@ test.describe("the Share Card names every visible Habit", () => {
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "save .png" }).click();
     expect((await download).suggestedFilename()).toBe("squares.png");
-    await expect(page.getByRole("status")).toHaveText("the card is saved.");
+    await expect(page.getByRole("status")).toHaveText("saved.");
   });
 
   test("is reached from settings and not from Home", async ({ app }) => {
@@ -85,7 +85,7 @@ test.describe("the Habit Card names only its own Habit", () => {
     await page.getByRole("button", { name: "make a share card ›" }).click();
 
     await expect(page.getByRole("heading", { name: "share workout" })).toBeVisible();
-    await expect(page.getByText("this card shows the name of this habit: workout.")).toBeVisible();
+    await expect(page.getByText("your habit name appears on this card: workout.")).toBeVisible();
     await expect(page.getByRole("img", { name: /habits: workout\./ })).toBeVisible();
     await expect(page.getByRole("img", { name: /drinking/ })).toHaveCount(0);
   });

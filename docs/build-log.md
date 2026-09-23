@@ -51,8 +51,8 @@ We deleted the design brief. It was a handover prompt for a single session, and
 that session is done.
 
 At the time, all the docs were rewritten in ASD-STE100 Simplified Technical
-English. (Since 2026-09-23 only user-facing text uses STE; the developer docs
-are in plain English.)
+English. (As of 2026-09-23 nothing uses STE any more: the developer docs are in plain
+English, and the app's text follows the voice rules in the README.)
 
 ### The code
 
