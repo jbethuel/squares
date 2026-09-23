@@ -183,8 +183,8 @@ export function DetailScreen({
         label="hide"
         hint={
           hidden
-            ? "this habit and its logs are not on home. turn off to show them again."
-            : "removes this habit and its logs from home. squares keeps the logs."
+            ? "hidden from home, logs kept. turn off to bring it back."
+            : "takes this habit off home. nothing is deleted."
         }
         on={hidden}
         onToggle={() => update((current) => setHidden(current, habitId, !hidden, today))}

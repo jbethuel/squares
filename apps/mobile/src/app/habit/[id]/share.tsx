@@ -53,13 +53,13 @@ export default function HabitShare() {
           style={{ width: "100%", aspectRatio: card.width / card.height, borderRadius: 14 }}
         />
       ) : (
-        <NoteFaint>squares cannot make the card on this device.</NoteFaint>
+        <NoteFaint>this device can&apos;t draw the card.</NoteFaint>
       )}
 
       {/* Always exactly one name, and no anonymous case: ADR 0011 gives a
           Hidden Habit no Habit Card at all, and every other Habit gets one. */}
       <Card style={{ marginTop: 16 }}>
-        <Note>this card shows the name of this habit: {model.names.join(", ")}.</Note>
+        <Note>your habit name appears on this card: {model.names.join(", ")}.</Note>
       </Card>
 
       <View style={{ marginTop: 20 }}>

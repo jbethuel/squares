@@ -47,7 +47,7 @@ describe("export", () => {
 
     await vi.waitFor(() => expect(downloads).toHaveLength(1));
     expect(downloads[0]?.filename).toBe("squares-2026-08-03.json");
-    expect(screen.getByRole("status")).toHaveTextContent("export complete.");
+    expect(screen.getByRole("status")).toHaveTextContent("exported.");
   });
 
   it("goes through the OS sheet where the device has one", async () => {
@@ -63,7 +63,7 @@ describe("export", () => {
     // On iOS the download is the branch that strands the user on an "Open in…"
     // screen, so it must not be attempted alongside the sheet.
     expect(downloads).toHaveLength(0);
-    expect(screen.getByRole("status")).toHaveTextContent("export complete.");
+    expect(screen.getByRole("status")).toHaveTextContent("exported.");
   });
 
   it("does not say exported when the sheet is dismissed", async () => {
@@ -103,7 +103,7 @@ describe("import replaces the year on this device", () => {
     await importFile(user, jsonFile(serialise(incoming)));
 
     expect(storedData().habits.map((h) => h.name)).toEqual(["read", "meditate"]);
-    expect(screen.getByRole("status")).toHaveTextContent("import complete.");
+    expect(screen.getByRole("status")).toHaveTextContent("imported.");
   });
 
   it("asks first when there is a year already, and says what it would cost", async () => {
@@ -113,9 +113,9 @@ describe("import replaces the year on this device", () => {
     await importFile(user, jsonFile(serialise(incoming)));
 
     expect(
-      screen.getByText(/the file has 2 habits and 3 logged days\./),
+      screen.getByText(/it has 2 habits and 3 logged days\./),
     ).toBeInTheDocument();
-    expect(screen.getByText(/you cannot undo this/)).toBeInTheDocument();
+    expect(screen.getByText(/this can't be undone/)).toBeInTheDocument();
     // Nothing has happened yet.
     expect(storedData().habits.map((h) => h.name)).toEqual(["workout"]);
   });
@@ -128,7 +128,7 @@ describe("import replaces the year on this device", () => {
     await user.click(screen.getByRole("button", { name: "cancel" }));
 
     expect(storedData().habits.map((h) => h.name)).toEqual(["workout"]);
-    expect(screen.queryByText(/replace all the data on this device/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/replace everything on this device/)).not.toBeInTheDocument();
   });
 
   it("replaces it when the answer is yes", async () => {
@@ -139,7 +139,7 @@ describe("import replaces the year on this device", () => {
     await user.click(screen.getByRole("button", { name: "replace" }));
 
     expect(storedData().habits.map((h) => h.name)).toEqual(["read", "meditate"]);
-    expect(screen.getByRole("status")).toHaveTextContent("import complete.");
+    expect(screen.getByRole("status")).toHaveTextContent("imported.");
   });
 
   it("takes a file back whatever it has been renamed to on the way", async () => {
@@ -162,7 +162,7 @@ describe("import replaces the year on this device", () => {
 
     await importFile(user, jsonFile(JSON.stringify({ hello: "world" })));
 
-    expect(screen.getByRole("status")).toHaveTextContent("the file is not a squares export.");
+    expect(screen.getByRole("status")).toHaveTextContent("that isn't a squares export.");
     expect(storedData().habits.map((h) => h.name)).toEqual(["workout"]);
   });
 
@@ -172,7 +172,7 @@ describe("import replaces the year on this device", () => {
 
     await importFile(user, jsonFile("this is my year, honest"));
 
-    expect(screen.getByRole("status")).toHaveTextContent("squares cannot read the file.");
+    expect(screen.getByRole("status")).toHaveTextContent("couldn't read that file.");
     expect(storedData().habits.map((h) => h.name)).toEqual(["workout"]);
   });
 
@@ -242,7 +242,7 @@ describe("what settings promises", () => {
   it("states that the year lives on this device only", () => {
     open();
     expect(screen.getByText("data · only on this device")).toBeInTheDocument();
-    expect(screen.getByText(/squares has no account, no sync and no analytics\./)).toBeInTheDocument();
+    expect(screen.getByText(/no account, no sync, no analytics\./)).toBeInTheDocument();
   });
 
 });

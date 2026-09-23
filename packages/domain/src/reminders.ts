@@ -185,7 +185,7 @@ export interface PlannedReminder {
  * its body never counts outstanding Habits — it says the same thing whether
  * the Day is done or not.
  */
-const DAILY_BODY = "log your habits for today.";
+const DAILY_BODY = "time to log today's habits.";
 
 /**
  * ADR 0008: a Reminder names its Habit only if that Habit is a Named Habit.
@@ -195,7 +195,9 @@ const DAILY_BODY = "log your habits for today.";
  * Share Card, which names every Habit unconditionally. See ADR 0010.
  */
 function habitBody(habit: Habit): string {
-  return habit.namedHabit ? `${habit.name} is not logged today.` : "a habit is not logged today.";
+  return habit.namedHabit
+    ? `${habit.name} isn't logged yet today.`
+    : "one of your habits isn't logged yet today.";
 }
 
 function when(reminder: PlannedReminder): string {

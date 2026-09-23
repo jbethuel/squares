@@ -22,7 +22,7 @@ describe("the Habit Card names only the one Habit", () => {
   it("says in words that it names this Habit, and nothing else", () => {
     const data = account({ habits: ["workout", "no drinking"] });
     open(data, idOf(data, "workout"));
-    expect(screen.getByText("this card shows the name of this habit: workout.")).toBeInTheDocument();
+    expect(screen.getByText("your habit name appears on this card: workout.")).toBeInTheDocument();
   });
 
   it("paints only this Habit's name", async () => {
@@ -86,7 +86,7 @@ describe("saving the card", () => {
     await user.click(screen.getByRole("button", { name: "save .png" }));
     await vi.waitFor(() => expect(downloads).toHaveLength(1));
     expect(downloads[0]?.filename).toBe("squares.png");
-    expect(screen.getByRole("status")).toHaveTextContent("the card is saved.");
+    expect(screen.getByRole("status")).toHaveTextContent("saved.");
   });
 
   it("goes through the OS sheet where the device has one", async () => {

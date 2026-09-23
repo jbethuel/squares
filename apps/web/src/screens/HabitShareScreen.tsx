@@ -52,7 +52,7 @@ export function HabitShareScreen({ habitId }: { habitId: string }) {
           Hidden Habit no Habit Card at all, and every other Habit gets one. */}
       <div className="card" style={{ marginTop: 16 }}>
         <p className="note" style={{ margin: 0 }}>
-          this card shows the name of this habit: {model.names.join(", ")}.
+          your habit name appears on this card: {model.names.join(", ")}.
         </p>
       </div>
 

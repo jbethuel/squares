@@ -121,12 +121,11 @@ export default function NewHabit() {
                   protects nobody.
                 */}
                 <Note style={{ marginBottom: 6 }}>
-                  you can log a habit only on the same day. after midnight, you cannot change that
-                  day.
+                  you can only log today. once midnight passes, that day is closed for good.
                 </Note>
                 <NoteFaint style={{ marginBottom: 14 }}>
-                  a daily reminder sends one notification each day at {DEFAULT_CLOCK}. it does not
-                  show the names of your habits. you can change the time in settings.
+                  a daily reminder sends one notification a day at {DEFAULT_CLOCK}. it never shows
+                  your habit names, and you can change the time in settings.
                 </NoteFaint>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <PrimaryButton
@@ -149,9 +148,9 @@ export default function NewHabit() {
                   Reminder is set.
                 */}
                 <Note style={{ marginBottom: 14 }}>
-                  squares cannot send notifications, so the daily reminder is off. to turn it on,
-                  first allow notifications for squares in the settings of your phone. then turn on
-                  the daily reminder in squares settings.
+                  notifications are off for squares, so the daily reminder isn&apos;t set. allow
+                  notifications for squares in your phone&apos;s settings, then turn on the daily
+                  reminder in squares settings.
                 </Note>
                 <PrimaryButton label="ok" onPress={() => router.back()} />
               </>

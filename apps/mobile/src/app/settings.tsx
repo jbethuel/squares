@@ -57,7 +57,7 @@ export default function Settings() {
       `navigator.share()` rejects on dismissal; telling someone their year is
       backed up when it is not is the one thing this line must never do.
     */
-    setStatus((await exportRecord(data, today)) ? "squares sent the file to the share sheet." : null);
+    setStatus((await exportRecord(data, today)) ? "exported." : null);
   };
 
   const doImport = async () => {
@@ -68,17 +68,17 @@ export default function Settings() {
     // bottom of a block the thumb is nowhere near.
     if (result.kind === "not-ours") {
       haptics.refused();
-      return setStatus("the file is not a squares export.");
+      return setStatus("that isn't a squares export.");
     }
     if (result.kind === "unreadable") {
       haptics.refused();
-      return setStatus("squares cannot read the file.");
+      return setStatus("couldn't read that file.");
     }
     // An import replaces the year on this device, and there is no undo, so a
     // year that already has something in it has to be confirmed first.
     if (data.habits.length === 0) {
       replace(result.data);
-      setStatus("import complete.");
+      setStatus("imported.");
       return;
     }
     setPending(result.data);
@@ -116,9 +116,8 @@ export default function Settings() {
         >
         <Card accent style={{ marginTop: 10 }}>
           <Note style={{ marginBottom: 12 }}>
-            replace all the data on this device with the file? the file has{" "}
-            {pending.habits.length} habits and {Object.keys(pending.days).length} logged days. you
-            cannot undo this.
+            replace everything on this device with this file? it has {pending.habits.length} habits
+            and {Object.keys(pending.days).length} logged days. this can&apos;t be undone.
           </Note>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <PrimaryButton
@@ -127,7 +126,7 @@ export default function Settings() {
               onPress={() => {
                 replace(pending);
                 setPending(null);
-                setStatus("import complete.");
+                setStatus("imported.");
               }}
             />
             <QuietButton label="cancel" style={{ flex: 1 }} onPress={() => setPending(null)} />
@@ -167,15 +166,15 @@ export default function Settings() {
       <SubTitle style={{ marginBottom: 9 }}>reminder · only on this device</SubTitle>
       <ReminderRow
         label="daily reminder"
-        hint="one notification each day."
+        hint="one notification a day."
         time={reminders.daily}
         onSet={reminders.setDaily}
       />
       {/* The rule the lock screen follows, said where it can still be acted on:
           the switch that changes it is on the Habit's own Screen. */}
       <NoteFaint style={{ marginTop: 10 }}>
-        a habit reminder shows the name of the habit only if &quot;show name in reminder&quot; is on
-        for that habit.
+        habit reminders show the habit&apos;s name only if &quot;show name in reminder&quot; is on for
+        that habit.
       </NoteFaint>
 
       <Rule />
@@ -235,8 +234,8 @@ export default function Settings() {
       {/* Below the last rule and under no label: this is what the Screen
           promises, not another thing on it to set. */}
       <NoteFaint>
-        squares has no account, no sync and no analytics. export your data often. if you uninstall
-        squares, you lose all your data.
+        no account, no sync, no analytics. your data lives only on this phone, so export it now and
+        then. uninstalling squares deletes it.
       </NoteFaint>
     </Screen>
   );
